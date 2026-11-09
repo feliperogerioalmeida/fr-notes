@@ -19,6 +19,7 @@ tauri-plugin-opener = "2"
 tauri-plugin-http = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+tauri-plugin-global-shortcut = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
@@ -40,5 +41,5 @@ objc2-core-audio-types = { version = "0.3", default-features = false, features =
 objc2-core-foundation = { version = "0.3", default-features = false, features = ["std", "CFDictionary", "CFString", "CFBase"] }
 objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString", "NSArray", "NSDictionary", "NSValue", "NSUUID", "NSDate", "NSURL", "NSObject", "NSEnumerator", "NSError", "NSPredicate"] }
 objc2-event-kit = { version = "0.3", default-features = false, features = ["std", "block2", "objc2-app-kit", "EKCalendar", "EKCalendarItem", "EKEvent", "EKEventStore", "EKObject", "EKParticipant", "EKSource", "EKTypes"] }
-objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "objc2-core-foundation", "NSRunningApplication", "NSColor", "NSColorSpace"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "block2", "objc2-core-foundation", "NSRunningApplication", "NSColor", "NSColorSpace", "NSEvent", "NSPasteboard", "NSWorkspace", "NSWindow", "NSResponder", "NSGraphics"] }
 libc = "0.2"

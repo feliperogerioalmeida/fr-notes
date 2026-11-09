@@ -8,6 +8,7 @@ import {
   type Permissions,
   type PermissionState,
   type PrivacyPane,
+  requestAccessibilityPermission,
   requestCalendarAccess,
   requestMicrophonePermission,
   requestSystemAudioPermission,
@@ -55,6 +56,13 @@ const PERMISSIONS: PermissionDefinition[] = [
       "Mostra as próximas reuniões e preenche título e participantes das notas.",
     pane: "calendar",
     request: requestCalendarAccess,
+  },
+  {
+    key: "accessibility",
+    title: "Acessibilidade",
+    description: "Digita o ditado no app em que você está escrevendo.",
+    pane: "accessibility",
+    request: requestAccessibilityPermission,
   },
 ];
 

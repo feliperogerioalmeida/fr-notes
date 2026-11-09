@@ -3,6 +3,7 @@ import { Input } from "@workspace/ui/components/ui/input";
 import { ScrollArea } from "@workspace/ui/components/ui/scroll-area";
 import { cn } from "@workspace/ui/lib/utils";
 import {
+  AudioLines,
   CalendarDays,
   Folder,
   House,
@@ -157,6 +158,7 @@ export const AppSidebar = ({
       <nav className="flex flex-col gap-0.5 px-3">
         <SidebarLink to="/" icon={House} label="Início" end />
         <SidebarLink to="/agenda" icon={CalendarDays} label="Agenda" />
+        <SidebarLink to="/dictations" icon={AudioLines} label="Ditados" />
         <SidebarLink to="/templates" icon={LayoutTemplate} label="Templates" />
         <FoldersSection />
       </nav>

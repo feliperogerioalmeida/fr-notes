@@ -116,4 +116,31 @@ describe("storage", () => {
     expect(segment?.speaker).toBe(1);
     expect(reloaded?.speakerNames).toEqual({ "1": "Marina" });
   });
+
+  it("keeps the dictation history newest first", async () => {
+    const storage = await initializeStorage(await createMemoryClient());
+    const base = {
+      polished: false,
+      inserted: true,
+      targetAppName: "Slack",
+      targetAppBundleId: "com.tinyspeck.slackmacgap",
+    };
+    await storage.dictations.appendDictation({
+      ...base,
+      text: "primeiro",
+      rawText: "primeiro",
+    });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const id = await storage.dictations.appendDictation({
+      ...base,
+      text: "segundo",
+      rawText: "segundo",
+    });
+
+    expect(
+      (await storage.dictations.listDictations()).map((item) => item.text),
+    ).toEqual(["segundo", "primeiro"]);
+    await storage.dictations.deleteDictation(id);
+    expect(await storage.dictations.listDictations()).toHaveLength(1);
+  });
 });

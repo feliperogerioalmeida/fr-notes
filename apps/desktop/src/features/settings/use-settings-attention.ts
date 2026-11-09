@@ -8,6 +8,7 @@ import {
 
 export type SettingsSectionId =
   | "geral"
+  | "ditado"
   | "transcricao"
   | "reunioes"
   | "ia"
@@ -35,6 +36,10 @@ export const useSettingsAttention = (): Partial<
     permissoes: permissions
       ? REQUIRED_PERMISSIONS.some((key) => permissions[key] !== "granted")
       : false,
+    ditado:
+      settings.dictationEnabled && permissions
+        ? permissions.accessibility !== "granted"
+        : false,
     sobre: updateReady,
   };
 };

@@ -1,4 +1,5 @@
 import { createChatRepository } from "./chat-repository.js";
+import { createDictationsRepository } from "./dictations-repository.js";
 import { createFoldersRepository } from "./folders-repository.js";
 import { runMigrations } from "./migrations.js";
 import { createNotesRepository } from "./notes-repository.js";
@@ -16,6 +17,7 @@ export const createStorage = (db: SqlClient) => ({
   chat: createChatRepository(db),
   settings: createSettingsRepository(db),
   webhooks: createWebhooksRepository(db),
+  dictations: createDictationsRepository(db),
 });
 
 export type Storage = ReturnType<typeof createStorage>;

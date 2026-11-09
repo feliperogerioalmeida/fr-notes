@@ -82,7 +82,12 @@ const createHandler = (db: Database) => {
         screenCapture: "undetermined",
         systemAudio: "granted",
         calendar: "granted",
+        accessibility: "denied",
       }),
+      request_accessibility_permission: () => false,
+      set_fn_key_monitoring: () => null,
+      "plugin:global-shortcut|register": () => null,
+      "plugin:global-shortcut|unregister": () => null,
       request_system_audio_permission: () => true,
       request_calendar_access: () => true,
       list_calendar_events: () => buildPreviewEvents(),
@@ -108,6 +113,13 @@ const exposePreviewControls = () => {
           ? [{ bundleId: "us.zoom.xos", name: "zoom.us", pid: 4242 }]
           : [],
       }),
+    simulateDictation: async () => {
+      await emit("dictation:state", { status: "listening" });
+      await emit("dictation:level", { level: 0.12 });
+      await emit("dictation:partial", {
+        text: "Oi Marina, te mando a proposta revisada até sexta com o cronograma",
+      });
+    },
     simulateNubPrompt: () =>
       emit("nub:prompt", {
         title: "Kickoff — App de pedidos",

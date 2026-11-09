@@ -11,6 +11,8 @@ const SCREEN_CAPTURE_SETTINGS_URL: &str =
 const SYSTEM_AUDIO_SETTINGS_URL: &str =
     "x-apple.systempreferences:com.apple.preference.security?Privacy_AudioCapture";
 const CALENDAR_SETTINGS_URL: &str = "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars";
+const ACCESSIBILITY_SETTINGS_URL: &str =
+    "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility";
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -19,6 +21,7 @@ pub struct Permissions {
     pub screen_capture: String,
     pub system_audio: String,
     pub calendar: String,
+    pub accessibility: String,
 }
 
 pub fn read_permissions() -> Permissions {
@@ -27,7 +30,19 @@ pub fn read_permissions() -> Permissions {
         screen_capture: platform::screen_capture_status().to_string(),
         system_audio: platform::system_audio_status().to_string(),
         calendar: crate::calendar::authorization_status().to_string(),
+        accessibility: accessibility_status().to_string(),
     }
+}
+
+fn accessibility_status() -> &'static str {
+    if crate::accessibility::is_trusted() {
+        return GRANTED;
+    }
+    DENIED
+}
+
+pub fn request_accessibility() -> bool {
+    crate::accessibility::request_trust()
 }
 
 pub async fn request_microphone() -> bool {
@@ -51,6 +66,7 @@ pub fn open_privacy_pane(pane: &str) -> Result<(), String> {
         "screen-capture" => SCREEN_CAPTURE_SETTINGS_URL,
         "system-audio" => SYSTEM_AUDIO_SETTINGS_URL,
         "calendar" => CALENDAR_SETTINGS_URL,
+        "accessibility" => ACCESSIBILITY_SETTINGS_URL,
         other => return Err(format!("unknown_privacy_pane:{other}")),
     };
     std::process::Command::new("open")

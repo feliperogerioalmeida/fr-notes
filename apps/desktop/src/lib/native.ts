@@ -35,13 +35,15 @@ export type PrivacyPane =
   | "microphone"
   | "screen-capture"
   | "system-audio"
-  | "calendar";
+  | "calendar"
+  | "accessibility";
 
 export interface Permissions {
   microphone: PermissionState;
   screenCapture: PermissionState;
   systemAudio: PermissionState;
   calendar: PermissionState;
+  accessibility: PermissionState;
 }
 
 export interface StartRecordingArgs {
@@ -84,6 +86,10 @@ export const MISSING_DEEPGRAM_KEY_ERROR = "missing_deepgram_api_key";
 export const SYSTEM_AUDIO_DENIED_ERROR = "system_audio_permission_denied";
 
 export const CALENDAR_DENIED_ERROR = "calendar_access_denied";
+
+export const ACCESSIBILITY_REQUIRED_ERROR = "accessibility_permission_required";
+
+export const DICTATION_RUNNING_ERROR = "dictation_already_running";
 
 export const readSecret = (key: SecretKey) =>
   invoke<string | null>("get_secret", { key });
@@ -219,3 +225,56 @@ export const focusMainWindow = async () => {
   await main?.unminimize();
   await main?.setFocus();
 };
+
+export interface StartDictationArgs {
+  language: string;
+  keyterms: string[];
+}
+
+export interface DictationTargetApp {
+  name: string;
+  bundleId: string;
+}
+
+export interface DictationResult {
+  text: string;
+  targetApp: DictationTargetApp | null;
+}
+
+export type DictationStatus = "listening" | "processing" | "idle";
+
+export const startDictation = (args: StartDictationArgs) =>
+  invoke<{ startedAtMs: number }>("start_dictation", { args });
+
+export const stopDictation = () => invoke<DictationResult>("stop_dictation");
+
+export const cancelDictation = () => invoke<void>("cancel_dictation");
+
+export const hideDictationPill = () => invoke<void>("hide_dictation_pill");
+
+export const insertText = (text: string) =>
+  invoke<void>("insert_text", { text });
+
+export const setFnKeyMonitoring = (enabled: boolean) =>
+  invoke<void>("set_fn_key_monitoring", { enabled });
+
+export const requestAccessibilityPermission = () =>
+  invoke<boolean>("request_accessibility_permission");
+
+export const onDictationLevel = (handler: (level: number) => void) =>
+  subscribe<{ level: number }>("dictation:level", ({ level }) =>
+    handler(level),
+  );
+
+export const onDictationPartial = (handler: (text: string) => void) =>
+  subscribe<{ text: string }>("dictation:partial", ({ text }) => handler(text));
+
+export const onDictationState = (handler: (status: DictationStatus) => void) =>
+  subscribe<{ status: DictationStatus }>("dictation:state", ({ status }) =>
+    handler(status),
+  );
+
+export const onFnKey = (handler: (pressed: boolean) => void) =>
+  subscribe<{ pressed: boolean }>("dictation:fn-key", ({ pressed }) =>
+    handler(pressed),
+  );

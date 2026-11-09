@@ -1,21 +1,27 @@
+mod accessibility;
 mod audio;
 mod calendar;
 mod commands;
 #[cfg(target_os = "macos")]
 mod core_audio;
+mod dictation;
 mod events;
+mod fn_key;
+mod main_thread;
 mod microphone_apps;
 mod permissions;
 mod secrets;
 mod session;
 #[cfg(target_os = "macos")]
 mod tcc;
+mod text_insertion;
 mod transcription;
 mod tray;
 mod windows;
 
 use tauri::{AppHandle, RunEvent, Window, WindowEvent};
 
+use dictation::DictationManager;
 use session::RecordingManager;
 use windows::{show_main_window, MAIN_WINDOW};
 
@@ -26,7 +32,9 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(RecordingManager::default())
+        .manage(DictationManager::default())
         .setup(|app| {
             tray::install_tray(app.handle())?;
             microphone_apps::spawn_microphone_apps_poller(app.handle().clone());
@@ -51,6 +59,13 @@ pub fn run() {
             commands::list_calendars,
             commands::list_calendar_events,
             commands::list_microphone_apps,
+            commands::request_accessibility_permission,
+            commands::start_dictation,
+            commands::stop_dictation,
+            commands::cancel_dictation,
+            commands::hide_dictation_pill,
+            commands::insert_text,
+            commands::set_fn_key_monitoring,
         ])
         .build(tauri::generate_context!())
         .expect("error while building FR Notes");

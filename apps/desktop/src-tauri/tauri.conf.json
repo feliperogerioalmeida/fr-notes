@@ -44,6 +44,24 @@
         "maximizable": false,
         "minimizable": false,
         "closable": false
+      },
+      {
+        "label": "dictation",
+        "url": "index.html#/dictation",
+        "width": 360,
+        "height": 64,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visibleOnAllWorkspaces": true,
+        "resizable": false,
+        "shadow": false,
+        "focus": false,
+        "visible": false,
+        "maximizable": false,
+        "minimizable": false,
+        "closable": false
       }
     ],
     "security": {

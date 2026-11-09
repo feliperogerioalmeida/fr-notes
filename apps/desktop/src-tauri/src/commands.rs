@@ -1,11 +1,13 @@
 use tauri::{AppHandle, State};
 
 use crate::calendar::{self, CalendarEvent, CalendarInfo, ListEventsArgs};
+use crate::dictation::{hide_and_idle, DictationManager, DictationResult, DictationStarted, StartDictationArgs};
 use crate::microphone_apps::{self, MicApp};
 use crate::permissions::{self, Permissions};
 use crate::secrets::{read_secret, remove_secret, write_secret};
 use crate::session::{RecordingManager, RecordingStarted, RecordingStatus, StartRecordingArgs};
 use crate::windows::set_nub_visible;
+use crate::{fn_key, text_insertion};
 
 #[tauri::command]
 pub fn get_secret(key: String) -> Result<Option<String>, String> {
@@ -95,6 +97,45 @@ pub async fn list_calendar_events(args: ListEventsArgs) -> Result<Vec<CalendarEv
 #[tauri::command]
 pub async fn list_microphone_apps() -> Result<Vec<MicApp>, String> {
     run_blocking(microphone_apps::list_microphone_apps).await
+}
+
+#[tauri::command]
+pub fn request_accessibility_permission() -> Result<bool, String> {
+    Ok(permissions::request_accessibility())
+}
+
+#[tauri::command]
+pub async fn start_dictation(
+    app: AppHandle,
+    manager: State<'_, DictationManager>,
+    args: StartDictationArgs,
+) -> Result<DictationStarted, String> {
+    manager.start(&app, args).await
+}
+
+#[tauri::command]
+pub async fn stop_dictation(app: AppHandle, manager: State<'_, DictationManager>) -> Result<DictationResult, String> {
+    manager.stop(&app).await
+}
+
+#[tauri::command]
+pub async fn cancel_dictation(app: AppHandle, manager: State<'_, DictationManager>) -> Result<(), String> {
+    manager.cancel(&app).await
+}
+
+#[tauri::command]
+pub fn hide_dictation_pill(app: AppHandle) -> Result<(), String> {
+    hide_and_idle(&app)
+}
+
+#[tauri::command]
+pub async fn insert_text(app: AppHandle, manager: State<'_, DictationManager>, text: String) -> Result<(), String> {
+    text_insertion::insert_text(&app, text, manager.target()).await
+}
+
+#[tauri::command]
+pub async fn set_fn_key_monitoring(app: AppHandle, enabled: bool) -> Result<(), String> {
+    fn_key::set_monitoring(&app, enabled).await
 }
 
 async fn run_blocking<T, F>(task: F) -> Result<T, String>

@@ -16,4 +16,5 @@ export const QUERY_KEYS = {
     ["calendar-events", daysBack, daysAhead] as const,
   calendars: ["calendars"] as const,
   webhooks: ["webhooks"] as const,
+  dictations: ["dictations"] as const,
 };

@@ -91,6 +91,21 @@ const MIGRATIONS: Migration[] = [
       "ALTER TABLE notes ADD COLUMN speaker_names_json TEXT NOT NULL DEFAULT '{}'",
     ],
   },
+  {
+    version: 5,
+    statements: [
+      `CREATE TABLE IF NOT EXISTS dictations (
+        id TEXT PRIMARY KEY,
+        text TEXT NOT NULL,
+        raw_text TEXT NOT NULL,
+        polished INTEGER NOT NULL DEFAULT 0,
+        inserted INTEGER NOT NULL DEFAULT 0,
+        target_app_name TEXT,
+        target_app_bundle_id TEXT,${SYNCED_COLUMNS}
+      )`,
+      "CREATE INDEX IF NOT EXISTS idx_dictations_created_at ON dictations (created_at)",
+    ],
+  },
 ];
 
 const ensureMigrationsTable = (db: SqlClient): Promise<void> =>

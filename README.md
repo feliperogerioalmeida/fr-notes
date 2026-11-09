@@ -35,6 +35,7 @@ O FR Notes é um app desktop para quem passa o dia em reuniões. Durante a chama
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 🎙️ **Transcrição em tempo real** | Seu microfone (“Eu”) e o áudio do computador em canais separados, com Deepgram nova-3, cancelamento de eco para usar sem fone e vocabulário personalizado.           |
 | 🗣️ **Quem disse o quê**          | As vozes dos outros participantes são separadas automaticamente (Pessoa 1, Pessoa 2…) e você dá nome a cada uma com um clique, a partir dos participantes do evento. |
+| ⌨️ **Ditado em qualquer app**    | Segure `fn`, fale e solte: o texto é digitado onde está o cursor — e-mail, Slack, WhatsApp, editor de código. Opcionalmente polido pela IA.                          |
 | ✨ **Notas geradas pela IA**     | Suas anotações viram a espinha das notas finais, completadas com o que foi dito. O título é sugerido automaticamente.                                                |
 | 🧩 **Templates**                 | Reunião geral, Cliente/Descoberta, 1:1, Daily, Kickoff e Entrevista — ou crie os seus.                                                                               |
 | 💬 **Pergunte à reunião**        | Chat sobre cada nota: “quais foram os próximos passos?”, “escreva o follow-up”.                                                                                      |
@@ -83,6 +84,7 @@ Em **Permissões do macOS**, clique em **Permitir** em cada item:
 | Microfone        | Transcrever o que você fala (“Eu”).                              |
 | Áudio do sistema | Transcrever os outros participantes (“Eles”).                    |
 | Calendário       | Mostrar as próximas reuniões e preencher título e participantes. |
+| Acessibilidade   | Digitar o ditado no app em que você está escrevendo.             |
 
 ### 2. Transcrição (Deepgram)
 
@@ -111,6 +113,9 @@ Preencha seu nome e um pouco de contexto em **Sobre você** — a IA usa isso pa
 4. **Ajuste e reaproveite:** alterne entre **Notas FR** e **Minhas notas**, regere com outro template, pergunte qualquer coisa à reunião ou copie tudo em Markdown.
 
 Atalhos úteis:
+
+- **Segure `fn` (🌐) em qualquer app para ditar**; toque rápido deixa o microfone aberto e `Esc` cancela. Tudo o que você dita fica em **Ditados**.
+- **⌥ ⇧ R** começa ou para a gravação de uma reunião, mesmo com o app em segundo plano.
 
 - O ícone do FR Notes na barra de menus tem **Nova nota**, que já começa a gravar.
 - Em **Configurações → Reuniões** você escolhe se o app deve perguntar, gravar sozinho ou ignorar reuniões detectadas, e se deve parar ao fim da chamada.

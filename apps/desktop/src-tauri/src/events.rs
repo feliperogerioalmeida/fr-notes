@@ -7,6 +7,10 @@ pub const RECORDING_STATE_EVENT: &str = "recording:state";
 pub const RECORDING_ERROR_EVENT: &str = "recording:error";
 pub const TRAY_NEW_NOTE_EVENT: &str = "tray:new-note";
 pub const MICROPHONE_APPS_CHANGED_EVENT: &str = "microphone-apps:changed";
+pub const DICTATION_LEVEL_EVENT: &str = "dictation:level";
+pub const DICTATION_PARTIAL_EVENT: &str = "dictation:partial";
+pub const DICTATION_STATE_EVENT: &str = "dictation:state";
+pub const DICTATION_FN_KEY_EVENT: &str = "dictation:fn-key";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AudioSource {
@@ -73,4 +77,32 @@ pub fn emit_recording_state(app: &AppHandle, status: &'static str, note_id: Opti
         message: None,
     };
     let _ = app.emit(RECORDING_STATE_EVENT, payload);
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DictationLevelPayload {
+    pub level: f32,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DictationPartialPayload {
+    pub text: String,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DictationStatePayload {
+    pub status: &'static str,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FnKeyPayload {
+    pub pressed: bool,
+}
+
+pub fn emit_dictation_state(app: &AppHandle, status: &'static str) {
+    let _ = app.emit(DICTATION_STATE_EVENT, DictationStatePayload { status });
 }

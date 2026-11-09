@@ -2,6 +2,7 @@ import type { UnlistenFn } from "@tauri-apps/api/event";
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
 
+import { useGlobalShortcuts } from "@/features/dictation/use-global-shortcuts.js";
 import { useMeetingDetection } from "@/features/meetings/use-meeting-detection.js";
 import { useStartNote } from "@/features/notes/use-start-note.js";
 import { endRecording } from "@/features/recording/use-recording-controls.js";
@@ -40,6 +41,7 @@ export const AppShell = () => {
   useRecordingListeners({ persistSegments: true });
   useShellEvents();
   useMeetingDetection(startNote);
+  useGlobalShortcuts(startNote);
   useThemeSync();
   useAutoUpdate();
   const context: ShellContext = { searchQuery };

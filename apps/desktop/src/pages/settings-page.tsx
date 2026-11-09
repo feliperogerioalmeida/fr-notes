@@ -4,6 +4,7 @@ import {
   AudioLines,
   CalendarDays,
   Info,
+  Keyboard,
   type LucideIcon,
   ShieldCheck,
   Sparkles,
@@ -15,6 +16,7 @@ import { Navigate, NavLink, useParams } from "react-router";
 
 import { PageContainer } from "@/components/page-container.js";
 import { PageHeader } from "@/components/page-header.js";
+import { DictationSection } from "@/features/dictation/dictation-section.js";
 import { IntegrationsSection } from "@/features/integrations/integrations-section.js";
 import { AboutSection } from "@/features/settings/about-section.js";
 import { AiSection } from "@/features/settings/ai-section.js";
@@ -51,6 +53,14 @@ const SECTIONS: SectionDefinition[] = [
         <PreferencesSection />
       </>
     ),
+  },
+  {
+    id: "ditado",
+    label: "Ditado e atalhos",
+    icon: Keyboard,
+    description:
+      "Fale em qualquer app e o FR Notes digita para você. Atalhos globais para gravar reuniões.",
+    content: () => <DictationSection />,
   },
   {
     id: "transcricao",

@@ -40,13 +40,13 @@ enum PumpOutcome {
     Disconnected,
 }
 
-struct AudioBuffer {
+pub(crate) struct AudioBuffer {
     pending: Vec<f32>,
     chunk_size: usize,
 }
 
 impl AudioBuffer {
-    fn new(sample_rate: u32) -> Self {
+    pub(crate) fn new(sample_rate: u32) -> Self {
         let chunk_size = (sample_rate / CHUNKS_PER_SECOND).max(1) as usize;
         Self {
             pending: Vec::with_capacity(chunk_size * 2),
@@ -54,11 +54,11 @@ impl AudioBuffer {
         }
     }
 
-    fn push(&mut self, samples: &[f32]) {
+    pub(crate) fn push(&mut self, samples: &[f32]) {
         self.pending.extend_from_slice(samples);
     }
 
-    fn take_chunk(&mut self) -> Option<Vec<u8>> {
+    pub(crate) fn take_chunk(&mut self) -> Option<Vec<u8>> {
         if self.pending.len() < self.chunk_size {
             return None;
         }
@@ -66,7 +66,7 @@ impl AudioBuffer {
         Some(to_i16_le_bytes(&chunk))
     }
 
-    fn take_remaining(&mut self) -> Option<Vec<u8>> {
+    pub(crate) fn take_remaining(&mut self) -> Option<Vec<u8>> {
         if self.pending.is_empty() {
             return None;
         }

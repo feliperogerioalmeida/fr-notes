@@ -8,6 +8,19 @@ export const LLM_PROVIDERS = ["gateway", "openai-compatible"] as const;
 
 export const MEETING_DETECTION_MODES = ["ask", "auto", "off"] as const;
 
+export const DICTATION_TRIGGERS = [
+  "fn",
+  "alt-space",
+  "ctrl-alt-space",
+  "cmd-shift-space",
+] as const;
+
+export const RECORDING_SHORTCUTS = [
+  "alt-shift-r",
+  "ctrl-alt-r",
+  "off",
+] as const;
+
 export const DEFAULT_TEMPLATE_ID = "builtin-general";
 
 export const SettingsSchema = z.object({
@@ -20,6 +33,10 @@ export const SettingsSchema = z.object({
   autoStopRecording: z.boolean().default(true),
   meetingReminders: z.boolean().default(true),
   hiddenCalendarIds: z.array(z.string()).default([]),
+  dictationEnabled: z.boolean().default(true),
+  dictationTrigger: z.enum(DICTATION_TRIGGERS).default("fn"),
+  dictationPolish: z.boolean().default(false),
+  recordingShortcut: z.enum(RECORDING_SHORTCUTS).default("alt-shift-r"),
   keyterms: z.array(z.string()).default([]),
   defaultTemplateId: z.string().default(DEFAULT_TEMPLATE_ID),
   llmProvider: z.enum(LLM_PROVIDERS).default("gateway"),
@@ -33,6 +50,10 @@ export type Settings = z.infer<typeof SettingsSchema>;
 export type LlmProvider = Settings["llmProvider"];
 
 export type MeetingDetectionMode = Settings["meetingDetection"];
+
+export type DictationTrigger = Settings["dictationTrigger"];
+
+export type RecordingShortcut = Settings["recordingShortcut"];
 
 export type TranscriptionLanguage = Settings["transcriptionLanguage"];
 
