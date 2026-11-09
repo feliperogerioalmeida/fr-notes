@@ -1,0 +1,13 @@
+{
+  "notFound": {
+    "title": "Página não encontrada",
+    "description": "A página que você procura não existe ou foi movida.",
+    "backButton": "Voltar ao início"
+  },
+  "error": {
+    "title": "Algo deu errado",
+    "description": "Ocorreu um erro inesperado. Tente novamente ou volte para a página inicial.",
+    "retryButton": "Tentar novamente",
+    "backButton": "Voltar ao início"
+  }
+}

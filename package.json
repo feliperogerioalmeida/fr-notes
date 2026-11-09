@@ -1,0 +1,62 @@
+{
+  "name": "@fr-notes/monorepo",
+  "version": "0.0.1",
+  "description": "FR Notes — notas de reunião com IA para macOS",
+  "scripts": {
+    "dev": "portless proxy start & turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "npx lint-staged",
+    "lint:ci": "turbo run lint",
+    "format:check": "prettier --check .",
+    "type-check": "turbo run type-check",
+    "db:studio": "turbo run db:studio",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "linear:check": "bash scripts/linear/check-access.sh",
+    "linear:issue": "bash scripts/linear/fetch-issue.sh",
+    "linear:create-issue": "bash scripts/linear/create-issue.sh",
+    "linear:create-branch": "bash scripts/linear/create-branch.sh",
+    "linear:set-status": "bash scripts/linear/set-status.sh",
+    "linear:relations": "bash scripts/linear/get-relations.sh",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "Felipe Rogerio",
+  "license": "MIT",
+  "packageManager": "pnpm@10.20.0",
+  "pnpm": {
+    "overrides": {
+      "react": "19.2.3",
+      "react-dom": "19.2.3",
+      "react-hook-form": "7.72.0",
+      "@better-auth/utils": "0.3.1",
+      "@better-fetch/fetch": "1.1.21",
+      "better-call": "1.3.2"
+    }
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
+    "@eslint/js": "^10.0.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "eslint": "^10.1.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "portless": "^0.7.2",
+    "prettier": "^3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "semantic-release": "^25.0.3",
+    "turbo": "^2.8.20",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/feliperogerioalmeida/fr-notes.git"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "tabWidth": 2,
+  "semi": true,
+  "proseWrap": "preserve",
+  "comments": "off",
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
+  }
+}

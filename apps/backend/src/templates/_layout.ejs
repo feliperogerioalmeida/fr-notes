@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title><%= title %></title>
+  </head>
+  <body style="margin:0;padding:0;background-color:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#0f172a;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f4f4f5;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,0.08);">
+            <tr>
+              <td style="height:4px;background:linear-gradient(90deg,#4f46e5 0%,#7c3aed 50%,#4f46e5 100%);"></td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:40px 32px 16px 32px;">
+                <h1 style="margin:0;font-family:'Inter','Helvetica Neue',Arial,sans-serif;font-size:32px;font-weight:700;letter-spacing:0.04em;color:#4f46e5;line-height:1;">
+                  <%= appName %>
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 32px 40px 32px;">
+                <%- body %>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding:24px 32px;background-color:#0f172a;color:#94a3b8;font-size:12px;">
+                <p style="margin:0;">© <%= year %> <%= appName %>. Todos os direitos reservados.</p>
+                <p style="margin:6px 0 0 0;">Este é um e-mail automático, não responda.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

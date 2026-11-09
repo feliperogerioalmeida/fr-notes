@@ -1,0 +1,22 @@
+{
+  "name": "@workspace/types",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {},
+  "keywords": [],
+  "author": "Felipe Rogerio",
+  "license": "ISC",
+  "packageManager": "pnpm@10.20.0",
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

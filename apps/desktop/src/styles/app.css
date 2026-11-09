@@ -1,0 +1,129 @@
+@import "@workspace/ui/globals.css";
+
+@source "../";
+
+@layer base {
+  html {
+    font-size: 15px;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+  }
+
+  input,
+  textarea,
+  [contenteditable="true"],
+  .fr-markdown,
+  .fr-selectable {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
+@layer components {
+  .fr-editor {
+    @apply text-body text-foreground min-h-[40vh] outline-none;
+  }
+
+  .fr-editor,
+  .fr-markdown {
+    & > * + * {
+      @apply mt-3;
+    }
+
+    & h1 {
+      @apply text-title-3 text-heading mt-8;
+    }
+
+    & h2 {
+      @apply text-body-lg text-heading mt-7 font-semibold;
+    }
+
+    & h3 {
+      @apply text-body text-heading mt-6 font-semibold tracking-tight;
+    }
+
+    & h1:first-child,
+    & h2:first-child,
+    & h3:first-child {
+      @apply mt-0;
+    }
+
+    & strong {
+      @apply text-heading font-semibold;
+    }
+
+    & ul {
+      @apply list-disc pl-5;
+    }
+
+    & ol {
+      @apply list-decimal pl-5;
+    }
+
+    & li {
+      @apply marker:text-muted-foreground my-1;
+    }
+
+    & li > p {
+      @apply m-0;
+    }
+
+    & ul[data-type="taskList"] {
+      @apply list-none pl-0;
+    }
+
+    & ul[data-type="taskList"] > li {
+      @apply flex items-start gap-2.5;
+    }
+
+    & ul[data-type="taskList"] > li > label {
+      @apply mt-[0.3em] flex shrink-0;
+    }
+
+    & ul[data-type="taskList"] > li > div {
+      @apply min-w-0 flex-1;
+    }
+
+    & ul[data-type="taskList"] input[type="checkbox"] {
+      @apply accent-brand size-3.5;
+    }
+
+    & ul[data-type="taskList"] > li[data-checked="true"] > div {
+      @apply text-muted-foreground line-through;
+    }
+
+    & blockquote {
+      @apply border-border-strong text-muted-foreground border-l-2 pl-4;
+    }
+
+    & code {
+      @apply bg-secondary rounded-sm px-1 py-0.5 font-mono text-[0.9em];
+    }
+
+    & hr {
+      @apply my-6;
+    }
+
+    & a {
+      @apply text-brand underline underline-offset-2;
+    }
+  }
+
+  .fr-editor p.is-editor-empty:first-child::before {
+    @apply text-muted-foreground pointer-events-none float-left h-0;
+    content: attr(data-placeholder);
+  }
+
+  .fr-markdown {
+    & > * + * {
+      @apply mt-2;
+    }
+
+    & h1,
+    & h2,
+    & h3 {
+      @apply text-body-sm mt-4;
+    }
+  }
+}

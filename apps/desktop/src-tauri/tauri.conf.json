@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "FR Notes",
+  "version": "0.1.0",
+  "identifier": "dev.feliperogerio.notes",
+  "build": {
+    "beforeDevCommand": "pnpm web:dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm web:build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "FR Notes",
+        "width": 1240,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 620,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": {
+          "x": 18,
+          "y": 22
+        },
+        "backgroundColor": "#0C0C0D"
+      },
+      {
+        "label": "nub",
+        "url": "index.html#/nub",
+        "width": 64,
+        "height": 168,
+        "transparent": true,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "visibleOnAllWorkspaces": true,
+        "resizable": false,
+        "shadow": false,
+        "focus": false,
+        "visible": false,
+        "maximizable": false,
+        "minimizable": false,
+        "closable": false
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "macOSPrivateApi": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "category": "public.app-category.productivity",
+    "shortDescription": "Notas de reunião com IA",
+    "copyright": "© 2026 Felipe Rogério",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "13.0",
+      "entitlements": "Entitlements.plist"
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDMyRDVDQkQyRDBENTlGNzYKUldSMm45WFEwc3ZWTW1DZzlGQjMwWDQ3OXRlWHhNOEw0bVdqMUlXeFJENDM0N21Yb3NJNVhNdSsK",
+      "endpoints": [
+        "https://github.com/feliperogerioalmeida/fr-notes/releases/latest/download/latest.json"
+      ]
+    }
+  }
+}

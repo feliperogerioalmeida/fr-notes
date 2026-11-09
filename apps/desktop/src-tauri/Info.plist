@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>O FR Notes usa o microfone para transcrever o que você fala nas reuniões.</string>
+  <key>NSAudioCaptureUsageDescription</key>
+  <string>O FR Notes captura o áudio do sistema para transcrever os outros participantes da reunião.</string>
+  <key>NSScreenCaptureUsageDescription</key>
+  <string>O FR Notes captura o áudio do sistema para transcrever os outros participantes da reunião.</string>
+  <key>NSCalendarsFullAccessUsageDescription</key>
+  <string>O FR Notes lê sua agenda para mostrar as próximas reuniões e preencher título e participantes das notas.</string>
+  <key>NSCalendarsUsageDescription</key>
+  <string>O FR Notes lê sua agenda para mostrar as próximas reuniões e preencher título e participantes das notas.</string>
+</dict>
+</plist>

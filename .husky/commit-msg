@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# Remove Claude Code generated messages
+sed -i '' '/^🤖 Generated with \[Claude Code\]/d; /^Co-Authored-By: Claude <noreply@anthropic\.com>/d; /^$/N;s/\n$//g' "$1"
+
+npx --no -- commitlint --edit $1

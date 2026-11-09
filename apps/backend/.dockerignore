@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.env.*.local
+dist
+coverage
+.turbo
+*.log
+.git
+.github
+README.md
+.prettierrc
+.eslintrc*
+tsconfig.json
+vitest.config.ts

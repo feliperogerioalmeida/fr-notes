@@ -1,0 +1,62 @@
+name: Claude PR Description
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+jobs:
+  describe:
+    if: ${{ github.event.pull_request.body == '' || github.event.pull_request.body == null }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Load secrets from 1Password
+        uses: 1password/load-secrets-action@v2
+        with:
+          export-env: true
+        env:
+          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SA_TOKEN_FR_CLAUDE_BOT }}
+          CLAUDE_APP_ID: op://FR Claude Bot/CLAUDE_APP_ID/password
+          CLAUDE_APP_PRIVATE_KEY: op://FR Claude Bot/CLAUDE_APP_PRIVATE_KEY/notesPlain
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ env.CLAUDE_APP_ID }}
+          private-key: ${{ env.CLAUDE_APP_PRIVATE_KEY }}
+
+      - name: Generate PR Description
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            PR TITLE: ${{ github.event.pull_request.title }}
+
+            Read the PR diff and generate a concise PR description in English. Use this format:
+
+            ## Summary
+            <1-2 sentences explaining what this PR does and why>
+
+            ## Changes
+            - <bullet points of key changes, max 5 items>
+
+            ## Type
+            <one of: feature | bugfix | refactor | docs | chore | test>
+
+            Update the PR description using:
+            `gh pr edit ${{ github.event.pull_request.number }} --body "..."`
+
+          claude_args: '--allowedTools "Read,Bash(gh pr edit:*),Bash(gh pr view:*),Bash(gh pr diff:*)"'

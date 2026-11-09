@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "FR Notes",
+    "slug": "fr-notes",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "frnotes",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.feliperogerio.notes.mobile"
+    },
+    "android": {
+      "package": "dev.feliperogerio.notes.mobile",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF",
+          "dark": {
+            "backgroundColor": "#0A0A0A"
+          }
+        }
+      ],
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

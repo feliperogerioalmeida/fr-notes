@@ -1,0 +1,38 @@
+{
+  "name": "frontend",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "NODE_EXTRA_CA_CERTS=$HOME/.portless/ca.pem portless frnotes next dev",
+    "build": "next build",
+    "start": " NODE_EXTRA_CA_CERTS=$HOME/.portless/ca.pem portless frnotes next start ",
+    "lint": "eslint",
+    "orval": "NODE_EXTRA_CA_CERTS=$HOME/.portless/ca.pem orval"
+  },
+  "dependencies": {
+    "@workspace/auth": "workspace:*",
+    "@workspace/ui": "workspace:*",
+    "@workspace/utils": "workspace:*",
+    "better-auth": "^1.5.6",
+    "lucide-react": "^0.577.0",
+    "motion": "^12.38.0",
+    "next": "16.2.1",
+    "next-themes": "^0.4.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-hook-form": "^7.72.0",
+    "sonner": "^2.0.7",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint-config-next": "16.2.1",
+    "portless": "^0.7.2",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3"
+  }
+}

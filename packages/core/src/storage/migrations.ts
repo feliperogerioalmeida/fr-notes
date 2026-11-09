@@ -1,0 +1,110 @@
+import type { SqlClient } from "./sql-client.js";
+
+interface Migration {
+  version: number;
+  statements: string[];
+}
+
+const SYNCED_COLUMNS = `
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  deleted_at TEXT`;
+
+const MIGRATIONS: Migration[] = [
+  {
+    version: 1,
+    statements: [
+      `CREATE TABLE IF NOT EXISTS notes (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL DEFAULT '',
+        notes_markdown TEXT NOT NULL DEFAULT '',
+        enhanced_markdown TEXT,
+        template_id TEXT,
+        folder_id TEXT,
+        status TEXT NOT NULL DEFAULT 'draft',
+        recording_started_at TEXT,
+        recording_ended_at TEXT,${SYNCED_COLUMNS}
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_notes_created_at ON notes (created_at)`,
+      `CREATE TABLE IF NOT EXISTS transcript_segments (
+        id TEXT PRIMARY KEY,
+        note_id TEXT NOT NULL,
+        source TEXT NOT NULL,
+        text TEXT NOT NULL,
+        start_ms INTEGER NOT NULL,
+        end_ms INTEGER NOT NULL,${SYNCED_COLUMNS}
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_segments_note ON transcript_segments (note_id, start_ms)`,
+      `CREATE TABLE IF NOT EXISTS folders (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,${SYNCED_COLUMNS}
+      )`,
+      `CREATE TABLE IF NOT EXISTS templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        instructions TEXT NOT NULL,
+        is_built_in INTEGER NOT NULL DEFAULT 0,${SYNCED_COLUMNS}
+      )`,
+      `CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        note_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,${SYNCED_COLUMNS}
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_chat_note ON chat_messages (note_id, created_at)`,
+      `CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )`,
+    ],
+  },
+  {
+    version: 2,
+    statements: [
+      "ALTER TABLE notes ADD COLUMN calendar_event_id TEXT",
+      "ALTER TABLE notes ADD COLUMN participants_json TEXT NOT NULL DEFAULT '[]'",
+      "CREATE INDEX IF NOT EXISTS idx_notes_calendar_event ON notes (calendar_event_id)",
+    ],
+  },
+];
+
+const ensureMigrationsTable = (db: SqlClient): Promise<void> =>
+  db.execute(
+    `CREATE TABLE IF NOT EXISTS schema_migrations (
+      version INTEGER PRIMARY KEY,
+      applied_at TEXT NOT NULL
+    )`,
+  );
+
+const readAppliedVersions = async (db: SqlClient): Promise<Set<number>> => {
+  const rows = await db.select<{ version: number }>(
+    "SELECT version FROM schema_migrations",
+  );
+  return new Set(rows.map((row) => row.version));
+};
+
+const applyMigration = async (
+  db: SqlClient,
+  migration: Migration,
+): Promise<void> => {
+  for (const statement of migration.statements) {
+    await db.execute(statement);
+  }
+  await db.execute(
+    "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+    [migration.version, new Date().toISOString()],
+  );
+};
+
+export const runMigrations = async (db: SqlClient): Promise<void> => {
+  await ensureMigrationsTable(db);
+  const applied = await readAppliedVersions(db);
+  const pending = MIGRATIONS.filter(
+    (migration) => !applied.has(migration.version),
+  );
+  for (const migration of pending) {
+    await applyMigration(db, migration);
+  }
+};

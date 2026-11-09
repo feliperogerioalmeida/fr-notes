@@ -1,0 +1,44 @@
+[package]
+name = "fr-notes"
+version = "0.1.0"
+description = "FR Notes — AI meeting notes"
+authors = ["Felipe Rogério"]
+edition = "2021"
+
+[lib]
+name = "fr_notes_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png", "macos-private-api"] }
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-opener = "2"
+tauri-plugin-http = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+tokio-tungstenite = { version = "0.30", features = ["native-tls"] }
+futures-util = "0.3"
+cpal = "0.18"
+uuid = { version = "1", features = ["v4"] }
+url = "2"
+aec3 = "0.4"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+screencapturekit = "11"
+keyring = { version = "3", features = ["apple-native"] }
+objc2 = "0.6"
+block2 = "0.6"
+objc2-av-foundation = { version = "0.3", default-features = false, features = ["std", "AVCaptureDevice", "AVMediaFormat", "block2"] }
+objc2-core-audio = { version = "0.3", default-features = false, features = ["std", "AudioHardware", "block2", "dispatch2", "objc2", "objc2-core-audio-types", "objc2-foundation"] }
+objc2-core-audio-types = { version = "0.3", default-features = false, features = ["std", "objc2", "CoreAudioBaseTypes"] }
+objc2-core-foundation = { version = "0.3", default-features = false, features = ["std", "CFDictionary", "CFString", "CFBase"] }
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString", "NSArray", "NSDictionary", "NSValue", "NSUUID", "NSDate", "NSURL", "NSObject", "NSEnumerator", "NSError", "NSPredicate"] }
+objc2-event-kit = { version = "0.3", default-features = false, features = ["std", "block2", "objc2-app-kit", "EKCalendar", "EKCalendarItem", "EKEvent", "EKEventStore", "EKObject", "EKParticipant", "EKSource", "EKTypes"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "objc2-core-foundation", "NSRunningApplication", "NSColor", "NSColorSpace"] }
+libc = "0.2"
