@@ -2,7 +2,7 @@ import { Label } from "@workspace/ui/components/ui/label";
 import type { ReactNode } from "react";
 
 interface SettingsSectionProps {
-  title: string;
+  title?: string;
   description?: string;
   children: ReactNode;
 }
@@ -13,12 +13,14 @@ export const SettingsSection = ({
   children,
 }: SettingsSectionProps) => (
   <section className="bg-card flex flex-col gap-5 rounded-lg border p-6">
-    <div className="flex flex-col gap-1">
-      <h2 className="text-body text-heading font-semibold">{title}</h2>
-      {description && (
-        <p className="text-body-sm text-muted-foreground">{description}</p>
-      )}
-    </div>
+    {title && (
+      <div className="flex flex-col gap-1">
+        <h2 className="text-body text-heading font-semibold">{title}</h2>
+        {description && (
+          <p className="text-body-sm text-muted-foreground">{description}</p>
+        )}
+      </div>
+    )}
     {children}
   </section>
 );

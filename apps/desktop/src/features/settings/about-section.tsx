@@ -50,7 +50,7 @@ export const AboutSection = () => {
   const progress = useUpdateStore((state) => state.progress);
   const busy = status === "checking" || status === "downloading";
   return (
-    <SettingsSection title="Sobre">
+    <SettingsSection>
       <div className="flex items-center justify-between gap-4">
         <div className="flex flex-col gap-0.5">
           <span className="text-body-sm text-heading font-medium">

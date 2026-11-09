@@ -32,10 +32,7 @@ export const AiSection = () => {
   const { data: secrets } = useSecretsPresence();
   const isCompatible = settings.llmProvider === "openai-compatible";
   return (
-    <SettingsSection
-      title="IA das notas e do chat"
-      description="O modelo que junta suas anotações com a transcrição e responde perguntas. Você escolhe o provedor e o modelo."
-    >
+    <SettingsSection>
       <SettingsField label="Provedor" htmlFor="llm-provider">
         <SelectSetting
           id="llm-provider"

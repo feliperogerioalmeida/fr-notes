@@ -20,7 +20,7 @@ export const router = createHashRouter([
       { path: "notes/:noteId", element: <NotePage /> },
       { path: "folders/:folderId", element: <FolderPage /> },
       { path: "templates", element: <TemplatesPage /> },
-      { path: "settings", element: <SettingsPage /> },
+      { path: "settings/:section?", element: <SettingsPage /> },
     ],
   },
 ]);

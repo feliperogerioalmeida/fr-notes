@@ -63,10 +63,7 @@ export const TranscriptionSection = () => {
   const updateSettings = useUpdateSettings();
   const { data: secrets } = useSecretsPresence();
   return (
-    <SettingsSection
-      title="Transcrição"
-      description="Deepgram nova-3 em tempo real: um canal para o seu microfone e outro para o áudio do computador."
-    >
+    <SettingsSection>
       <SecretField
         secretKey={SECRET_KEYS.deepgram}
         label="Chave da Deepgram"

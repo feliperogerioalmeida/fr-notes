@@ -105,10 +105,7 @@ const PermissionRow = ({ definition, state }: PermissionRowProps) => {
 export const PermissionsSection = () => {
   const { data: permissions } = usePermissions();
   return (
-    <SettingsSection
-      title="Permissões do macOS"
-      description="Necessárias para ouvir você, os outros participantes e ler sua agenda."
-    >
+    <SettingsSection>
       {PERMISSIONS.map((definition) => (
         <PermissionRow
           key={definition.key}

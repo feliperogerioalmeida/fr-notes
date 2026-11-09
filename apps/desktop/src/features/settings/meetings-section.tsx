@@ -16,7 +16,7 @@ export const MeetingsSection = () => {
   const updateSettings = useUpdateSettings();
   return (
     <SettingsSection
-      title="Reuniões"
+      title="Detecção de reuniões"
       description="O FR Notes percebe quando Zoom, Meet, Teams, Slack ou FaceTime começam a usar o microfone."
     >
       <SettingsField

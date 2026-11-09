@@ -145,10 +145,7 @@ export const IntegrationsSection = () => {
     setIsDialogOpen(true);
   };
   return (
-    <SettingsSection
-      title="Integrações"
-      description="Envie cada nota para outros sistemas (FR Hub, n8n, Make, seu backend) por webhook assinado, com a API key que o destino exigir."
-    >
+    <SettingsSection>
       {webhooks.map((webhook) => (
         <WebhookRow
           key={webhook.id}
