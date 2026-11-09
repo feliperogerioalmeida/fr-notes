@@ -14,7 +14,7 @@ else
 fi
 
 export PATH="$HOME/.cargo/bin:$PATH"
-pnpm tauri build --debug --bundles app
+pnpm tauri build --debug --bundles app --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
 if [ -z "${APPLE_SIGNING_IDENTITY:-}" ]; then
   codesign --force --deep --sign - \
