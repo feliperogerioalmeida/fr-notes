@@ -94,4 +94,26 @@ describe("storage", () => {
     expect(webhook?.lastStatus).toBe(200);
     expect(webhook?.headerName).toBe("Authorization");
   });
+
+  it("persists speaker indexes and speaker names", async () => {
+    const storage = await initializeStorage(await createMemoryClient());
+    const note = await storage.notes.createNote();
+    await storage.transcript.appendSegment({
+      noteId: note.id,
+      source: "system",
+      text: "Pode ser",
+      startMs: 1,
+      endMs: 2,
+      speaker: 1,
+    });
+    await storage.notes.updateNote({
+      id: note.id,
+      patch: { speakerNames: { "1": "Marina" } },
+    });
+
+    const [segment] = await storage.transcript.listSegments(note.id);
+    const reloaded = await storage.notes.findNote(note.id);
+    expect(segment?.speaker).toBe(1);
+    expect(reloaded?.speakerNames).toEqual({ "1": "Marina" });
+  });
 });

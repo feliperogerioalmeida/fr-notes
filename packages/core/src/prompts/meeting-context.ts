@@ -63,7 +63,7 @@ export const buildMeetingContext = ({
     wrap(
       "transcript",
       segments.length > 0
-        ? formatTranscriptForPrompt(segments)
+        ? formatTranscriptForPrompt(segments, note.speakerNames)
         : EMPTY_TRANSCRIPT,
     ),
   ].join("\n\n");

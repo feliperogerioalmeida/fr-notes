@@ -19,6 +19,7 @@ pub struct DeepgramConfig {
     pub language: String,
     pub keyterms: Vec<String>,
     pub sample_rate: u32,
+    pub diarize: bool,
 }
 
 #[derive(Debug, PartialEq)]
@@ -27,6 +28,7 @@ pub struct DeepgramResult {
     pub is_final: bool,
     pub start_seconds: f64,
     pub duration_seconds: f64,
+    pub speaker: Option<u32>,
 }
 
 #[derive(Deserialize)]
@@ -50,6 +52,24 @@ struct ResultsChannel {
 #[derive(Deserialize)]
 struct ResultsAlternative {
     transcript: String,
+    #[serde(default)]
+    words: Vec<ResultsWord>,
+}
+
+#[derive(Deserialize)]
+struct ResultsWord {
+    speaker: Option<u32>,
+}
+
+fn dominant_speaker(words: &[ResultsWord]) -> Option<u32> {
+    let mut counts: Vec<(u32, usize)> = Vec::new();
+    for speaker in words.iter().filter_map(|word| word.speaker) {
+        match counts.iter_mut().find(|(id, _)| *id == speaker) {
+            Some((_, count)) => *count += 1,
+            None => counts.push((speaker, 1)),
+        }
+    }
+    counts.into_iter().max_by_key(|(_, count)| *count).map(|(id, _)| id)
 }
 
 pub fn build_listen_url(config: &DeepgramConfig) -> Result<Url, String> {
@@ -66,6 +86,9 @@ pub fn build_listen_url(config: &DeepgramConfig) -> Result<Url, String> {
             .append_pair("punctuate", "true")
             .append_pair("interim_results", "true")
             .append_pair("endpointing", ENDPOINTING_MS);
+        if config.diarize {
+            query.append_pair("diarize", "true");
+        }
         for keyterm in config.keyterms.iter().filter(|term| !term.trim().is_empty()) {
             query.append_pair("keyterm", keyterm.trim());
         }
@@ -93,12 +116,13 @@ pub fn parse_result(text: &str) -> Option<DeepgramResult> {
     if message.kind != "Results" {
         return None;
     }
-    let transcript = message.channel?.alternatives.into_iter().next()?.transcript;
-    if transcript.trim().is_empty() {
+    let alternative = message.channel?.alternatives.into_iter().next()?;
+    if alternative.transcript.trim().is_empty() {
         return None;
     }
     Some(DeepgramResult {
-        transcript,
+        speaker: dominant_speaker(&alternative.words),
+        transcript: alternative.transcript,
         is_final: message.is_final,
         start_seconds: message.start,
         duration_seconds: message.duration,
@@ -115,6 +139,7 @@ mod tests {
             language: "pt-BR".into(),
             keyterms: vec!["FR Hub".into(), " ".into()],
             sample_rate: 48_000,
+            diarize: true,
         }
     }
 
@@ -126,6 +151,7 @@ mod tests {
         assert!(query.contains("language=pt-BR"));
         assert!(query.contains("sample_rate=48000"));
         assert!(query.contains("keyterm=FR+Hub"));
+        assert!(query.contains("diarize=true"));
         assert_eq!(query.matches("keyterm=").count(), 1);
     }
 
@@ -143,5 +169,17 @@ mod tests {
         assert!(parse_result(r#"{"type":"Metadata"}"#).is_none());
         let empty = r#"{"type":"Results","channel":{"alternatives":[{"transcript":"  "}]}}"#;
         assert!(parse_result(empty).is_none());
+    }
+
+    #[test]
+    fn picks_the_dominant_speaker_from_words() {
+        let text = r#"{"type":"Results","is_final":true,"start":0.0,"duration":1.0,"channel":{"alternatives":[{"transcript":"oi tudo bem","words":[{"speaker":1},{"speaker":0},{"speaker":1}]}]}}"#;
+        assert_eq!(parse_result(text).unwrap().speaker, Some(1));
+    }
+
+    #[test]
+    fn has_no_speaker_without_diarization() {
+        let text = r#"{"type":"Results","is_final":true,"start":0.0,"duration":1.0,"channel":{"alternatives":[{"transcript":"oi","words":[{"word":"oi"}]}]}}"#;
+        assert_eq!(parse_result(text).unwrap().speaker, None);
     }
 }

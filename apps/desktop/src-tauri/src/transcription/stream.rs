@@ -233,6 +233,7 @@ fn build_segment_payload(
     TranscriptSegmentPayload {
         note_id: note_id.to_string(),
         source: source.as_str(),
+        speaker: result.speaker,
         text: result.transcript,
         is_final: result.is_final,
         start_ms,

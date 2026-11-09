@@ -12,6 +12,7 @@ interface NoteRow {
   folder_id: string | null;
   calendar_event_id: string | null;
   participants_json: string;
+  speaker_names_json: string;
   status: string;
   recording_started_at: string | null;
   recording_ended_at: string | null;
@@ -28,21 +29,24 @@ const PATCH_COLUMNS: Record<keyof NotePatch, keyof NoteRow> = {
   folderId: "folder_id",
   calendarEventId: "calendar_event_id",
   participants: "participants_json",
+  speakerNames: "speaker_names_json",
   status: "status",
   recordingStartedAt: "recording_started_at",
   recordingEndedAt: "recording_ended_at",
 };
 
-const parseParticipants = (raw: string): unknown => {
+const parseJson = (raw: string | null, fallback: unknown): unknown => {
   try {
-    return JSON.parse(raw);
+    return raw ? JSON.parse(raw) : fallback;
   } catch {
-    return [];
+    return fallback;
   }
 };
 
 const toSqlValue = (value: NotePatch[keyof NotePatch]): SqlValue =>
-  Array.isArray(value) ? JSON.stringify(value) : (value ?? null);
+  typeof value === "object" && value !== null
+    ? JSON.stringify(value)
+    : (value ?? null);
 
 const toNote = (row: NoteRow): Note =>
   NoteSchema.parse({
@@ -53,7 +57,8 @@ const toNote = (row: NoteRow): Note =>
     templateId: row.template_id,
     folderId: row.folder_id,
     calendarEventId: row.calendar_event_id,
-    participants: parseParticipants(row.participants_json),
+    participants: parseJson(row.participants_json, []),
+    speakerNames: parseJson(row.speaker_names_json, {}),
     status: row.status,
     recordingStartedAt: row.recording_started_at,
     recordingEndedAt: row.recording_ended_at,

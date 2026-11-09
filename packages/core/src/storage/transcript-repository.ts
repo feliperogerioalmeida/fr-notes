@@ -13,6 +13,7 @@ interface SegmentRow {
   text: string;
   start_ms: number;
   end_ms: number;
+  speaker: number | null;
   created_at: string;
 }
 
@@ -24,6 +25,7 @@ const toSegment = (row: SegmentRow): TranscriptSegment =>
     text: row.text,
     startMs: Number(row.start_ms),
     endMs: Number(row.end_ms),
+    speaker: row.speaker === null ? null : Number(row.speaker),
     createdAt: row.created_at,
   });
 
@@ -33,6 +35,7 @@ export interface AppendSegmentInput {
   text: string;
   startMs: number;
   endMs: number;
+  speaker?: number | null;
 }
 
 export const createTranscriptRepository = (db: SqlClient) => {
@@ -50,13 +53,16 @@ export const createTranscriptRepository = (db: SqlClient) => {
     const segment: TranscriptSegment = {
       id: createId(),
       createdAt: nowIso(),
-      ...input,
+      noteId: input.noteId,
+      source: input.source,
+      text: input.text,
       startMs: Math.round(input.startMs),
       endMs: Math.round(input.endMs),
+      speaker: input.speaker ?? null,
     };
     await db.execute(
-      `INSERT INTO transcript_segments (id, note_id, source, text, start_ms, end_ms, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO transcript_segments (id, note_id, source, text, start_ms, end_ms, speaker, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         segment.id,
         segment.noteId,
@@ -64,6 +70,7 @@ export const createTranscriptRepository = (db: SqlClient) => {
         segment.text,
         segment.startMs,
         segment.endMs,
+        segment.speaker,
         segment.createdAt,
         segment.createdAt,
       ],

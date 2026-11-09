@@ -64,7 +64,7 @@ O menu **⋯ → Enviar para integrações** de cada nota reenvia o evento corre
 }
 ```
 
-`speaker` é `Eu` (seu microfone) ou `Eles` (áudio do computador). Campos sem valor chegam como `null`.
+`speaker` é `Eu` (seu microfone), o nome que você atribuiu à voz, `Pessoa N` (voz separada automaticamente e ainda sem nome) ou `Eles` (áudio do computador sem separação). Campos sem valor chegam como `null`.
 
 ## Verificando a assinatura
 

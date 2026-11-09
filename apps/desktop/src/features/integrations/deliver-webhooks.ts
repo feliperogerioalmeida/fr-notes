@@ -156,6 +156,7 @@ const SAMPLE_NOTE: Note = {
   folderId: null,
   calendarEventId: null,
   participants: [{ name: "Participante de exemplo", email: null }],
+  speakerNames: {},
   status: "done",
   recordingStartedAt: null,
   recordingEndedAt: null,

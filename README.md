@@ -31,17 +31,18 @@ O FR Notes é um app desktop para quem passa o dia em reuniões. Durante a chama
 
 ## Recursos
 
-|                                  |                                                                                                                                           |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| 🎙️ **Transcrição em tempo real** | Dois canais separados — “Eu” e “Eles” — com Deepgram nova-3, cancelamento de eco para usar sem fone e vocabulário personalizado.          |
-| ✨ **Notas geradas pela IA**     | Suas anotações viram a espinha das notas finais, completadas com o que foi dito. O título é sugerido automaticamente.                     |
-| 🧩 **Templates**                 | Reunião geral, Cliente/Descoberta, 1:1, Daily, Kickoff e Entrevista — ou crie os seus.                                                    |
-| 💬 **Pergunte à reunião**        | Chat sobre cada nota: “quais foram os próximos passos?”, “escreva o follow-up”.                                                           |
-| 📅 **Calendário da Apple**       | Próximas reuniões e agenda com todas as contas do app Calendário (iCloud, Google, Exchange…). Notas já nascem com título e participantes. |
-| 🔔 **Detecção de reunião**       | Percebe quando Zoom, Meet, Teams, Slack ou FaceTime começam a usar o microfone e oferece gravar — ou grava sozinho.                       |
-| 🟠 **Indicador flutuante**       | Um mini símbolo FR no canto da tela mostra que está ouvindo, com tempo e botão de parar.                                                  |
-| 🔄 **Atualização automática**    | O app se atualiza sozinho, sem precisar baixar o instalador de novo.                                                                      |
-| 🔗 **Integrações**               | Envia cada nota para outros sistemas (FR Hub, n8n, Make, seu backend) por webhook assinado, com a API key que o destino exigir.           |
+|                                  |                                                                                                                                                                      |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🎙️ **Transcrição em tempo real** | Seu microfone (“Eu”) e o áudio do computador em canais separados, com Deepgram nova-3, cancelamento de eco para usar sem fone e vocabulário personalizado.           |
+| 🗣️ **Quem disse o quê**          | As vozes dos outros participantes são separadas automaticamente (Pessoa 1, Pessoa 2…) e você dá nome a cada uma com um clique, a partir dos participantes do evento. |
+| ✨ **Notas geradas pela IA**     | Suas anotações viram a espinha das notas finais, completadas com o que foi dito. O título é sugerido automaticamente.                                                |
+| 🧩 **Templates**                 | Reunião geral, Cliente/Descoberta, 1:1, Daily, Kickoff e Entrevista — ou crie os seus.                                                                               |
+| 💬 **Pergunte à reunião**        | Chat sobre cada nota: “quais foram os próximos passos?”, “escreva o follow-up”.                                                                                      |
+| 📅 **Calendário da Apple**       | Próximas reuniões e agenda com todas as contas do app Calendário (iCloud, Google, Exchange…). Notas já nascem com título e participantes.                            |
+| 🔔 **Detecção de reunião**       | Percebe quando Zoom, Meet, Teams, Slack ou FaceTime começam a usar o microfone e oferece gravar — ou grava sozinho.                                                  |
+| 🟠 **Indicador flutuante**       | Um mini símbolo FR no canto da tela mostra que está ouvindo, com tempo e botão de parar.                                                                             |
+| 🔄 **Atualização automática**    | O app se atualiza sozinho, sem precisar baixar o instalador de novo.                                                                                                 |
+| 🔗 **Integrações**               | Envia cada nota para outros sistemas (FR Hub, n8n, Make, seu backend) por webhook assinado, com a API key que o destino exigir.                                      |
 
 <p align="center">
   <img src="docs/images/home.png" alt="Tela inicial com notas, próximas reuniões e resumo da semana" width="49%" />

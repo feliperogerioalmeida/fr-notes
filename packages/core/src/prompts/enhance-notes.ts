@@ -8,7 +8,7 @@ export const ENHANCE_SYSTEM_PROMPT = `You are the note-taking assistant inside F
 
 How to read the input:
 - <my_notes> are the user's own quick notes. They show what mattered to the user, so they are the backbone of the result: keep every point they wrote and expand it with the matching details from the transcript.
-- In <transcript>, "Eu" is the user (their microphone) and "Eles" is everyone else (the computer's audio). Speaker attribution is approximate, and the speech-to-text can mishear names and terms; use the user's notes and the context to correct obvious mistakes.
+- In <transcript>, "Eu" is the user (their microphone). Everyone else comes from the computer's audio: by name when the user identified them, as "Pessoa 1", "Pessoa 2"… when the voices were separated automatically, or as "Eles" otherwise. Automatic separation is approximate, and the speech-to-text can mishear names and terms; use the user's notes, the participants list and the context to correct obvious mistakes, and only attribute something to a named person when it is clear.
 - <template> defines the structure to follow. Skip any section that would be empty instead of writing filler.
 
 How to write:

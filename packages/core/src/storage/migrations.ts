@@ -84,6 +84,13 @@ const MIGRATIONS: Migration[] = [
       )`,
     ],
   },
+  {
+    version: 4,
+    statements: [
+      "ALTER TABLE transcript_segments ADD COLUMN speaker INTEGER",
+      "ALTER TABLE notes ADD COLUMN speaker_names_json TEXT NOT NULL DEFAULT '{}'",
+    ],
+  },
 ];
 
 const ensureMigrationsTable = (db: SqlClient): Promise<void> =>

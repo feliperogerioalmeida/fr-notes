@@ -18,6 +18,7 @@ const NOTE: Note = {
   folderId: null,
   calendarEventId: "event-1",
   participants: [{ name: "Marina", email: "marina@cliente.com" }],
+  speakerNames: { "0": "Marina" },
   status: "done",
   recordingStartedAt: "2026-11-09T13:00:00.000Z",
   recordingEndedAt: "2026-11-09T13:30:00.000Z",
@@ -72,6 +73,7 @@ describe("buildWebhookPayload", () => {
           text: "O prazo é março.",
           startMs: Date.parse("2026-11-09T13:01:00.000Z"),
           endMs: Date.parse("2026-11-09T13:01:04.000Z"),
+          speaker: 0,
           createdAt: NOTE.createdAt,
         },
       ],
@@ -89,7 +91,7 @@ describe("buildWebhookPayload", () => {
       },
       transcript: [
         {
-          speaker: "Eles",
+          speaker: "Marina",
           text: "O prazo é março.",
           startedAt: "2026-11-09T13:01:00.000Z",
         },

@@ -40,6 +40,7 @@ pub struct TranscriptSegmentPayload {
     pub start_ms: u64,
     pub end_ms: u64,
     pub segment_key: String,
+    pub speaker: Option<u32>,
 }
 
 #[derive(Clone, Serialize)]

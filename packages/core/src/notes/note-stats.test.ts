@@ -14,6 +14,7 @@ const buildNote = (overrides: Partial<Note>): Note => ({
   folderId: null,
   calendarEventId: null,
   participants: [],
+  speakerNames: {},
   status: "done",
   recordingStartedAt: null,
   recordingEndedAt: null,

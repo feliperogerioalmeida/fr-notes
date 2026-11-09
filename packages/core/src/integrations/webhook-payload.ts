@@ -2,7 +2,8 @@ import type { Folder } from "../domain/folder.js";
 import type { Note } from "../domain/note.js";
 import type { Template } from "../domain/template.js";
 import {
-  SPEAKER_LABELS,
+  describeSpeaker,
+  type SpeakerNames,
   type TranscriptSegment,
 } from "../domain/transcript.js";
 import type { WebhookEvent } from "../domain/webhook.js";
@@ -21,9 +22,16 @@ interface BuildWebhookPayloadInput {
 
 const toIso = (ms: number) => new Date(ms).toISOString();
 
-const describeTranscript = (segments: TranscriptSegment[]) =>
+const describeTranscript = (
+  segments: TranscriptSegment[],
+  speakerNames: SpeakerNames,
+) =>
   segments.map((segment) => ({
-    speaker: SPEAKER_LABELS[segment.source],
+    speaker: describeSpeaker({
+      source: segment.source,
+      speaker: segment.speaker,
+      speakerNames,
+    }),
     source: segment.source,
     text: segment.text,
     startedAt: toIso(segment.startMs),
@@ -62,7 +70,7 @@ export const buildWebhookPayload = ({
   sentAt: nowIso(),
   source: { app: "FR Notes", version: appVersion },
   note: describeNote(context),
-  transcript: describeTranscript(segments),
+  transcript: describeTranscript(segments, context.note.speakerNames),
 });
 
 export type WebhookPayload = ReturnType<typeof buildWebhookPayload>;

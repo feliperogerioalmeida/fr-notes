@@ -16,6 +16,7 @@ const buildSegment = (
   source: "microphone",
   text: "texto",
   endMs: overrides.startMs + 1000,
+  speaker: null,
   createdAt: new Date(BASE_MS).toISOString(),
   ...overrides,
 });
@@ -63,5 +64,29 @@ describe("formatTranscriptForPrompt", () => {
     ]);
 
     expect(output).toBe("[00:00] Eu: Vamos começar.\n[01:05] Eles: Pode ser.");
+  });
+});
+
+describe("speaker diarization", () => {
+  it("keeps different people apart and uses assigned names", () => {
+    const turns = groupIntoTurns(
+      [
+        buildSegment({
+          startMs: BASE_MS,
+          source: "system",
+          speaker: 0,
+          text: "Oi",
+        }),
+        buildSegment({
+          startMs: BASE_MS + 1000,
+          source: "system",
+          speaker: 1,
+          text: "Olá",
+        }),
+      ],
+      { "0": "Marina" },
+    );
+
+    expect(turns.map((turn) => turn.speaker)).toEqual(["Marina", "Pessoa 2"]);
   });
 });

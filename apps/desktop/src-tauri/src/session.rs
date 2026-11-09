@@ -138,6 +138,7 @@ fn start_session(app: &AppHandle, args: StartRecordingArgs, api_key: String) -> 
         language: args.language.clone(),
         keyterms: args.keyterms.clone(),
         sample_rate: 0,
+        diarize: false,
     };
     let (microphone, microphone_source) = start_microphone_capture(app)?;
     let (system, system_source) = match start_optional_system_capture(app, &args) {
@@ -176,6 +177,7 @@ fn spawn_stream(
         source,
         config: DeepgramConfig {
             sample_rate: routed.sample_rate,
+            diarize: matches!(source, AudioSource::System),
             ..base_config.clone()
         },
         level,

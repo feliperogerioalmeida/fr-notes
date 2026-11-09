@@ -59,6 +59,10 @@ const seedDemoMeeting = async () => {
   const note = await storage.notes.createNote({
     title: "Descoberta — Pedidos da Marina",
     templateId: "builtin-client-discovery",
+    participants: [
+      { name: "Marina Souza", email: "marina@cliente.com" },
+      { name: "João Lima", email: "joao@cliente.com" },
+    ],
   });
   const startedAt = Date.now() - 2 * MINUTE_MS * DEMO_TRANSCRIPT.length;
   await storage.notes.updateNote({
@@ -78,6 +82,7 @@ const seedDemoMeeting = async () => {
       text,
       startMs,
       endMs: startMs + SEGMENT_GAP_MS - 1000,
+      speaker: source === "system" ? Math.floor(index / 2) % 2 : null,
     });
   }
 };
