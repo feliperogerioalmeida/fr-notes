@@ -1,6 +1,7 @@
 import { ScrollArea } from "@workspace/ui/components/ui/scroll-area";
 
 import { PageHeader } from "@/components/page-header.js";
+import { IntegrationsSection } from "@/features/integrations/integrations-section.js";
 import { AboutSection } from "@/features/settings/about-section.js";
 import { AiSection } from "@/features/settings/ai-section.js";
 import { CalendarsSection } from "@/features/settings/calendars-section.js";
@@ -22,6 +23,7 @@ export const SettingsPage = () => (
         <MeetingsSection />
         <CalendarsSection />
         <AiSection />
+        <IntegrationsSection />
         <PermissionsSection />
         <ProfileSection />
         <PreferencesSection />

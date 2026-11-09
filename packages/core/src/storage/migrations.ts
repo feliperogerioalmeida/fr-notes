@@ -68,6 +68,22 @@ const MIGRATIONS: Migration[] = [
       "CREATE INDEX IF NOT EXISTS idx_notes_calendar_event ON notes (calendar_event_id)",
     ],
   },
+  {
+    version: 3,
+    statements: [
+      `CREATE TABLE IF NOT EXISTS webhooks (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        url TEXT NOT NULL,
+        events_json TEXT NOT NULL DEFAULT '[]',
+        header_name TEXT,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        last_delivery_at TEXT,
+        last_status INTEGER,
+        last_error TEXT,${SYNCED_COLUMNS}
+      )`,
+    ],
+  },
 ];
 
 const ensureMigrationsTable = (db: SqlClient): Promise<void> =>

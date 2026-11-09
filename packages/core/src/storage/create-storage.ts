@@ -6,6 +6,7 @@ import { createSettingsRepository } from "./settings-repository.js";
 import type { SqlClient } from "./sql-client.js";
 import { createTemplatesRepository } from "./templates-repository.js";
 import { createTranscriptRepository } from "./transcript-repository.js";
+import { createWebhooksRepository } from "./webhooks-repository.js";
 
 export const createStorage = (db: SqlClient) => ({
   notes: createNotesRepository(db),
@@ -14,6 +15,7 @@ export const createStorage = (db: SqlClient) => ({
   templates: createTemplatesRepository(db),
   chat: createChatRepository(db),
   settings: createSettingsRepository(db),
+  webhooks: createWebhooksRepository(db),
 });
 
 export type Storage = ReturnType<typeof createStorage>;

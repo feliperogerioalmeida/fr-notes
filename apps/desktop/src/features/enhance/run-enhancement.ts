@@ -6,6 +6,7 @@ import {
   type Storage,
 } from "@workspace/core";
 
+import { dispatchNoteEvent } from "@/features/integrations/deliver-webhooks.js";
 import { getStorage } from "@/lib/database.js";
 import { streamCompletion } from "@/lib/llm.js";
 import { queryClient } from "@/lib/query-client.js";
@@ -83,6 +84,7 @@ export const runEnhancement = async ({
         title: pickTitle(note, enhanced.title),
       },
     });
+    void dispatchNoteEvent({ noteId, event: "note.enhanced" });
   } finally {
     store.finish();
     await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.note(noteId) });

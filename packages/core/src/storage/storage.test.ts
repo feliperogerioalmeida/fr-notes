@@ -72,4 +72,26 @@ describe("storage", () => {
       { name: null, email: "joao@cliente.com" },
     ]);
   });
+
+  it("stores webhooks and filters them by event", async () => {
+    const storage = await initializeStorage(await createMemoryClient());
+    const id = await storage.webhooks.createWebhook({
+      name: "FR Hub",
+      url: "https://hub.example.com/hooks/notes",
+      events: ["note.enhanced"],
+      headerName: "Authorization",
+      enabled: true,
+    });
+    await storage.webhooks.recordDelivery({
+      id,
+      result: { status: 200, error: null },
+    });
+
+    expect(
+      await storage.webhooks.listWebhooksFor("note.completed"),
+    ).toHaveLength(0);
+    const [webhook] = await storage.webhooks.listWebhooksFor("note.enhanced");
+    expect(webhook?.lastStatus).toBe(200);
+    expect(webhook?.headerName).toBe("Authorization");
+  });
 });

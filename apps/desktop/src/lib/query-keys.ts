@@ -15,4 +15,5 @@ export const QUERY_KEYS = {
   calendarEventsRange: (daysBack: number, daysAhead: number) =>
     ["calendar-events", daysBack, daysAhead] as const,
   calendars: ["calendars"] as const,
+  webhooks: ["webhooks"] as const,
 };

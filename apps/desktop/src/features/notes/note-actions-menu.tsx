@@ -10,11 +10,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/ui/dropdown-menu";
-import { Copy, Ellipsis, FolderInput, Trash2 } from "lucide-react";
+import { Copy, Ellipsis, FolderInput, Send, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { useFoldersQuery } from "@/features/folders/use-folders.js";
+import { dispatchCurrentState } from "@/features/integrations/deliver-webhooks.js";
 
 import { useDeleteNote, useUpdateNote } from "./use-notes.js";
 
@@ -58,6 +59,18 @@ export const NoteActionsMenu = ({ note }: { note: Note }) => {
     await navigator.clipboard.writeText(buildMarkdown(note));
     toast.success("Nota copiada em Markdown");
   };
+  const sendToIntegrations = async () => {
+    const results = await dispatchCurrentState(note);
+    if (results.length === 0) {
+      toast.message("Nenhuma integração ativa", {
+        description: "Cadastre uma em Configurações → Integrações.",
+      });
+      return;
+    }
+    const failed = results.filter((result) => result.error).length;
+    if (failed > 0) toast.error(`${failed} envio(s) falharam`);
+    else toast.success("Nota enviada para as integrações");
+  };
   const remove = async () => {
     await deleteNote.mutateAsync(note.id);
     navigate("/");
@@ -73,6 +86,10 @@ export const NoteActionsMenu = ({ note }: { note: Note }) => {
         <DropdownMenuItem onSelect={copyMarkdown}>
           <Copy />
           Copiar como Markdown
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void sendToIntegrations()}>
+          <Send />
+          Enviar para integrações
         </DropdownMenuItem>
         <FolderSubmenu note={note} />
         <DropdownMenuSeparator />

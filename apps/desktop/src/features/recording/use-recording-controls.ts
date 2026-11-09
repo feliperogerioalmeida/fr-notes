@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 
 import { runEnhancement } from "@/features/enhance/run-enhancement.js";
+import { dispatchNoteEvent } from "@/features/integrations/deliver-webhooks.js";
 import { getStorage } from "@/lib/database.js";
 import { describeError } from "@/lib/errors.js";
 import { setNubVisible, startRecording, stopRecording } from "@/lib/native.js";
@@ -73,6 +74,7 @@ export const endRecording = async (): Promise<void> => {
       id: noteId,
       patch: { status: "done", recordingEndedAt: nowIso() },
     });
+    void dispatchNoteEvent({ noteId, event: "note.completed" });
   } catch (error) {
     toast.error(describeError(error));
   } finally {

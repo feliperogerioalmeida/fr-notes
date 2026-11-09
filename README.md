@@ -10,7 +10,7 @@
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-0F0F10)](LICENSE)
 ![macOS](https://img.shields.io/badge/macOS-Apple%20Silicon-0F0F10?logo=apple)
 
-[Baixar](#instalação) · [Configurar](#configuração-inicial) · [Como usar](#como-usar) · [Privacidade](#privacidade-e-dados) · [Desenvolvimento](#desenvolvimento)
+[Baixar](#instalação) · [Configurar](#configuração-inicial) · [Como usar](#como-usar) · [Integrações](#integrações) · [Privacidade](#privacidade-e-dados) · [Desenvolvimento](#desenvolvimento)
 
 </div>
 
@@ -31,16 +31,17 @@ O FR Notes é um app desktop para quem passa o dia em reuniões. Durante a chama
 
 ## Recursos
 
-| | |
-| --- | --- |
-| 🎙️ **Transcrição em tempo real** | Dois canais separados — “Eu” e “Eles” — com Deepgram nova-3, cancelamento de eco para usar sem fone e vocabulário personalizado. |
-| ✨ **Notas geradas pela IA** | Suas anotações viram a espinha das notas finais, completadas com o que foi dito. O título é sugerido automaticamente. |
-| 🧩 **Templates** | Reunião geral, Cliente/Descoberta, 1:1, Daily, Kickoff e Entrevista — ou crie os seus. |
-| 💬 **Pergunte à reunião** | Chat sobre cada nota: “quais foram os próximos passos?”, “escreva o follow-up”. |
-| 📅 **Calendário da Apple** | Próximas reuniões e agenda com todas as contas do app Calendário (iCloud, Google, Exchange…). Notas já nascem com título e participantes. |
-| 🔔 **Detecção de reunião** | Percebe quando Zoom, Meet, Teams, Slack ou FaceTime começam a usar o microfone e oferece gravar — ou grava sozinho. |
-| 🟠 **Indicador flutuante** | Um mini símbolo FR no canto da tela mostra que está ouvindo, com tempo e botão de parar. |
-| 🔄 **Atualização automática** | O app se atualiza sozinho, sem precisar baixar o instalador de novo. |
+|                                  |                                                                                                                                           |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 🎙️ **Transcrição em tempo real** | Dois canais separados — “Eu” e “Eles” — com Deepgram nova-3, cancelamento de eco para usar sem fone e vocabulário personalizado.          |
+| ✨ **Notas geradas pela IA**     | Suas anotações viram a espinha das notas finais, completadas com o que foi dito. O título é sugerido automaticamente.                     |
+| 🧩 **Templates**                 | Reunião geral, Cliente/Descoberta, 1:1, Daily, Kickoff e Entrevista — ou crie os seus.                                                    |
+| 💬 **Pergunte à reunião**        | Chat sobre cada nota: “quais foram os próximos passos?”, “escreva o follow-up”.                                                           |
+| 📅 **Calendário da Apple**       | Próximas reuniões e agenda com todas as contas do app Calendário (iCloud, Google, Exchange…). Notas já nascem com título e participantes. |
+| 🔔 **Detecção de reunião**       | Percebe quando Zoom, Meet, Teams, Slack ou FaceTime começam a usar o microfone e oferece gravar — ou grava sozinho.                       |
+| 🟠 **Indicador flutuante**       | Um mini símbolo FR no canto da tela mostra que está ouvindo, com tempo e botão de parar.                                                  |
+| 🔄 **Atualização automática**    | O app se atualiza sozinho, sem precisar baixar o instalador de novo.                                                                      |
+| 🔗 **Integrações**               | Envia cada nota para outros sistemas (FR Hub, n8n, Make, seu backend) por webhook assinado, com a API key que o destino exigir.           |
 
 <p align="center">
   <img src="docs/images/home.png" alt="Tela inicial com notas, próximas reuniões e resumo da semana" width="49%" />
@@ -76,11 +77,11 @@ Abra **Configurações** na barra lateral.
 
 Em **Permissões do macOS**, clique em **Permitir** em cada item:
 
-| Permissão | Para quê |
-| --- | --- |
-| Microfone | Transcrever o que você fala (“Eu”). |
-| Áudio do sistema | Transcrever os outros participantes (“Eles”). |
-| Calendário | Mostrar as próximas reuniões e preencher título e participantes. |
+| Permissão        | Para quê                                                         |
+| ---------------- | ---------------------------------------------------------------- |
+| Microfone        | Transcrever o que você fala (“Eu”).                              |
+| Áudio do sistema | Transcrever os outros participantes (“Eles”).                    |
+| Calendário       | Mostrar as próximas reuniões e preencher título e participantes. |
 
 ### 2. Transcrição (Deepgram)
 
@@ -92,7 +93,7 @@ Em **Permissões do macOS**, clique em **Permitir** em cada item:
 
 Escolha um provedor e informe o modelo:
 
-- **Vercel AI Gateway:** crie uma chave em *Vercel → AI Gateway → API Keys* e use o ID do modelo no formato `provedor/modelo` ([catálogo](https://vercel.com/ai-gateway/models)).
+- **Vercel AI Gateway:** crie uma chave em _Vercel → AI Gateway → API Keys_ e use o ID do modelo no formato `provedor/modelo` ([catálogo](https://vercel.com/ai-gateway/models)).
 - **Compatível com OpenAI:** informe a URL base e o nome do modelo. Exemplos:
   - OpenRouter: `https://openrouter.ai/api/v1`
   - Ollama local: `http://localhost:11434/v1` (sem chave)
@@ -113,6 +114,16 @@ Atalhos úteis:
 - O ícone do FR Notes na barra de menus tem **Nova nota**, que já começa a gravar.
 - Em **Configurações → Reuniões** você escolhe se o app deve perguntar, gravar sozinho ou ignorar reuniões detectadas, e se deve parar ao fim da chamada.
 
+## Integrações
+
+Em **Configurações → Integrações** você cadastra destinos para as suas notas. A cada gravação finalizada (`note.completed`) e a cada nota gerada pela IA (`note.enhanced`), o FR Notes faz um `POST` com a nota completa em JSON — título, suas anotações, notas da IA, participantes, pasta e transcrição.
+
+- Autenticação no destino com `Authorization: Bearer <chave>`, `X-API-Key` ou outro cabeçalho, com a chave guardada no Keychain.
+- Assinatura HMAC-SHA256 em cada envio para o destino confirmar que veio do seu FR Notes.
+- Novas tentativas automáticas, botão **Testar** e status da última entrega.
+
+Formato completo, exemplos de verificação em Node e Python e boas práticas em **[docs/webhooks.md](docs/webhooks.md)**.
+
 ## Atualizações
 
 O FR Notes procura novas versões ao abrir e a cada 6 horas. Quando encontra, baixa e instala em segundo plano — nunca durante uma gravação — e avisa para reiniciar. Você também pode procurar manualmente em **Configurações → Sobre**.
@@ -121,12 +132,13 @@ Cada atualização é assinada; o app só instala pacotes cuja assinatura confer
 
 ## Privacidade e dados
 
-| O quê | Onde fica / para onde vai |
-| --- | --- |
-| Notas, transcrições, pastas, templates | Banco SQLite local em `~/Library/Application Support/dev.feliperogerio.notes/` |
-| Chaves de API | Keychain do macOS |
-| Áudio da reunião | Enviado em tempo real à Deepgram para transcrição; não é salvo pelo app |
+| O quê                                     | Onde fica / para onde vai                                                                 |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Notas, transcrições, pastas, templates    | Banco SQLite local em `~/Library/Application Support/dev.feliperogerio.notes/`            |
+| Chaves de API                             | Keychain do macOS                                                                         |
+| Áudio da reunião                          | Enviado em tempo real à Deepgram para transcrição; não é salvo pelo app                   |
 | Texto para gerar notas e responder o chat | Enviado ao provedor de IA que você configurou, só quando você gera notas ou pergunta algo |
+| Notas enviadas por integração             | Só para as URLs que você cadastrar em Integrações                                         |
 
 O FR Notes não tem servidor próprio nem coleta de uso.
 
@@ -180,7 +192,8 @@ O script atualiza a versão, gera o `.dmg` e o pacote de atualização assinado 
 - [x] Notas com IA, templates e chat
 - [x] Calendário da Apple e detecção de reunião
 - [x] Instalador `.dmg` com atualização automática
-- [ ] Integrações via webhooks (enviar notas para outros sistemas)
+- [x] Integrações via webhooks (enviar notas para outros sistemas)
+- [ ] API para outros sistemas consultarem as notas com API key
 - [ ] App para iPhone, para reuniões presenciais
 - [ ] Sincronização com o ambiente FR
 
