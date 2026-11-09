@@ -86,8 +86,15 @@ if [ "$PUBLISH" != "true" ]; then
   exit 0
 fi
 
+git add src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock package.json
+if ! git diff --cached --quiet; then
+  git commit -q -m "chore(desktop): release v$VERSION"
+fi
+git push -q origin HEAD
+
 gh release create "v$VERSION" \
   --repo "$RELEASES_REPO" \
+  --target "$(git rev-parse HEAD)" \
   --title "FR Notes $VERSION" \
   --notes "$NOTES" \
   "$OUT_DIR/$DMG_NAME" "$OUT_DIR/$TARBALL_NAME" "$OUT_DIR/latest.json"
