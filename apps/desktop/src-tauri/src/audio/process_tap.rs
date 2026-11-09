@@ -6,17 +6,19 @@ use objc2::rc::Retained;
 use objc2::runtime::AnyObject;
 use objc2::{AllocAnyThread, Message};
 use objc2_core_audio::{
-    kAudioAggregateDeviceIsPrivateKey, kAudioAggregateDeviceIsStackedKey, kAudioAggregateDeviceMainSubDeviceKey,
-    kAudioAggregateDeviceNameKey, kAudioAggregateDeviceSubDeviceListKey, kAudioAggregateDeviceTapAutoStartKey,
+    kAudioAggregateDeviceIsPrivateKey, kAudioAggregateDeviceIsStackedKey,
+    kAudioAggregateDeviceMainSubDeviceKey, kAudioAggregateDeviceNameKey,
+    kAudioAggregateDeviceSubDeviceListKey, kAudioAggregateDeviceTapAutoStartKey,
     kAudioAggregateDeviceTapListKey, kAudioAggregateDeviceUIDKey, kAudioDevicePropertyDeviceUID,
     kAudioHardwarePropertyDefaultOutputDevice, kAudioHardwarePropertyTranslatePIDToProcessObject,
-    kAudioSubDeviceUIDKey, kAudioSubTapDriftCompensationKey, kAudioSubTapUIDKey, kAudioTapPropertyFormat,
-    AudioDeviceCreateIOProcIDWithBlock, AudioDeviceDestroyIOProcID, AudioDeviceIOProcID, AudioDeviceStart,
-    AudioDeviceStop, AudioHardwareCreateAggregateDevice, AudioHardwareDestroyAggregateDevice, AudioObjectID,
-    CATapDescription,
+    kAudioSubDeviceUIDKey, kAudioSubTapDriftCompensationKey, kAudioSubTapUIDKey,
+    kAudioTapPropertyFormat, AudioDeviceCreateIOProcIDWithBlock, AudioDeviceDestroyIOProcID,
+    AudioDeviceIOProcID, AudioDeviceStart, AudioDeviceStop, AudioHardwareCreateAggregateDevice,
+    AudioHardwareDestroyAggregateDevice, AudioObjectID, CATapDescription,
 };
 use objc2_core_audio_types::{
-    kAudioFormatFlagIsFloat, kAudioFormatLinearPCM, AudioBufferList, AudioStreamBasicDescription, AudioTimeStamp,
+    kAudioFormatFlagIsFloat, kAudioFormatLinearPCM, AudioBufferList, AudioStreamBasicDescription,
+    AudioTimeStamp,
 };
 use objc2_core_foundation::CFDictionary;
 use objc2_foundation::{NSArray, NSDictionary, NSNumber, NSString, NSUUID};
@@ -99,7 +101,9 @@ fn tap_functions() -> Option<TapFunctions> {
     })
 }
 
-pub fn start_process_tap(audio_tx: UnboundedSender<Vec<f32>>) -> Result<(ProcessTapCapture, u32), TapError> {
+pub fn start_process_tap(
+    audio_tx: UnboundedSender<Vec<f32>>,
+) -> Result<(ProcessTapCapture, u32), TapError> {
     let functions = tap_functions().ok_or(TapError::Unavailable)?;
     if tcc::is_audio_capture_denied() {
         return Err(TapError::PermissionDenied);
@@ -113,7 +117,10 @@ pub fn start_process_tap(audio_tx: UnboundedSender<Vec<f32>>) -> Result<(Process
     capture.proc_id = register_io_block(aggregate_id, format.mChannelsPerFrame, audio_tx)?;
     let status = unsafe { AudioDeviceStart(aggregate_id, capture.proc_id) };
     if status != 0 {
-        return Err(TapError::Failed(status_error("aggregate_device_start", status)));
+        return Err(TapError::Failed(status_error(
+            "aggregate_device_start",
+            status,
+        )));
     }
     capture.started = true;
     Ok((capture, format.mSampleRate as u32))
@@ -121,16 +128,27 @@ pub fn start_process_tap(audio_tx: UnboundedSender<Vec<f32>>) -> Result<(Process
 
 fn own_process_object() -> Option<AudioObjectID> {
     let pid = std::process::id() as i32;
-    let object: AudioObjectID =
-        read_qualified(SYSTEM_OBJECT, kAudioHardwarePropertyTranslatePIDToProcessObject, Some(&pid)).ok()?;
+    let object: AudioObjectID = read_qualified(
+        SYSTEM_OBJECT,
+        kAudioHardwarePropertyTranslatePIDToProcessObject,
+        Some(&pid),
+    )
+    .ok()?;
     (object != 0).then_some(object)
 }
 
 fn build_tap_description() -> Retained<CATapDescription> {
-    let exclusions: Vec<Retained<NSNumber>> = own_process_object().map(NSNumber::new_u32).into_iter().collect();
+    let exclusions: Vec<Retained<NSNumber>> = own_process_object()
+        .map(NSNumber::new_u32)
+        .into_iter()
+        .collect();
     let processes = NSArray::from_retained_slice(&exclusions);
-    let description =
-        unsafe { CATapDescription::initMonoGlobalTapButExcludeProcesses(CATapDescription::alloc(), &processes) };
+    let description = unsafe {
+        CATapDescription::initMonoGlobalTapButExcludeProcesses(
+            CATapDescription::alloc(),
+            &processes,
+        )
+    };
     unsafe {
         description.setUUID(&NSUUID::new());
         description.setName(&NSString::from_str(TAP_NAME));
@@ -139,7 +157,10 @@ fn build_tap_description() -> Retained<CATapDescription> {
     description
 }
 
-fn create_tap(functions: TapFunctions, description: &CATapDescription) -> Result<ProcessTapCapture, TapError> {
+fn create_tap(
+    functions: TapFunctions,
+    description: &CATapDescription,
+) -> Result<ProcessTapCapture, TapError> {
     let mut tap_id: AudioObjectID = 0;
     let status = unsafe { (functions.create)(description as *const CATapDescription, &mut tap_id) };
     if status != 0 || tap_id == 0 {
@@ -167,8 +188,9 @@ fn read_tap_format(tap_id: AudioObjectID) -> Result<AudioStreamBasicDescription,
 }
 
 fn default_output_uid() -> Result<String, TapError> {
-    let device: AudioObjectID = read_value(SYSTEM_OBJECT, kAudioHardwarePropertyDefaultOutputDevice)
-        .map_err(|status| TapError::Failed(status_error("default_output_device", status)))?;
+    let device: AudioObjectID =
+        read_value(SYSTEM_OBJECT, kAudioHardwarePropertyDefaultOutputDevice)
+            .map_err(|status| TapError::Failed(status_error("default_output_device", status)))?;
     read_string(device, kAudioDevicePropertyDeviceUID)
         .map_err(|status| TapError::Failed(status_error("output_device_uid", status)))
 }
@@ -191,24 +213,54 @@ fn single_item_list(entries: Vec<ObjectEntry>) -> Retained<AnyObject> {
     as_object(NSArray::from_retained_slice(&[dictionary(entries)]))
 }
 
-fn aggregate_description(tap_uid: &str, output_uid: &str) -> Retained<NSDictionary<NSString, AnyObject>> {
+fn aggregate_description(
+    tap_uid: &str,
+    output_uid: &str,
+) -> Retained<NSDictionary<NSString, AnyObject>> {
     let aggregate_uid = format!("{AGGREGATE_UID_PREFIX}{}", NSUUID::new().UUIDString());
     dictionary(vec![
-        (key(kAudioAggregateDeviceNameKey), as_object(NSString::from_str(AGGREGATE_NAME))),
-        (key(kAudioAggregateDeviceUIDKey), as_object(NSString::from_str(&aggregate_uid))),
-        (key(kAudioAggregateDeviceMainSubDeviceKey), as_object(NSString::from_str(output_uid))),
-        (key(kAudioAggregateDeviceIsPrivateKey), as_object(NSNumber::new_bool(true))),
-        (key(kAudioAggregateDeviceIsStackedKey), as_object(NSNumber::new_bool(false))),
-        (key(kAudioAggregateDeviceTapAutoStartKey), as_object(NSNumber::new_bool(true))),
+        (
+            key(kAudioAggregateDeviceNameKey),
+            as_object(NSString::from_str(AGGREGATE_NAME)),
+        ),
+        (
+            key(kAudioAggregateDeviceUIDKey),
+            as_object(NSString::from_str(&aggregate_uid)),
+        ),
+        (
+            key(kAudioAggregateDeviceMainSubDeviceKey),
+            as_object(NSString::from_str(output_uid)),
+        ),
+        (
+            key(kAudioAggregateDeviceIsPrivateKey),
+            as_object(NSNumber::new_bool(true)),
+        ),
+        (
+            key(kAudioAggregateDeviceIsStackedKey),
+            as_object(NSNumber::new_bool(false)),
+        ),
+        (
+            key(kAudioAggregateDeviceTapAutoStartKey),
+            as_object(NSNumber::new_bool(true)),
+        ),
         (
             key(kAudioAggregateDeviceSubDeviceListKey),
-            single_item_list(vec![(key(kAudioSubDeviceUIDKey), as_object(NSString::from_str(output_uid)))]),
+            single_item_list(vec![(
+                key(kAudioSubDeviceUIDKey),
+                as_object(NSString::from_str(output_uid)),
+            )]),
         ),
         (
             key(kAudioAggregateDeviceTapListKey),
             single_item_list(vec![
-                (key(kAudioSubTapUIDKey), as_object(NSString::from_str(tap_uid))),
-                (key(kAudioSubTapDriftCompensationKey), as_object(NSNumber::new_bool(true))),
+                (
+                    key(kAudioSubTapUIDKey),
+                    as_object(NSString::from_str(tap_uid)),
+                ),
+                (
+                    key(kAudioSubTapDriftCompensationKey),
+                    as_object(NSNumber::new_bool(true)),
+                ),
             ]),
         ),
     ])
@@ -219,9 +271,14 @@ fn create_aggregate_device(tap_uid: &str) -> Result<AudioObjectID, TapError> {
     let description = aggregate_description(tap_uid, &output_uid);
     let description_ref = unsafe { &*(Retained::as_ptr(&description) as *const CFDictionary) };
     let mut aggregate_id: AudioObjectID = 0;
-    let status = unsafe { AudioHardwareCreateAggregateDevice(description_ref, NonNull::from(&mut aggregate_id)) };
+    let status = unsafe {
+        AudioHardwareCreateAggregateDevice(description_ref, NonNull::from(&mut aggregate_id))
+    };
     if status != 0 || aggregate_id == 0 {
-        return Err(TapError::Failed(status_error("aggregate_device_create", status)));
+        return Err(TapError::Failed(status_error(
+            "aggregate_device_create",
+            status,
+        )));
     }
     Ok(aggregate_id)
 }
@@ -237,9 +294,15 @@ unsafe fn read_tap_samples(list: NonNull<AudioBufferList>, tap_channels: u32) ->
         if buffer.mData.is_null() {
             return Vec::new();
         }
-        std::slice::from_raw_parts(buffer.mData as *const f32, buffer.mDataByteSize as usize / 4).to_vec()
+        std::slice::from_raw_parts(
+            buffer.mData as *const f32,
+            buffer.mDataByteSize as usize / 4,
+        )
+        .to_vec()
     };
-    let is_planar = tap_channels > 1 && count == tap_channels as usize && buffers.iter().all(|b| b.mNumberChannels == 1);
+    let is_planar = tap_channels > 1
+        && count == tap_channels as usize
+        && buffers.iter().all(|b| b.mNumberChannels == 1);
     if is_planar {
         let channels: Vec<Vec<f32>> = buffers.iter().map(to_samples).collect();
         return Some(average_channels(&channels));
@@ -249,7 +312,10 @@ unsafe fn read_tap_samples(list: NonNull<AudioBufferList>, tap_channels: u32) ->
     if samples.is_empty() {
         return None;
     }
-    Some(downmix_to_mono(&samples, buffer.mNumberChannels.max(1) as usize))
+    Some(downmix_to_mono(
+        &samples,
+        buffer.mNumberChannels.max(1) as usize,
+    ))
 }
 
 fn register_io_block(
@@ -270,7 +336,12 @@ fn register_io_block(
     );
     let mut proc_id: AudioDeviceIOProcID = None;
     let status = unsafe {
-        AudioDeviceCreateIOProcIDWithBlock(NonNull::from(&mut proc_id), aggregate_id, None, RcBlock::as_ptr(&block))
+        AudioDeviceCreateIOProcIDWithBlock(
+            NonNull::from(&mut proc_id),
+            aggregate_id,
+            None,
+            RcBlock::as_ptr(&block),
+        )
     };
     if status != 0 || proc_id.is_none() {
         return Err(TapError::Failed(status_error("io_proc_create", status)));

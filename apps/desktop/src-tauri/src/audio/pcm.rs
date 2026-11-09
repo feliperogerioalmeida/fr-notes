@@ -19,7 +19,9 @@ pub fn average_channels(channels: &[Vec<f32>]) -> Vec<f32> {
     }
     let frames = channels.iter().map(Vec::len).min().unwrap_or(0);
     (0..frames)
-        .map(|index| channels.iter().map(|channel| channel[index]).sum::<f32>() / channels.len() as f32)
+        .map(|index| {
+            channels.iter().map(|channel| channel[index]).sum::<f32>() / channels.len() as f32
+        })
         .collect()
 }
 
@@ -129,7 +131,10 @@ mod tests {
         let first = resampler.process(&[0.5; 320]);
         let second = resampler.process(&[0.5; 320]);
         assert!(second.iter().all(|sample| (sample - 0.5).abs() < 1e-6));
-        assert!(first.iter().skip(1).all(|sample| (sample - 0.5).abs() < 1e-6));
+        assert!(first
+            .iter()
+            .skip(1)
+            .all(|sample| (sample - 0.5).abs() < 1e-6));
     }
 
     #[test]

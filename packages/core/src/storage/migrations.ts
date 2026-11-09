@@ -106,6 +106,30 @@ const MIGRATIONS: Migration[] = [
       "CREATE INDEX IF NOT EXISTS idx_dictations_created_at ON dictations (created_at)",
     ],
   },
+  {
+    version: 6,
+    statements: [
+      `CREATE TABLE IF NOT EXISTS action_items (
+        id TEXT PRIMARY KEY,
+        note_id TEXT NOT NULL,
+        item_key TEXT NOT NULL,
+        text TEXT NOT NULL,
+        owner TEXT,
+        due_text TEXT,
+        done INTEGER NOT NULL DEFAULT 0,
+        position INTEGER NOT NULL DEFAULT 0,
+        sent_to_json TEXT NOT NULL DEFAULT '[]',${SYNCED_COLUMNS}
+      )`,
+      "CREATE INDEX IF NOT EXISTS idx_action_items_note ON action_items (note_id, position)",
+      `CREATE TABLE IF NOT EXISTS connections (
+        id TEXT PRIMARY KEY,
+        provider TEXT NOT NULL,
+        name TEXT NOT NULL,
+        config_json TEXT NOT NULL DEFAULT '{}',
+        enabled INTEGER NOT NULL DEFAULT 1,${SYNCED_COLUMNS}
+      )`,
+    ],
+  },
 ];
 
 const ensureMigrationsTable = (db: SqlClient): Promise<void> =>

@@ -31,7 +31,10 @@ impl EchoInputSender {
     }
 
     fn try_send(&self, input: EchoInput) -> bool {
-        !matches!(self.sender.try_send(input), Err(TrySendError::Disconnected(_)))
+        !matches!(
+            self.sender.try_send(input),
+            Err(TrySendError::Disconnected(_))
+        )
     }
 }
 
@@ -50,7 +53,10 @@ struct EchoWorker {
     output: UnboundedSender<Vec<f32>>,
 }
 
-pub fn start_echo_canceller(rates: EchoRates, output: UnboundedSender<Vec<f32>>) -> Result<EchoInputSender, String> {
+pub fn start_echo_canceller(
+    rates: EchoRates,
+    output: UnboundedSender<Vec<f32>>,
+) -> Result<EchoInputSender, String> {
     let (sender, receiver) = mpsc::sync_channel(INPUT_QUEUE_CAPACITY);
     let (ready_tx, ready_rx) = mpsc::channel::<Result<(), String>>();
     std::thread::Builder::new()

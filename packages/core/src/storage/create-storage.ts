@@ -1,4 +1,6 @@
+import { createActionItemsRepository } from "./action-items-repository.js";
 import { createChatRepository } from "./chat-repository.js";
+import { createConnectionsRepository } from "./connections-repository.js";
 import { createDictationsRepository } from "./dictations-repository.js";
 import { createFoldersRepository } from "./folders-repository.js";
 import { runMigrations } from "./migrations.js";
@@ -18,6 +20,8 @@ export const createStorage = (db: SqlClient) => ({
   settings: createSettingsRepository(db),
   webhooks: createWebhooksRepository(db),
   dictations: createDictationsRepository(db),
+  actionItems: createActionItemsRepository(db),
+  connections: createConnectionsRepository(db),
 });
 
 export type Storage = ReturnType<typeof createStorage>;

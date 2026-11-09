@@ -3,9 +3,20 @@ import { Button } from "@workspace/ui/components/ui/button";
 import { Input } from "@workspace/ui/components/ui/input";
 import { Separator } from "@workspace/ui/components/ui/separator";
 import { cn } from "@workspace/ui/lib/utils";
-import { ArrowUp, LoaderCircle, ScrollText, Sparkles } from "lucide-react";
+import {
+  ArrowUp,
+  ListChecks,
+  LoaderCircle,
+  type LucideIcon,
+  ScrollText,
+  Sparkles,
+} from "lucide-react";
 import { type FormEvent, useState } from "react";
 
+import {
+  selectOpenItems,
+  useNoteActionItems,
+} from "@/features/action-items/use-action-items.js";
 import { useEnhanceStore } from "@/features/enhance/enhance-store.js";
 import { TemplateMenu } from "@/features/enhance/template-menu.js";
 import { RecordingControl } from "@/features/recording/recording-control.js";
@@ -80,6 +91,58 @@ const EnhanceButton = ({
   );
 };
 
+interface PanelToggleProps {
+  target: SidePanel;
+  label: string;
+  icon: LucideIcon;
+  panel: SidePanel | null;
+  count?: number;
+  onToggle: (panel: SidePanel) => void;
+}
+
+const PanelToggle = ({
+  target,
+  label,
+  icon: Icon,
+  panel,
+  count = 0,
+  onToggle,
+}: PanelToggleProps) => (
+  <Button
+    size={count > 0 ? "sm" : "icon-sm"}
+    variant="ghost"
+    aria-label={label}
+    aria-pressed={panel === target}
+    onClick={() => onToggle(target)}
+    className={cn("gap-1", panel === target && "bg-accent text-brand")}
+  >
+    <Icon />
+    {count > 0 && <span className="text-caption tabular-nums">{count}</span>}
+  </Button>
+);
+
+const TasksToggle = ({
+  noteId,
+  panel,
+  onToggle,
+}: {
+  noteId: string;
+  panel: SidePanel | null;
+  onToggle: (panel: SidePanel) => void;
+}) => {
+  const { data: items = [] } = useNoteActionItems(noteId);
+  return (
+    <PanelToggle
+      target="tasks"
+      label="Próximos passos"
+      icon={ListChecks}
+      panel={panel}
+      count={selectOpenItems(items).length}
+      onToggle={onToggle}
+    />
+  );
+};
+
 export const NoteActionBar = ({
   note,
   hasTranscript,
@@ -90,16 +153,14 @@ export const NoteActionBar = ({
 }: NoteActionBarProps) => (
   <div className="bg-card/95 flex w-full max-w-2xl items-center gap-1 rounded-xl border p-1.5 shadow-lg backdrop-blur">
     <RecordingControl noteId={note.id} hasTranscript={hasTranscript} />
-    <Button
-      size="icon-sm"
-      variant="ghost"
-      aria-label="Transcrição"
-      aria-pressed={panel === "transcript"}
-      onClick={() => onTogglePanel("transcript")}
-      className={cn(panel === "transcript" && "bg-accent text-brand")}
-    >
-      <ScrollText />
-    </Button>
+    <PanelToggle
+      target="transcript"
+      label="Transcrição"
+      icon={ScrollText}
+      panel={panel}
+      onToggle={onTogglePanel}
+    />
+    <TasksToggle noteId={note.id} panel={panel} onToggle={onTogglePanel} />
     <Separator orientation="vertical" className="mx-1 h-5!" />
     <AskInput onAsk={onAsk} />
     <EnhanceButton note={note} onEnhance={onEnhance} />

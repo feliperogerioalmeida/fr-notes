@@ -11,5 +11,7 @@ where
         let _ = sender.send(task());
     })
     .map_err(|error| error.to_string())?;
-    receiver.await.map_err(|_| "main_thread_task_dropped".to_string())
+    receiver
+        .await
+        .map_err(|_| "main_thread_task_dropped".to_string())
 }

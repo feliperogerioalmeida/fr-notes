@@ -97,7 +97,9 @@ async fn send_samples(
     shared: &DictationShared,
     samples: &[f32],
 ) -> Result<(), String> {
-    shared.level.store(rms_level(samples).to_bits(), Ordering::Relaxed);
+    shared
+        .level
+        .store(rms_level(samples).to_bits(), Ordering::Relaxed);
     buffer.push(samples);
     while let Some(chunk) = buffer.take_chunk() {
         writer
@@ -112,9 +114,14 @@ async fn finish(mut writer: SocketWriter, mut buffer: AudioBuffer, reader_task: 
     if let Some(remaining) = buffer.take_remaining() {
         let _ = writer.send(Message::binary(remaining)).await;
     }
-    let _ = writer.send(Message::text(CLOSE_STREAM_MESSAGE.to_string())).await;
+    let _ = writer
+        .send(Message::text(CLOSE_STREAM_MESSAGE.to_string()))
+        .await;
     let abort_handle = reader_task.abort_handle();
-    if tokio::time::timeout(FINAL_RESULTS_TIMEOUT, reader_task).await.is_err() {
+    if tokio::time::timeout(FINAL_RESULTS_TIMEOUT, reader_task)
+        .await
+        .is_err()
+    {
         abort_handle.abort();
     }
     let _ = writer.close().await;
@@ -136,7 +143,11 @@ async fn drain_audio(
     }
 }
 
-fn spawn_reader(app: AppHandle, shared: DictationShared, mut reader: SocketReader) -> JoinHandle<()> {
+fn spawn_reader(
+    app: AppHandle,
+    shared: DictationShared,
+    mut reader: SocketReader,
+) -> JoinHandle<()> {
     tokio::spawn(async move {
         while let Some(Ok(message)) = reader.next().await {
             if let Message::Close(_) = message {
@@ -149,7 +160,10 @@ fn spawn_reader(app: AppHandle, shared: DictationShared, mut reader: SocketReade
                 continue;
             };
             let running = apply_result(&shared, &result.transcript, result.is_final);
-            let _ = app.emit(DICTATION_PARTIAL_EVENT, DictationPartialPayload { text: running });
+            let _ = app.emit(
+                DICTATION_PARTIAL_EVENT,
+                DictationPartialPayload { text: running },
+            );
         }
     })
 }

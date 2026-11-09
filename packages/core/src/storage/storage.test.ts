@@ -143,4 +143,50 @@ describe("storage", () => {
     await storage.dictations.deleteDictation(id);
     expect(await storage.dictations.listDictations()).toHaveLength(1);
   });
+
+  it("syncs action items from markdown keeping sent state", async () => {
+    const storage = await initializeStorage(await createMemoryClient());
+    const note = await storage.notes.createNote();
+    const first = await storage.actionItems.syncFromMarkdown({
+      noteId: note.id,
+      markdown:
+        "- [ ] Felipe — enviar proposta (sexta)\n- [ ] Marina — mandar planilha",
+    });
+    const proposal = first[0];
+    if (!proposal) throw new Error("missing item");
+    await storage.actionItems.recordSent({
+      id: proposal.id,
+      ref: {
+        connectionId: "c1",
+        provider: "clickup",
+        externalId: "86abc",
+        url: "https://app.clickup.com/t/86abc",
+        sentAt: "2026-11-09T15:00:00.000Z",
+      },
+    });
+
+    const second = await storage.actionItems.syncFromMarkdown({
+      noteId: note.id,
+      markdown: "- [x] Felipe — enviar proposta (sexta)",
+    });
+
+    expect(second).toHaveLength(1);
+    expect(second[0]?.id).toBe(proposal.id);
+    expect(second[0]?.done).toBe(true);
+    expect(second[0]?.sentTo[0]?.url).toBe("https://app.clickup.com/t/86abc");
+    expect(await storage.actionItems.listAll()).toHaveLength(1);
+  });
+
+  it("stores connections with their config", async () => {
+    const storage = await initializeStorage(await createMemoryClient());
+    await storage.connections.createConnection({
+      provider: "clickup",
+      name: "ClickUp — FR Digital",
+      config: { listId: "901", listName: "Backlog" },
+      enabled: true,
+    });
+
+    const [connection] = await storage.connections.listConnections();
+    expect(connection?.config).toEqual({ listId: "901", listName: "Backlog" });
+  });
 });

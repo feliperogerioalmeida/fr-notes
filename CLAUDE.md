@@ -29,6 +29,8 @@
 - Rust lives in `apps/desktop/src-tauri` (audio capture with cpal + ScreenCaptureKit, Deepgram WebSocket, Keychain secrets, tray, floating "nub" window). The React side talks to it ONLY through `src/lib/native.ts` (commands + events) — keep names in sync with `src-tauri/src/commands.rs` and `events.rs`
 - Data is local-first SQLite via `tauri-plugin-sql`, accessed only through `@workspace/core` repositories; every table keeps `id` (UUID), `created_at`, `updated_at`, `deleted_at` (soft delete) for future sync
 - Secrets (Deepgram key, LLM key) live in the macOS Keychain — NEVER in SQLite, settings or env files
+- Next steps ("action items") are parsed from the AI notes markdown (`- [ ] Owner — task (due)`) by `extractActionItems` and synced into `action_items` on every `enhancedMarkdown` save; checking one updates both the table and the markdown
+- Connections (ClickUp, Linear, Notion, Slack) live in `@workspace/core/connections` as pure functions that receive an injected `HttpFetch` (the desktop passes `src/lib/http-client.ts`, backed by plugin-http). Nothing is sent automatically: the user picks the destination per item or note. Tokens live in the Keychain as `connection_token:<id>`
 - LLM calls use the Vercel AI SDK (`src/lib/llm.ts`) with a user-configurable provider (AI Gateway or any OpenAI-compatible endpoint) through `@tauri-apps/plugin-http` — NEVER hardcode a model or provider; ask the user which model to use
 - Browser preview: opening `http://localhost:1420` outside Tauri (dev only) installs `src/dev/browser-preview.ts` (mocked IPC + sql.js + demo seed) for UI work and screenshots
 - Desktop UI is denser than web: `html { font-size: 15px }` in `src/styles/app.css` scales every rem-based token

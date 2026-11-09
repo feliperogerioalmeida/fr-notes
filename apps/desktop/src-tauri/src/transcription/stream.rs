@@ -11,11 +11,13 @@ use tokio::task::JoinHandle;
 use tokio_tungstenite::tungstenite::Message;
 
 use super::deepgram::{
-    connect_deepgram, parse_result, DeepgramConfig, DeepgramResult, DeepgramSocket, CLOSE_STREAM_MESSAGE,
-    KEEP_ALIVE_MESSAGE,
+    connect_deepgram, parse_result, DeepgramConfig, DeepgramResult, DeepgramSocket,
+    CLOSE_STREAM_MESSAGE, KEEP_ALIVE_MESSAGE,
 };
 use crate::audio::pcm::{rms_level, to_i16_le_bytes};
-use crate::events::{emit_recording_error, AudioSource, TranscriptSegmentPayload, TRANSCRIPT_SEGMENT_EVENT};
+use crate::events::{
+    emit_recording_error, AudioSource, TranscriptSegmentPayload, TRANSCRIPT_SEGMENT_EVENT,
+};
 
 const CHUNKS_PER_SECOND: u32 = 10;
 const KEEP_ALIVE_INTERVAL: Duration = Duration::from_secs(5);
@@ -86,7 +88,11 @@ pub async fn run_source_stream(
         let socket = match connect_deepgram(&stream.config).await {
             Ok(socket) => socket,
             Err(error) => {
-                emit_recording_error(&stream.app, "deepgram", format!("{}: {error}", stream.source.as_str()));
+                emit_recording_error(
+                    &stream.app,
+                    "deepgram",
+                    format!("{}: {error}", stream.source.as_str()),
+                );
                 attempts += 1;
                 if attempts > MAX_RECONNECT_ATTEMPTS {
                     drain_until_stopped(&stream, &mut audio_rx, &mut stop_rx).await;
@@ -177,7 +183,10 @@ async fn finish_socket(
     }
     let _ = send_text(writer, CLOSE_STREAM_MESSAGE).await;
     let abort_handle = reader_task.abort_handle();
-    if tokio::time::timeout(FINAL_RESULTS_TIMEOUT, reader_task).await.is_err() {
+    if tokio::time::timeout(FINAL_RESULTS_TIMEOUT, reader_task)
+        .await
+        .is_err()
+    {
         abort_handle.abort();
     }
     let _ = writer.close().await;

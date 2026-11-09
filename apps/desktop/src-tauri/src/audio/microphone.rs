@@ -76,7 +76,13 @@ fn open_input_stream(
         .map_err(|error| error.to_string())?;
     let config = supported.config();
     let sample_rate = config.sample_rate;
-    let stream = build_for_format(&device, supported.sample_format(), config, audio_tx, report_error)?;
+    let stream = build_for_format(
+        &device,
+        supported.sample_format(),
+        config,
+        audio_tx,
+        report_error,
+    )?;
     stream.play().map_err(|error| error.to_string())?;
     Ok((stream, sample_rate))
 }
@@ -112,7 +118,10 @@ where
         .build_input_stream::<T, _, _>(
             config,
             move |data: &[T], _| {
-                let samples: Vec<f32> = data.iter().map(|sample| sample.to_sample::<f32>()).collect();
+                let samples: Vec<f32> = data
+                    .iter()
+                    .map(|sample| sample.to_sample::<f32>())
+                    .collect();
                 let _ = audio_tx.send(downmix_to_mono(&samples, channels));
             },
             move |error| report_error(error.to_string()),

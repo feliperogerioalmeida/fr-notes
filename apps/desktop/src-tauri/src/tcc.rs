@@ -43,8 +43,10 @@ fn symbols() -> &'static TccSymbols {
         let preflight = resolve_symbol(handle, PREFLIGHT_SYMBOL);
         let request = resolve_symbol(handle, REQUEST_SYMBOL);
         TccSymbols {
-            preflight: (!preflight.is_null()).then(|| unsafe { std::mem::transmute::<*mut c_void, PreflightFn>(preflight) }),
-            request: (!request.is_null()).then(|| unsafe { std::mem::transmute::<*mut c_void, RequestFn>(request) }),
+            preflight: (!preflight.is_null())
+                .then(|| unsafe { std::mem::transmute::<*mut c_void, PreflightFn>(preflight) }),
+            request: (!request.is_null())
+                .then(|| unsafe { std::mem::transmute::<*mut c_void, RequestFn>(request) }),
         }
     })
 }
@@ -67,7 +69,12 @@ pub fn audio_capture_status() -> &'static str {
         return last_known_audio_capture();
     };
     let service = NSString::from_str(AUDIO_CAPTURE_SERVICE);
-    let result = unsafe { preflight(&*service as *const NSString as *const c_void, std::ptr::null()) };
+    let result = unsafe {
+        preflight(
+            &*service as *const NSString as *const c_void,
+            std::ptr::null(),
+        )
+    };
     match result {
         PREFLIGHT_GRANTED => GRANTED,
         PREFLIGHT_DENIED => DENIED,

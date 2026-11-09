@@ -17,4 +17,7 @@ export const QUERY_KEYS = {
   calendars: ["calendars"] as const,
   webhooks: ["webhooks"] as const,
   dictations: ["dictations"] as const,
+  connections: ["connections"] as const,
+  actionItems: (noteId: string) => ["action-items", noteId] as const,
+  allActionItems: ["action-items"] as const,
 };

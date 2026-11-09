@@ -6,6 +6,7 @@ import type {
   NotePatch,
 } from "@workspace/core";
 
+import { syncActionItems } from "@/features/action-items/sync-action-items.js";
 import { getStorage } from "@/lib/database.js";
 import { QUERY_KEYS } from "@/lib/query-keys.js";
 
@@ -43,8 +44,12 @@ const applyPatch = (note: Note | null | undefined, patch: NotePatch) =>
 export const useUpdateNote = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: UpdateNoteInput) =>
-      (await getStorage()).notes.updateNote(input),
+    mutationFn: async (input: UpdateNoteInput) => {
+      await (await getStorage()).notes.updateNote(input);
+      const markdown = input.patch.enhancedMarkdown;
+      if (typeof markdown === "string")
+        await syncActionItems(input.id, markdown);
+    },
     onMutate: ({ id, patch }) =>
       queryClient.setQueryData<Note | null>(QUERY_KEYS.note(id), (note) =>
         applyPatch(note, patch),

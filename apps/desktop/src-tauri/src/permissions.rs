@@ -5,12 +5,14 @@ pub const DENIED: &str = "denied";
 pub const UNDETERMINED: &str = "undetermined";
 pub const RESTRICTED: &str = "restricted";
 
-const MICROPHONE_SETTINGS_URL: &str = "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone";
+const MICROPHONE_SETTINGS_URL: &str =
+    "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone";
 const SCREEN_CAPTURE_SETTINGS_URL: &str =
     "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture";
 const SYSTEM_AUDIO_SETTINGS_URL: &str =
     "x-apple.systempreferences:com.apple.preference.security?Privacy_AudioCapture";
-const CALENDAR_SETTINGS_URL: &str = "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars";
+const CALENDAR_SETTINGS_URL: &str =
+    "x-apple.systempreferences:com.apple.preference.security?Privacy_Calendars";
 const ACCESSIBILITY_SETTINGS_URL: &str =
     "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility";
 
@@ -116,7 +118,9 @@ mod platform {
                 let _ = pending.send(granted.as_bool());
             }
         });
-        unsafe { AVCaptureDevice::requestAccessForMediaType_completionHandler(media_type, &handler) };
+        unsafe {
+            AVCaptureDevice::requestAccessForMediaType_completionHandler(media_type, &handler)
+        };
         Some(receiver)
     }
 
@@ -138,7 +142,9 @@ mod platform {
     pub async fn request_system_audio() -> bool {
         let granted = match crate::tcc::begin_audio_capture_request() {
             Some(receiver) => receiver.await.unwrap_or(false),
-            None => tokio::task::spawn_blocking(probe_process_tap).await.unwrap_or(false),
+            None => tokio::task::spawn_blocking(probe_process_tap)
+                .await
+                .unwrap_or(false),
         };
         crate::tcc::record_audio_capture_result(granted);
         granted

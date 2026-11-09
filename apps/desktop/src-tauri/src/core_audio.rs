@@ -5,8 +5,8 @@ use std::ptr::NonNull;
 use objc2::rc::Retained;
 use objc2_core_audio::{
     kAudioObjectPropertyElementMain, kAudioObjectPropertyScopeGlobal, kAudioObjectSystemObject,
-    AudioObjectGetPropertyData, AudioObjectGetPropertyDataSize, AudioObjectID, AudioObjectPropertyAddress,
-    AudioObjectPropertySelector,
+    AudioObjectGetPropertyData, AudioObjectGetPropertyDataSize, AudioObjectID,
+    AudioObjectPropertyAddress, AudioObjectPropertySelector,
 };
 use objc2_foundation::NSString;
 
@@ -24,7 +24,10 @@ pub fn status_error(context: &str, status: i32) -> String {
     format!("{context}_failed:{status}")
 }
 
-pub fn read_value<T: Copy>(object: AudioObjectID, selector: AudioObjectPropertySelector) -> Result<T, i32> {
+pub fn read_value<T: Copy>(
+    object: AudioObjectID,
+    selector: AudioObjectPropertySelector,
+) -> Result<T, i32> {
     read_qualified::<T, ()>(object, selector, None)
 }
 
@@ -55,11 +58,20 @@ pub fn read_qualified<T: Copy, Q>(
     Ok(value)
 }
 
-pub fn read_array<T: Copy>(object: AudioObjectID, selector: AudioObjectPropertySelector) -> Result<Vec<T>, i32> {
+pub fn read_array<T: Copy>(
+    object: AudioObjectID,
+    selector: AudioObjectPropertySelector,
+) -> Result<Vec<T>, i32> {
     let address = global_address(selector);
     let mut size = 0u32;
     let status = unsafe {
-        AudioObjectGetPropertyDataSize(object, NonNull::from(&address), 0, std::ptr::null(), NonNull::from(&mut size))
+        AudioObjectGetPropertyDataSize(
+            object,
+            NonNull::from(&address),
+            0,
+            std::ptr::null(),
+            NonNull::from(&mut size),
+        )
     };
     if status != 0 {
         return Err(status);
@@ -86,7 +98,10 @@ pub fn read_array<T: Copy>(object: AudioObjectID, selector: AudioObjectPropertyS
     Ok(values)
 }
 
-pub fn read_string(object: AudioObjectID, selector: AudioObjectPropertySelector) -> Result<String, i32> {
+pub fn read_string(
+    object: AudioObjectID,
+    selector: AudioObjectPropertySelector,
+) -> Result<String, i32> {
     let raw: usize = read_value(object, selector)?;
     let Some(pointer) = NonNull::new(raw as *mut NSString) else {
         return Ok(String::new());

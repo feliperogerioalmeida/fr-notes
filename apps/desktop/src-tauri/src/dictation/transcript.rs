@@ -22,7 +22,12 @@ impl DictationTranscript {
     }
 
     pub fn running_text(&self) -> String {
-        join_segments(self.finals.iter().map(String::as_str).chain([self.interim.as_str()]))
+        join_segments(
+            self.finals
+                .iter()
+                .map(String::as_str)
+                .chain([self.interim.as_str()]),
+        )
     }
 }
 

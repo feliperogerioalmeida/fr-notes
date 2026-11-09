@@ -1,7 +1,9 @@
 use tauri::{AppHandle, State};
 
 use crate::calendar::{self, CalendarEvent, CalendarInfo, ListEventsArgs};
-use crate::dictation::{hide_and_idle, DictationManager, DictationResult, DictationStarted, StartDictationArgs};
+use crate::dictation::{
+    hide_and_idle, DictationManager, DictationResult, DictationStarted, StartDictationArgs,
+};
 use crate::microphone_apps::{self, MicApp};
 use crate::permissions::{self, Permissions};
 use crate::secrets::{read_secret, remove_secret, write_secret};
@@ -39,13 +41,18 @@ pub async fn start_recording(
 }
 
 #[tauri::command]
-pub async fn stop_recording(app: AppHandle, manager: State<'_, RecordingManager>) -> Result<(), String> {
+pub async fn stop_recording(
+    app: AppHandle,
+    manager: State<'_, RecordingManager>,
+) -> Result<(), String> {
     let _ = set_nub_visible(&app, false);
     manager.stop(&app).await
 }
 
 #[tauri::command]
-pub async fn get_recording_status(manager: State<'_, RecordingManager>) -> Result<RecordingStatus, String> {
+pub async fn get_recording_status(
+    manager: State<'_, RecordingManager>,
+) -> Result<RecordingStatus, String> {
     Ok(manager.status().await)
 }
 
@@ -114,12 +121,18 @@ pub async fn start_dictation(
 }
 
 #[tauri::command]
-pub async fn stop_dictation(app: AppHandle, manager: State<'_, DictationManager>) -> Result<DictationResult, String> {
+pub async fn stop_dictation(
+    app: AppHandle,
+    manager: State<'_, DictationManager>,
+) -> Result<DictationResult, String> {
     manager.stop(&app).await
 }
 
 #[tauri::command]
-pub async fn cancel_dictation(app: AppHandle, manager: State<'_, DictationManager>) -> Result<(), String> {
+pub async fn cancel_dictation(
+    app: AppHandle,
+    manager: State<'_, DictationManager>,
+) -> Result<(), String> {
     manager.cancel(&app).await
 }
 
@@ -129,7 +142,11 @@ pub fn hide_dictation_pill(app: AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn insert_text(app: AppHandle, manager: State<'_, DictationManager>, text: String) -> Result<(), String> {
+pub async fn insert_text(
+    app: AppHandle,
+    manager: State<'_, DictationManager>,
+    text: String,
+) -> Result<(), String> {
     text_insertion::insert_text(&app, text, manager.target()).await
 }
 

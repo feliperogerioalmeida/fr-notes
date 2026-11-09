@@ -39,11 +39,13 @@ O FR Notes é um app desktop para quem passa o dia em reuniões. Durante a chama
 | ✨ **Notas geradas pela IA**     | Suas anotações viram a espinha das notas finais, completadas com o que foi dito. O título é sugerido automaticamente.                                                |
 | 🧩 **Templates**                 | Reunião geral, Cliente/Descoberta, 1:1, Daily, Kickoff e Entrevista — ou crie os seus.                                                                               |
 | 💬 **Pergunte à reunião**        | Chat sobre cada nota: “quais foram os próximos passos?”, “escreva o follow-up”.                                                                                      |
+| ✅ **Próximos passos**           | As tarefas combinadas viram uma lista com responsável e prazo, por reunião e numa página só. Marque como feito ou envie cada uma para onde quiser.                   |
 | 📅 **Calendário da Apple**       | Próximas reuniões e agenda com todas as contas do app Calendário (iCloud, Google, Exchange…). Notas já nascem com título e participantes.                            |
 | 🔔 **Detecção de reunião**       | Percebe quando Zoom, Meet, Teams, Slack ou FaceTime começam a usar o microfone e oferece gravar — ou grava sozinho.                                                  |
 | 🟠 **Indicador flutuante**       | Um mini símbolo FR no canto da tela mostra que está ouvindo, com tempo e botão de parar.                                                                             |
 | 🔄 **Atualização automática**    | O app se atualiza sozinho, sem precisar baixar o instalador de novo.                                                                                                 |
-| 🔗 **Integrações**               | Envia cada nota para outros sistemas (FR Hub, n8n, Make, seu backend) por webhook assinado, com a API key que o destino exigir.                                      |
+| 🔌 **Conexões**                  | ClickUp, Linear, Notion e Slack: você conecta o que usa e escolhe o destino na hora de enviar um próximo passo ou uma nota.                                          |
+| 🔗 **Webhooks**                  | Envia cada nota para outros sistemas (FR Hub, n8n, Make, seu backend) por webhook assinado, com a API key que o destino exigir.                                      |
 
 <p align="center">
   <img src="docs/images/home.png" alt="Tela inicial com notas, próximas reuniões e resumo da semana" width="49%" />
@@ -111,6 +113,7 @@ Preencha seu nome e um pouco de contexto em **Sobre você** — a IA usa isso pa
 2. **Anote o essencial** enquanto a reunião acontece. A transcrição fica no painel lateral (ícone de pergaminho na barra inferior).
 3. **Pare a gravação** pelo botão da barra inferior ou pelo indicador flutuante. As notas são geradas automaticamente com o template padrão.
 4. **Ajuste e reaproveite:** alterne entre **Notas FR** e **Minhas notas**, regere com outro template, pergunte qualquer coisa à reunião ou copie tudo em Markdown.
+5. **Distribua os próximos passos:** abra o painel **Próximos passos** (ícone de checklist na barra inferior) ou a página de mesmo nome e envie cada tarefa — ou todas de uma vez — para a conexão que quiser.
 
 Atalhos úteis:
 
@@ -120,7 +123,20 @@ Atalhos úteis:
 - O ícone do FR Notes na barra de menus tem **Nova nota**, que já começa a gravar.
 - Em **Configurações → Reuniões** você escolhe se o app deve perguntar, gravar sozinho ou ignorar reuniões detectadas, e se deve parar ao fim da chamada.
 
-## Integrações
+## Conexões
+
+Em **Conexões** você liga só os apps que usa. Nada é enviado automaticamente: na hora de mandar um próximo passo ou uma nota, você escolhe o destino.
+
+| App     | Recebe                    | O que você precisa                                                        |
+| ------- | ------------------------- | ------------------------------------------------------------------------- |
+| ClickUp | Próximos passos (tarefas) | Token pessoal da API (_Settings → Apps_) e a lista de destino             |
+| Linear  | Próximos passos (issues)  | Personal API key (_Settings → Security & access_) e o time                |
+| Notion  | Notas (páginas)           | Token de uma integração interna e um banco de dados compartilhado com ela |
+| Slack   | Notas e próximos passos   | URL de um Incoming Webhook do canal                                       |
+
+Você pode ter vários destinos do mesmo app (por exemplo, duas listas do ClickUp). Os tokens ficam no Keychain e cada próximo passo enviado guarda o link para abrir no app de destino.
+
+## Webhooks
 
 Em **Configurações → Integrações** você cadastra destinos para as suas notas. A cada gravação finalizada (`note.completed`) e a cada nota gerada pela IA (`note.enhanced`), o FR Notes faz um `POST` com a nota completa em JSON — título, suas anotações, notas da IA, participantes, pasta e transcrição.
 
@@ -144,7 +160,8 @@ Cada atualização é assinada; o app só instala pacotes cuja assinatura confer
 | Chaves de API                             | Keychain do macOS                                                                         |
 | Áudio da reunião                          | Enviado em tempo real à Deepgram para transcrição; não é salvo pelo app                   |
 | Texto para gerar notas e responder o chat | Enviado ao provedor de IA que você configurou, só quando você gera notas ou pergunta algo |
-| Notas enviadas por integração             | Só para as URLs que você cadastrar em Integrações                                         |
+| Notas enviadas por webhook                | Só para as URLs que você cadastrar em Integrações                                         |
+| Próximos passos e notas enviados          | Só para a conexão que você escolher, no momento em que clicar em enviar                   |
 
 O FR Notes não tem servidor próprio nem coleta de uso.
 
@@ -199,6 +216,10 @@ O script atualiza a versão, gera o `.dmg` e o pacote de atualização assinado 
 - [x] Calendário da Apple e detecção de reunião
 - [x] Instalador `.dmg` com atualização automática
 - [x] Integrações via webhooks (enviar notas para outros sistemas)
+- [x] Ditado em qualquer app
+- [x] Próximos passos e conexões (ClickUp, Linear, Notion, Slack)
+- [ ] Chat com todas as reuniões
+- [ ] Nome de quem fala detectado automaticamente
 - [ ] API para outros sistemas consultarem as notas com API key
 - [ ] App para iPhone, para reuniões presenciais
 - [ ] Sincronização com o ambiente FR

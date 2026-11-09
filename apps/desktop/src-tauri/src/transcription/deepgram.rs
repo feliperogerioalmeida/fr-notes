@@ -69,7 +69,10 @@ fn dominant_speaker(words: &[ResultsWord]) -> Option<u32> {
             None => counts.push((speaker, 1)),
         }
     }
-    counts.into_iter().max_by_key(|(_, count)| *count).map(|(id, _)| id)
+    counts
+        .into_iter()
+        .max_by_key(|(_, count)| *count)
+        .map(|(id, _)| id)
 }
 
 pub fn build_listen_url(config: &DeepgramConfig) -> Result<Url, String> {
@@ -89,7 +92,11 @@ pub fn build_listen_url(config: &DeepgramConfig) -> Result<Url, String> {
         if config.diarize {
             query.append_pair("diarize", "true");
         }
-        for keyterm in config.keyterms.iter().filter(|term| !term.trim().is_empty()) {
+        for keyterm in config
+            .keyterms
+            .iter()
+            .filter(|term| !term.trim().is_empty())
+        {
             query.append_pair("keyterm", keyterm.trim());
         }
     }

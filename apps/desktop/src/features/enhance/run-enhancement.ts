@@ -6,6 +6,7 @@ import {
   type Storage,
 } from "@workspace/core";
 
+import { syncActionItems } from "@/features/action-items/sync-action-items.js";
 import { dispatchNoteEvent } from "@/features/integrations/deliver-webhooks.js";
 import { getStorage } from "@/lib/database.js";
 import { streamCompletion } from "@/lib/llm.js";
@@ -84,6 +85,7 @@ export const runEnhancement = async ({
         title: pickTitle(note, enhanced.title),
       },
     });
+    await syncActionItems(noteId, enhanced.markdown);
     void dispatchNoteEvent({ noteId, event: "note.enhanced" });
   } finally {
     store.finish();

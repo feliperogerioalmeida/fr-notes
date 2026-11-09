@@ -41,8 +41,11 @@ impl SCStreamOutputTrait for IgnoredVideoOutput {
     fn did_output_sample_buffer(&self, _sample: CMSampleBuffer, _output_type: SCStreamOutputType) {}
 }
 
-pub fn start_screen_capture_audio(audio_tx: UnboundedSender<Vec<f32>>) -> Result<(ScreenCaptureAudio, u32), String> {
-    let content = SCShareableContent::get().map_err(|error| format!("shareable_content_unavailable: {error}"))?;
+pub fn start_screen_capture_audio(
+    audio_tx: UnboundedSender<Vec<f32>>,
+) -> Result<(ScreenCaptureAudio, u32), String> {
+    let content = SCShareableContent::get()
+        .map_err(|error| format!("shareable_content_unavailable: {error}"))?;
     let display = content
         .displays()
         .into_iter()
@@ -53,7 +56,8 @@ pub fn start_screen_capture_audio(audio_tx: UnboundedSender<Vec<f32>>) -> Result
         .with_excluding_windows(&[])
         .build()
         .map_err(|error| error.to_string())?;
-    let mut stream = SCStream::new(&filter, &build_configuration()).map_err(|error| error.to_string())?;
+    let mut stream =
+        SCStream::new(&filter, &build_configuration()).map_err(|error| error.to_string())?;
     stream
         .add_output_handler(IgnoredVideoOutput, SCStreamOutputType::Screen)
         .map_err(|error| error.to_string())?;

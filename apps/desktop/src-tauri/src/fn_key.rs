@@ -75,10 +75,21 @@ mod platform {
             handle_flags_changed(&app, &pressed, flags_of(event));
             event.as_ptr()
         });
-        let global = NSEvent::addGlobalMonitorForEventsMatchingMask_handler(NSEventMask::FlagsChanged, &global_block);
-        let local =
-            unsafe { NSEvent::addLocalMonitorForEventsMatchingMask_handler(NSEventMask::FlagsChanged, &local_block) };
-        MONITORS.with(|monitors| monitors.borrow_mut().extend(global.into_iter().chain(local)));
+        let global = NSEvent::addGlobalMonitorForEventsMatchingMask_handler(
+            NSEventMask::FlagsChanged,
+            &global_block,
+        );
+        let local = unsafe {
+            NSEvent::addLocalMonitorForEventsMatchingMask_handler(
+                NSEventMask::FlagsChanged,
+                &local_block,
+            )
+        };
+        MONITORS.with(|monitors| {
+            monitors
+                .borrow_mut()
+                .extend(global.into_iter().chain(local))
+        });
     }
 
     pub fn remove_monitors() {

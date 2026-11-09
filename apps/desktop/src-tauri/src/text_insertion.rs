@@ -40,7 +40,11 @@ pub fn frontmost_external_app() -> Option<TargetAppInfo> {
     Some(info)
 }
 
-pub async fn insert_text(app: &AppHandle, text: String, target: Option<TargetAppInfo>) -> Result<(), String> {
+pub async fn insert_text(
+    app: &AppHandle,
+    text: String,
+    target: Option<TargetAppInfo>,
+) -> Result<(), String> {
     if !is_trusted() {
         return Err(ACCESSIBILITY_REQUIRED_ERROR.into());
     }
@@ -69,7 +73,8 @@ mod platform {
 
     use objc2::rc::autoreleasepool;
     use objc2_app_kit::{
-        NSApplicationActivationOptions, NSPasteboard, NSPasteboardTypeString, NSRunningApplication, NSWorkspace,
+        NSApplicationActivationOptions, NSPasteboard, NSPasteboardTypeString, NSRunningApplication,
+        NSWorkspace,
     };
     use objc2_foundation::NSString;
 
@@ -83,7 +88,11 @@ mod platform {
     #[link(name = "CoreGraphics", kind = "framework")]
     extern "C" {
         fn CGEventSourceCreate(state_id: i32) -> *mut c_void;
-        fn CGEventCreateKeyboardEvent(source: *mut c_void, virtual_key: u16, key_down: bool) -> *mut c_void;
+        fn CGEventCreateKeyboardEvent(
+            source: *mut c_void,
+            virtual_key: u16,
+            key_down: bool,
+        ) -> *mut c_void;
         fn CGEventSetFlags(event: *mut c_void, flags: u64);
         fn CGEventPost(tap: u32, event: *mut c_void);
     }
@@ -96,7 +105,10 @@ mod platform {
     pub fn frontmost_app() -> Option<TargetAppInfo> {
         autoreleasepool(|_| {
             let app = NSWorkspace::sharedWorkspace().frontmostApplication()?;
-            let bundle_id = app.bundleIdentifier().map(|id| id.to_string()).unwrap_or_default();
+            let bundle_id = app
+                .bundleIdentifier()
+                .map(|id| id.to_string())
+                .unwrap_or_default();
             let name = app
                 .localizedName()
                 .map(|name| name.to_string())
@@ -123,7 +135,9 @@ mod platform {
         autoreleasepool(|_| {
             let pasteboard = NSPasteboard::generalPasteboard();
             let string_type = unsafe { NSPasteboardTypeString };
-            let previous = pasteboard.stringForType(string_type).map(|value| value.to_string());
+            let previous = pasteboard
+                .stringForType(string_type)
+                .map(|value| value.to_string());
             pasteboard.clearContents();
             pasteboard.setString_forType(&NSString::from_str(text), string_type);
             previous
@@ -135,7 +149,9 @@ mod platform {
             let pasteboard = NSPasteboard::generalPasteboard();
             pasteboard.clearContents();
             if let Some(value) = previous {
-                pasteboard.setString_forType(&NSString::from_str(&value), unsafe { NSPasteboardTypeString });
+                pasteboard.setString_forType(&NSString::from_str(&value), unsafe {
+                    NSPasteboardTypeString
+                });
             }
         });
     }

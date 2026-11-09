@@ -65,11 +65,18 @@ pub fn truncate_chars(text: &str, limit: usize) -> String {
 
 pub fn format_hex_color(red: f64, green: f64, blue: f64) -> String {
     let channel = |value: f64| (value.clamp(0.0, 1.0) * 255.0).round() as u8;
-    format!("#{:02X}{:02X}{:02X}", channel(red), channel(green), channel(blue))
+    format!(
+        "#{:02X}{:02X}{:02X}",
+        channel(red),
+        channel(green),
+        channel(blue)
+    )
 }
 
 fn non_empty(value: Option<String>) -> Option<String> {
-    value.map(|text| text.trim().to_string()).filter(|text| !text.is_empty())
+    value
+        .map(|text| text.trim().to_string())
+        .filter(|text| !text.is_empty())
 }
 
 pub fn notes_excerpt(notes: Option<String>) -> Option<String> {
@@ -99,12 +106,14 @@ mod platform {
     use objc2::runtime::Bool;
     use objc2::{sel, AllocAnyThread};
     use objc2_app_kit::{NSColor, NSColorSpace};
-    use objc2_event_kit::{EKAuthorizationStatus, EKCalendar, EKEntityType, EKEvent, EKEventStore, EKParticipant};
+    use objc2_event_kit::{
+        EKAuthorizationStatus, EKCalendar, EKEntityType, EKEvent, EKEventStore, EKParticipant,
+    };
     use objc2_foundation::{NSArray, NSDate, NSError, NSObjectProtocol};
 
     use super::{
-        format_hex_color, non_empty, notes_excerpt, parse_mailto, sort_calendars, CalendarAttendee, CalendarEvent,
-        CalendarInfo, ListEventsArgs, CALENDAR_ACCESS_DENIED,
+        format_hex_color, non_empty, notes_excerpt, parse_mailto, sort_calendars, CalendarAttendee,
+        CalendarEvent, CalendarInfo, ListEventsArgs, CALENDAR_ACCESS_DENIED,
     };
     use crate::permissions::{DENIED, GRANTED, RESTRICTED, UNDETERMINED};
 
@@ -140,12 +149,16 @@ mod platform {
         let completion = RcBlock::new(move |granted: Bool, _error: *mut NSError| {
             let _ = sender.send(granted.as_bool());
         });
-        let supports_full_access = store.respondsToSelector(sel!(requestFullAccessToEventsWithCompletion:));
+        let supports_full_access =
+            store.respondsToSelector(sel!(requestFullAccessToEventsWithCompletion:));
         unsafe {
             if supports_full_access {
                 store.requestFullAccessToEventsWithCompletion(RcBlock::as_ptr(&completion));
             } else {
-                store.requestAccessToEntityType_completion(EKEntityType::Event, RcBlock::as_ptr(&completion));
+                store.requestAccessToEntityType_completion(
+                    EKEntityType::Event,
+                    RcBlock::as_ptr(&completion),
+                );
             }
         }
     }
@@ -157,7 +170,9 @@ mod platform {
         let store = new_store();
         let (sender, receiver) = mpsc::channel();
         send_access_request(&store, sender);
-        let granted = receiver.recv_timeout(ACCESS_PROMPT_TIMEOUT).unwrap_or(false);
+        let granted = receiver
+            .recv_timeout(ACCESS_PROMPT_TIMEOUT)
+            .unwrap_or(false);
         drop(store);
         Ok(granted)
     }
@@ -165,7 +180,11 @@ mod platform {
     fn hex_color(calendar: &EKCalendar) -> Option<String> {
         let color: Retained<NSColor> = unsafe { calendar.color() };
         let srgb = color.colorUsingColorSpace(&NSColorSpace::sRGBColorSpace())?;
-        Some(format_hex_color(srgb.redComponent(), srgb.greenComponent(), srgb.blueComponent()))
+        Some(format_hex_color(
+            srgb.redComponent(),
+            srgb.greenComponent(),
+            srgb.blueComponent(),
+        ))
     }
 
     fn to_calendar_info(calendar: &EKCalendar) -> CalendarInfo {
@@ -189,13 +208,19 @@ mod platform {
         ensure_authorized()?;
         autoreleasepool(|_| {
             let store = new_store();
-            let mut calendars: Vec<CalendarInfo> = event_calendars(&store).iter().map(|c| to_calendar_info(&c)).collect();
+            let mut calendars: Vec<CalendarInfo> = event_calendars(&store)
+                .iter()
+                .map(|c| to_calendar_info(&c))
+                .collect();
             sort_calendars(&mut calendars);
             Ok(calendars)
         })
     }
 
-    fn selected_calendars(store: &EKEventStore, ids: &Option<Vec<String>>) -> Option<Retained<NSArray<EKCalendar>>> {
+    fn selected_calendars(
+        store: &EKEventStore,
+        ids: &Option<Vec<String>>,
+    ) -> Option<Retained<NSArray<EKCalendar>>> {
         let ids = ids.as_ref().filter(|ids| !ids.is_empty())?;
         let matching: Vec<Retained<EKCalendar>> = event_calendars(store)
             .iter()
@@ -208,7 +233,9 @@ mod platform {
         let url = unsafe { participant.URL() };
         CalendarAttendee {
             name: non_empty(unsafe { participant.name() }.map(|name| name.to_string())),
-            email: url.absoluteString().and_then(|value| parse_mailto(&value.to_string())),
+            email: url
+                .absoluteString()
+                .and_then(|value| parse_mailto(&value.to_string())),
             is_current_user: unsafe { participant.isCurrentUser() },
         }
     }
@@ -221,10 +248,16 @@ mod platform {
         let start_date = unsafe { event.startDate() };
         let end_date = unsafe { event.endDate() };
         let start_ms = to_millis(&start_date);
-        let identifier = unsafe { event.eventIdentifier() }.map(|id| id.to_string()).unwrap_or_default();
+        let identifier = unsafe { event.eventIdentifier() }
+            .map(|id| id.to_string())
+            .unwrap_or_default();
         let calendar = unsafe { event.calendar() };
         let attendees = unsafe { event.attendees() }
-            .map(|list| list.iter().map(|participant| to_attendee(&participant)).collect())
+            .map(|list| {
+                list.iter()
+                    .map(|participant| to_attendee(&participant))
+                    .collect()
+            })
             .unwrap_or_default();
         CalendarEvent {
             id: format!("{identifier}:{}", start_ms.round() as i64),
@@ -238,8 +271,13 @@ mod platform {
             is_all_day: unsafe { event.isAllDay() },
             location: non_empty(unsafe { event.location() }.map(|location| location.to_string())),
             notes: notes_excerpt(unsafe { event.notes() }.map(|notes| notes.to_string())),
-            url: unsafe { event.URL() }.and_then(|url| url.absoluteString()).map(|url| url.to_string()),
-            calendar_title: calendar.as_ref().map(|calendar| unsafe { calendar.title() }.to_string()).unwrap_or_default(),
+            url: unsafe { event.URL() }
+                .and_then(|url| url.absoluteString())
+                .map(|url| url.to_string()),
+            calendar_title: calendar
+                .as_ref()
+                .map(|calendar| unsafe { calendar.title() }.to_string())
+                .unwrap_or_default(),
             calendar_color: calendar.as_ref().and_then(|calendar| hex_color(calendar)),
             attendees,
             organizer: unsafe { event.organizer() }.map(|organizer| to_attendee(&organizer)),
@@ -256,10 +294,18 @@ mod platform {
             if calendars.as_ref().is_some_and(|list| list.count() == 0) {
                 return Ok(Vec::new());
             }
-            let predicate =
-                unsafe { store.predicateForEventsWithStartDate_endDate_calendars(&start, &end, calendars.as_deref()) };
+            let predicate = unsafe {
+                store.predicateForEventsWithStartDate_endDate_calendars(
+                    &start,
+                    &end,
+                    calendars.as_deref(),
+                )
+            };
             let mut events: Vec<CalendarEvent> =
-                unsafe { store.eventsMatchingPredicate(&predicate) }.iter().map(|event| to_calendar_event(&event)).collect();
+                unsafe { store.eventsMatchingPredicate(&predicate) }
+                    .iter()
+                    .map(|event| to_calendar_event(&event))
+                    .collect();
             events.sort_by(|first, second| first.start_ms.total_cmp(&second.start_ms));
             Ok(events)
         })
@@ -292,8 +338,14 @@ mod tests {
 
     #[test]
     fn parses_mailto_urls() {
-        assert_eq!(parse_mailto("mailto:ana@fr.dev"), Some("ana@fr.dev".to_string()));
-        assert_eq!(parse_mailto("MAILTO:Ana@FR.dev?subject=oi"), Some("Ana@FR.dev".to_string()));
+        assert_eq!(
+            parse_mailto("mailto:ana@fr.dev"),
+            Some("ana@fr.dev".to_string())
+        );
+        assert_eq!(
+            parse_mailto("MAILTO:Ana@FR.dev?subject=oi"),
+            Some("Ana@FR.dev".to_string())
+        );
         assert_eq!(parse_mailto("https://meet.google.com/abc"), None);
         assert_eq!(parse_mailto("mailto:"), None);
         assert_eq!(parse_mailto("mail"), None);
@@ -319,9 +371,19 @@ mod tests {
             source: source.into(),
             allows_modifications: true,
         };
-        let mut calendars = vec![info("iCloud", "Pessoal"), info("Google", "Trabalho"), info("Google", "Aniversários")];
+        let mut calendars = vec![
+            info("iCloud", "Pessoal"),
+            info("Google", "Trabalho"),
+            info("Google", "Aniversários"),
+        ];
         sort_calendars(&mut calendars);
-        let order: Vec<&str> = calendars.iter().map(|calendar| calendar.id.as_str()).collect();
-        assert_eq!(order, vec!["Google-Aniversários", "Google-Trabalho", "iCloud-Pessoal"]);
+        let order: Vec<&str> = calendars
+            .iter()
+            .map(|calendar| calendar.id.as_str())
+            .collect();
+        assert_eq!(
+            order,
+            vec!["Google-Aniversários", "Google-Trabalho", "iCloud-Pessoal"]
+        );
     }
 }

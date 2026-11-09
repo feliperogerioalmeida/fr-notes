@@ -12,7 +12,8 @@ use crate::audio::echo::{start_echo_canceller, EchoInputSender, EchoRates, AEC_S
 use crate::audio::microphone::{start_microphone, MicrophoneCapture};
 use crate::audio::ErrorReporter;
 use crate::events::{
-    emit_recording_error, emit_recording_state, AudioSource, RecordingLevelPayload, RECORDING_LEVEL_EVENT,
+    emit_recording_error, emit_recording_state, AudioSource, RecordingLevelPayload,
+    RECORDING_LEVEL_EVENT,
 };
 use crate::secrets::{read_secret, DEEPGRAM_API_KEY};
 use crate::transcription::deepgram::DeepgramConfig;
@@ -80,12 +81,17 @@ pub struct RecordingManager {
 }
 
 impl RecordingManager {
-    pub async fn start(&self, app: &AppHandle, args: StartRecordingArgs) -> Result<RecordingStarted, String> {
+    pub async fn start(
+        &self,
+        app: &AppHandle,
+        args: StartRecordingArgs,
+    ) -> Result<RecordingStarted, String> {
         let mut active = self.active.lock().await;
         if active.is_some() {
             return Err("recording_already_active".into());
         }
-        let api_key = read_secret(DEEPGRAM_API_KEY)?.ok_or_else(|| MISSING_DEEPGRAM_KEY_ERROR.to_string())?;
+        let api_key =
+            read_secret(DEEPGRAM_API_KEY)?.ok_or_else(|| MISSING_DEEPGRAM_KEY_ERROR.to_string())?;
         let session = start_session(app, args, api_key)?;
         let started = RecordingStarted {
             session_id: uuid::Uuid::new_v4().to_string(),
@@ -127,7 +133,11 @@ struct AudioRouting {
     tasks: Vec<JoinHandle<()>>,
 }
 
-fn start_session(app: &AppHandle, args: StartRecordingArgs, api_key: String) -> Result<ActiveSession, String> {
+fn start_session(
+    app: &AppHandle,
+    args: StartRecordingArgs,
+    api_key: String,
+) -> Result<ActiveSession, String> {
     let (stop_tx, stop_rx) = watch::channel(false);
     let levels = SessionLevels {
         microphone: Arc::new(AtomicU32::new(0)),
@@ -145,11 +155,32 @@ fn start_session(app: &AppHandle, args: StartRecordingArgs, api_key: String) -> 
         Some((capture, source)) => (Some(capture), Some(source)),
         None => (None, None),
     };
-    let routing = route_audio(app, args.echo_cancellation, microphone_source, system_source);
+    let routing = route_audio(
+        app,
+        args.echo_cancellation,
+        microphone_source,
+        system_source,
+    );
     let mut stream_tasks = routing.tasks;
-    stream_tasks.push(spawn_stream(app, &args.note_id, AudioSource::Microphone, &base_config, levels.microphone.clone(), routing.microphone, stop_rx.clone()));
+    stream_tasks.push(spawn_stream(
+        app,
+        &args.note_id,
+        AudioSource::Microphone,
+        &base_config,
+        levels.microphone.clone(),
+        routing.microphone,
+        stop_rx.clone(),
+    ));
     if let Some(source) = routing.system {
-        stream_tasks.push(spawn_stream(app, &args.note_id, AudioSource::System, &base_config, levels.system.clone(), source, stop_rx));
+        stream_tasks.push(spawn_stream(
+            app,
+            &args.note_id,
+            AudioSource::System,
+            &base_config,
+            levels.system.clone(),
+            source,
+            stop_rx,
+        ));
     }
     Ok(ActiveSession {
         note_id: args.note_id,
@@ -188,19 +219,35 @@ fn spawn_stream(
 fn start_microphone_capture(app: &AppHandle) -> Result<(MicrophoneCapture, RoutedSource), String> {
     let (audio_tx, receiver) = unbounded_channel();
     let error_app = app.clone();
-    let report_error: ErrorReporter = Arc::new(move |message| emit_recording_error(&error_app, "microphone", message));
+    let report_error: ErrorReporter =
+        Arc::new(move |message| emit_recording_error(&error_app, "microphone", message));
     let (capture, sample_rate) = start_microphone(audio_tx, report_error)?;
-    Ok((capture, RoutedSource { receiver, sample_rate }))
+    Ok((
+        capture,
+        RoutedSource {
+            receiver,
+            sample_rate,
+        },
+    ))
 }
 
 #[cfg(target_os = "macos")]
-fn start_optional_system_capture(app: &AppHandle, args: &StartRecordingArgs) -> Option<(SystemCapture, RoutedSource)> {
+fn start_optional_system_capture(
+    app: &AppHandle,
+    args: &StartRecordingArgs,
+) -> Option<(SystemCapture, RoutedSource)> {
     if !args.capture_system_audio {
         return None;
     }
     let (audio_tx, receiver) = unbounded_channel();
     match crate::audio::system_audio::start_system_audio(audio_tx) {
-        Ok((capture, sample_rate)) => Some((capture, RoutedSource { receiver, sample_rate })),
+        Ok((capture, sample_rate)) => Some((
+            capture,
+            RoutedSource {
+                receiver,
+                sample_rate,
+            },
+        )),
         Err(error) => {
             emit_recording_error(app, "system", error);
             None
@@ -209,7 +256,10 @@ fn start_optional_system_capture(app: &AppHandle, args: &StartRecordingArgs) -> 
 }
 
 #[cfg(not(target_os = "macos"))]
-fn start_optional_system_capture(app: &AppHandle, args: &StartRecordingArgs) -> Option<(SystemCapture, RoutedSource)> {
+fn start_optional_system_capture(
+    app: &AppHandle,
+    args: &StartRecordingArgs,
+) -> Option<(SystemCapture, RoutedSource)> {
     if args.capture_system_audio {
         emit_recording_error(app, "system", "system_audio_unsupported_platform");
     }
@@ -224,7 +274,13 @@ fn route_audio(
 ) -> AudioRouting {
     let system = match system {
         Some(system) if echo_cancellation => system,
-        other => return AudioRouting { microphone, system: other, tasks: Vec::new() },
+        other => {
+            return AudioRouting {
+                microphone,
+                system: other,
+                tasks: Vec::new(),
+            }
+        }
     };
     let (clean_tx, clean_rx) = unbounded_channel();
     let rates = EchoRates {
@@ -235,7 +291,11 @@ fn route_audio(
         Ok(canceller) => canceller,
         Err(error) => {
             emit_recording_error(app, "microphone", error);
-            return AudioRouting { microphone, system: Some(system), tasks: Vec::new() };
+            return AudioRouting {
+                microphone,
+                system: Some(system),
+                tasks: Vec::new(),
+            };
         }
     };
     let (system_tx, system_rx) = unbounded_channel();
@@ -244,8 +304,14 @@ fn route_audio(
         tokio::spawn(forward_reference(system.receiver, canceller, system_tx)),
     ];
     AudioRouting {
-        microphone: RoutedSource { receiver: clean_rx, sample_rate: AEC_SAMPLE_RATE },
-        system: Some(RoutedSource { receiver: system_rx, sample_rate: system.sample_rate }),
+        microphone: RoutedSource {
+            receiver: clean_rx,
+            sample_rate: AEC_SAMPLE_RATE,
+        },
+        system: Some(RoutedSource {
+            receiver: system_rx,
+            sample_rate: system.sample_rate,
+        }),
         tasks,
     }
 }
@@ -296,7 +362,10 @@ async fn shutdown_session(session: ActiveSession) {
     .await;
     for task in session.stream_tasks {
         let abort_handle = task.abort_handle();
-        if tokio::time::timeout(STREAM_SHUTDOWN_TIMEOUT, task).await.is_err() {
+        if tokio::time::timeout(STREAM_SHUTDOWN_TIMEOUT, task)
+            .await
+            .is_err()
+        {
             abort_handle.abort();
         }
     }

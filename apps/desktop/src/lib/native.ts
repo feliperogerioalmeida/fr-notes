@@ -17,13 +17,17 @@ export const SECRET_KEYS = {
 export type SecretKey =
   | (typeof SECRET_KEYS)[keyof typeof SECRET_KEYS]
   | `webhook_secret:${string}`
-  | `webhook_header:${string}`;
+  | `webhook_header:${string}`
+  | `connection_token:${string}`;
 
 export const webhookSecretKey = (webhookId: string): SecretKey =>
   `webhook_secret:${webhookId}`;
 
 export const webhookHeaderKey = (webhookId: string): SecretKey =>
   `webhook_header:${webhookId}`;
+
+export const connectionTokenKey = (connectionId: string): SecretKey =>
+  `connection_token:${connectionId}`;
 
 export type PermissionState =
   | "granted"

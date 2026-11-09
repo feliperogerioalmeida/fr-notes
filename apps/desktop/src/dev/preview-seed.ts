@@ -1,8 +1,14 @@
-import type { CalendarEvent, TranscriptSource } from "@workspace/core";
+import {
+  type CalendarEvent,
+  nowIso,
+  type TranscriptSource,
+} from "@workspace/core";
 
 import { getStorage } from "@/lib/database.js";
+import { connectionTokenKey, writeSecret } from "@/lib/native.js";
 
 const MINUTE_MS = 60_000;
+const DAY_MS = 24 * 60 * MINUTE_MS;
 const SEGMENT_GAP_MS = 9_000;
 
 const DEMO_TRANSCRIPT: [TranscriptSource, string][] = [
@@ -74,6 +80,10 @@ const seedDemoMeeting = async () => {
       recordingStartedAt: new Date(startedAt).toISOString(),
     },
   });
+  await storage.actionItems.syncFromMarkdown({
+    noteId: note.id,
+    markdown: DEMO_ENHANCED,
+  });
   for (const [index, [source, text]] of DEMO_TRANSCRIPT.entries()) {
     const startMs = startedAt + index * SEGMENT_GAP_MS;
     await storage.transcript.appendSegment({
@@ -87,13 +97,77 @@ const seedDemoMeeting = async () => {
   }
 };
 
+const SPRINT_ENHANCED = `### Resumo
+- Sprint fechou com **8 de 10** histórias entregues.
+- Sync com o FR Hub ficou para a próxima sprint.
+
+### Próximos passos
+- [ ] Ana — revisar o fluxo de onboarding no app (quarta)
+- [x] Felipe — publicar a versão 0.2.0
+- [ ] Bruno — estimar o sync de notas com o FR Hub`;
+
+const seedSprintReview = async () => {
+  const storage = await getStorage();
+  const note = await storage.notes.createNote({
+    title: "Review de sprint — FR Hub",
+  });
+  const startedAt = new Date(Date.now() - DAY_MS).toISOString();
+  await storage.notes.updateNote({
+    id: note.id,
+    patch: {
+      enhancedMarkdown: SPRINT_ENHANCED,
+      status: "done",
+      recordingStartedAt: startedAt,
+    },
+  });
+  await storage.actionItems.syncFromMarkdown({
+    noteId: note.id,
+    markdown: SPRINT_ENHANCED,
+  });
+};
+
+const seedConnections = async () => {
+  const storage = await getStorage();
+  const clickUpId = await storage.connections.createConnection({
+    provider: "clickup",
+    name: "ClickUp · Sprint atual",
+    config: { listId: "preview-list", listName: "Sprint atual" },
+    enabled: true,
+  });
+  await writeSecret(connectionTokenKey(clickUpId), "pk_preview");
+  const slackId = await storage.connections.createConnection({
+    provider: "slack",
+    name: "Slack · #clientes",
+    config: {},
+    enabled: true,
+  });
+  await writeSecret(
+    connectionTokenKey(slackId),
+    "https://hooks.slack.com/preview",
+  );
+  const [first] = await storage.actionItems.listAll();
+  if (!first) return;
+  await storage.actionItems.recordSent({
+    id: first.id,
+    ref: {
+      connectionId: clickUpId,
+      provider: "clickup",
+      externalId: "86abc",
+      url: "https://app.clickup.com/t/86abc",
+      sentAt: nowIso(),
+    },
+  });
+};
+
 export const seedPreviewData = async () => {
   const storage = await getStorage();
   await storage.settings.writeSettings({ userName: "Felipe Rogério" });
   await storage.folders.createFolder("FR Digital");
   await storage.folders.createFolder("Clientes");
+  await seedSprintReview();
   await seedDemoMeeting();
   await storage.notes.createNote({ title: "1:1 com o time" });
+  await seedConnections();
 };
 
 const buildEvent = (

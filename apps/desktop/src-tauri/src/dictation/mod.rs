@@ -66,12 +66,17 @@ pub struct DictationManager {
 }
 
 impl DictationManager {
-    pub async fn start(&self, app: &AppHandle, args: StartDictationArgs) -> Result<DictationStarted, String> {
+    pub async fn start(
+        &self,
+        app: &AppHandle,
+        args: StartDictationArgs,
+    ) -> Result<DictationStarted, String> {
         let mut active = self.active.lock().await;
         if active.is_some() {
             return Err(ALREADY_RUNNING_ERROR.into());
         }
-        let api_key = read_secret(DEEPGRAM_API_KEY)?.ok_or_else(|| MISSING_DEEPGRAM_KEY_ERROR.to_string())?;
+        let api_key =
+            read_secret(DEEPGRAM_API_KEY)?.ok_or_else(|| MISSING_DEEPGRAM_KEY_ERROR.to_string())?;
         self.remember_target(run_on_main(app, frontmost_external_app).await?);
         let session = start_session(app, args, api_key)?;
         let started = DictationStarted {
@@ -128,7 +133,11 @@ pub fn hide_and_idle(app: &AppHandle) -> Result<(), String> {
     hidden
 }
 
-fn start_session(app: &AppHandle, args: StartDictationArgs, api_key: String) -> Result<ActiveDictation, String> {
+fn start_session(
+    app: &AppHandle,
+    args: StartDictationArgs,
+    api_key: String,
+) -> Result<ActiveDictation, String> {
     let shared = DictationShared::default();
     let error_shared = shared.clone();
     let report_error: ErrorReporter = Arc::new(move |message| error_shared.record_error(message));
@@ -177,7 +186,10 @@ async fn shutdown_session(session: ActiveDictation, wait_for_results: bool) {
         return;
     }
     let abort_handle = session.stream_task.abort_handle();
-    if tokio::time::timeout(STOP_TIMEOUT, session.stream_task).await.is_err() {
+    if tokio::time::timeout(STOP_TIMEOUT, session.stream_task)
+        .await
+        .is_err()
+    {
         abort_handle.abort();
     }
 }

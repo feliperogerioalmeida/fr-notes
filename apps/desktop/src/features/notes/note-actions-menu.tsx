@@ -10,10 +10,19 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@workspace/ui/components/ui/dropdown-menu";
-import { Copy, Ellipsis, FolderInput, Send, Trash2 } from "lucide-react";
+import {
+  Copy,
+  Ellipsis,
+  FolderInput,
+  Send,
+  Trash2,
+  Webhook,
+} from "lucide-react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
+import { sendNoteTo } from "@/features/action-items/send-to-connection.js";
+import { ConnectionMenuItems } from "@/features/connections/connection-menu-items.js";
 import { useFoldersQuery } from "@/features/folders/use-folders.js";
 import { dispatchCurrentState } from "@/features/integrations/deliver-webhooks.js";
 
@@ -52,6 +61,22 @@ const FolderSubmenu = ({ note }: { note: Note }) => {
   );
 };
 
+const SendNoteSubmenu = ({ note }: { note: Note }) => (
+  <DropdownMenuSub>
+    <DropdownMenuSubTrigger>
+      <Send />
+      Enviar nota para
+    </DropdownMenuSubTrigger>
+    <DropdownMenuSubContent className="w-56">
+      <ConnectionMenuItems
+        capability="note"
+        label="Destinos"
+        onSelect={(connection) => void sendNoteTo({ note, connection })}
+      />
+    </DropdownMenuSubContent>
+  </DropdownMenuSub>
+);
+
 export const NoteActionsMenu = ({ note }: { note: Note }) => {
   const deleteNote = useDeleteNote();
   const navigate = useNavigate();
@@ -62,14 +87,14 @@ export const NoteActionsMenu = ({ note }: { note: Note }) => {
   const sendToIntegrations = async () => {
     const results = await dispatchCurrentState(note);
     if (results.length === 0) {
-      toast.message("Nenhuma integração ativa", {
-        description: "Cadastre uma em Configurações → Integrações.",
+      toast.message("Nenhum webhook ativo", {
+        description: "Cadastre um em Configurações → Integrações.",
       });
       return;
     }
     const failed = results.filter((result) => result.error).length;
     if (failed > 0) toast.error(`${failed} envio(s) falharam`);
-    else toast.success("Nota enviada para as integrações");
+    else toast.success("Webhooks disparados");
   };
   const remove = async () => {
     await deleteNote.mutateAsync(note.id);
@@ -87,9 +112,10 @@ export const NoteActionsMenu = ({ note }: { note: Note }) => {
           <Copy />
           Copiar como Markdown
         </DropdownMenuItem>
+        <SendNoteSubmenu note={note} />
         <DropdownMenuItem onSelect={() => void sendToIntegrations()}>
-          <Send />
-          Enviar para integrações
+          <Webhook />
+          Disparar webhooks
         </DropdownMenuItem>
         <FolderSubmenu note={note} />
         <DropdownMenuSeparator />

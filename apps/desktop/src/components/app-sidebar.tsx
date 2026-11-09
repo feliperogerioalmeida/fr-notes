@@ -8,7 +8,9 @@ import {
   Folder,
   House,
   LayoutTemplate,
+  ListChecks,
   type LucideIcon,
+  Plug,
   Plus,
   Search,
   Settings,
@@ -158,8 +160,10 @@ export const AppSidebar = ({
       <nav className="flex flex-col gap-0.5 px-3">
         <SidebarLink to="/" icon={House} label="Início" end />
         <SidebarLink to="/agenda" icon={CalendarDays} label="Agenda" />
+        <SidebarLink to="/tasks" icon={ListChecks} label="Próximos passos" />
         <SidebarLink to="/dictations" icon={AudioLines} label="Ditados" />
         <SidebarLink to="/templates" icon={LayoutTemplate} label="Templates" />
+        <SidebarLink to="/connections" icon={Plug} label="Conexões" />
         <FoldersSection />
       </nav>
     </ScrollArea>

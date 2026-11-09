@@ -19,7 +19,9 @@ impl SystemAudioCapture {
     }
 }
 
-pub fn start_system_audio(audio_tx: UnboundedSender<Vec<f32>>) -> Result<(SystemAudioCapture, u32), String> {
+pub fn start_system_audio(
+    audio_tx: UnboundedSender<Vec<f32>>,
+) -> Result<(SystemAudioCapture, u32), String> {
     match start_process_tap(audio_tx.clone()) {
         Ok((capture, sample_rate)) => Ok((SystemAudioCapture::ProcessTap(capture), sample_rate)),
         Err(TapError::PermissionDenied) => Err(SYSTEM_AUDIO_PERMISSION_DENIED.into()),
@@ -28,7 +30,10 @@ pub fn start_system_audio(audio_tx: UnboundedSender<Vec<f32>>) -> Result<(System
     }
 }
 
-fn start_fallback(audio_tx: UnboundedSender<Vec<f32>>, tap_reason: &str) -> Result<(SystemAudioCapture, u32), String> {
+fn start_fallback(
+    audio_tx: UnboundedSender<Vec<f32>>,
+    tap_reason: &str,
+) -> Result<(SystemAudioCapture, u32), String> {
     start_screen_capture_audio(audio_tx)
         .map(|(capture, sample_rate)| (SystemAudioCapture::ScreenCapture(capture), sample_rate))
         .map_err(|error| format!("{tap_reason}; screen_capture_fallback: {error}"))
