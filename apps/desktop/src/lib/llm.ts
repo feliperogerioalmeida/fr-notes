@@ -11,9 +11,13 @@ export class LlmNotConfiguredError extends Error {
   }
 }
 
-type LlmSettings = Pick<Settings, "llmProvider" | "llmModel" | "llmBaseUrl">;
+type LlmSettings = Pick<
+  Settings,
+  "llmProvider" | "llmModel" | "llmBaseUrl" | "llmThinking"
+>;
 
 const OPENAI_COMPATIBLE_NAME = "fr-notes-llm";
+const OPENAI_COMPATIBLE_OPTIONS_KEY = "frNotesLlm";
 
 const buildModel = (settings: LlmSettings, apiKey: string | null) => {
   if (settings.llmProvider === "gateway") {
@@ -28,6 +32,11 @@ const buildModel = (settings: LlmSettings, apiKey: string | null) => {
     fetch: tauriFetch,
   }).chatModel(settings.llmModel);
 };
+
+const buildProviderOptions = (settings: LlmSettings) =>
+  settings.llmProvider === "openai-compatible" && !settings.llmThinking
+    ? { [OPENAI_COMPATIBLE_OPTIONS_KEY]: { reasoningEffort: "none" } }
+    : undefined;
 
 const isConfigured = (settings: LlmSettings, apiKey: string | null) => {
   if (!settings.llmModel.trim()) return false;
@@ -55,6 +64,7 @@ export const streamCompletion = async ({
   let streamError: unknown = null;
   const result = streamText({
     model: buildModel(settings, apiKey),
+    providerOptions: buildProviderOptions(settings),
     instructions,
     messages,
     abortSignal: signal,

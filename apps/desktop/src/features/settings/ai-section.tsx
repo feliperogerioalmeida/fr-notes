@@ -5,6 +5,7 @@ import { SECRET_KEYS } from "@/lib/native.js";
 import { SecretField } from "./secret-field.js";
 import { SelectSetting, TextSetting } from "./settings-controls.js";
 import { SettingsField, SettingsSection } from "./settings-section.js";
+import { SwitchSetting } from "./switch-setting.js";
 import {
   useSecretsPresence,
   useSettings,
@@ -67,6 +68,13 @@ export const AiSection = () => {
             : "Crie em vercel.com → AI Gateway → API Keys."
         }
       />
+      {isCompatible && (
+        <SwitchSetting
+          settingKey="llmThinking"
+          title="Raciocínio do modelo"
+          description="Em modelos que “pensam” antes de responder, pode melhorar a qualidade, mas deixa tudo bem mais lento. Mantenha desligado no Ollama."
+        />
+      )}
     </SettingsSection>
   );
 };

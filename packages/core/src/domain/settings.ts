@@ -44,6 +44,7 @@ export const SettingsSchema = z.object({
   llmProvider: z.enum(LLM_PROVIDERS).default("gateway"),
   llmModel: z.string().default(""),
   llmBaseUrl: z.string().default(""),
+  llmThinking: z.boolean().default(false),
   theme: z.enum(THEMES).default("dark"),
 });
 
