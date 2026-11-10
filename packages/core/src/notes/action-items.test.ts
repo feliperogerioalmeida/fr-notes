@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { extractActionItems, setTaskChecked } from "./action-items.js";
+import {
+  extractActionItems,
+  normalizeTaskBullets,
+  setTaskChecked,
+} from "./action-items.js";
 
 const MARKDOWN = [
   "### Próximos passos",
@@ -59,5 +63,32 @@ describe("setTaskChecked", () => {
     expect(updated.split("\n")[2]).toBe(
       "- [x] **Marina** — compartilhar a planilha atual",
     );
+  });
+});
+
+const SMALL_MODEL_OUTPUT = [
+  "### Próximos passos",
+  "*   - [ ] Felipe Rogério — Enviar proposta com escopo Fase 1 (deadLine: sexta-feira)",
+  "* [ ] Marina Souza — Enviar planilha atual de pedidos",
+].join("\n");
+
+describe("normalizeTaskBullets", () => {
+  it("fixes doubled and star bullets in front of checkboxes", () => {
+    expect(normalizeTaskBullets(SMALL_MODEL_OUTPUT)).toBe(
+      [
+        "### Próximos passos",
+        "- [ ] Felipe Rogério — Enviar proposta com escopo Fase 1 (deadLine: sexta-feira)",
+        "- [ ] Marina Souza — Enviar planilha atual de pedidos",
+      ].join("\n"),
+    );
+  });
+
+  it("still extracts tasks written with a doubled bullet and a labeled deadline", () => {
+    const [first] = extractActionItems(SMALL_MODEL_OUTPUT);
+    expect(first).toMatchObject({
+      owner: "Felipe Rogério",
+      text: "Enviar proposta com escopo Fase 1",
+      dueText: "sexta-feira",
+    });
   });
 });

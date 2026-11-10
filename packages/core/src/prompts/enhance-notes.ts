@@ -1,4 +1,5 @@
 import type { Template } from "../domain/template.js";
+import { normalizeTaskBullets } from "../notes/action-items.js";
 import {
   buildMeetingContext,
   type MeetingContextInput,
@@ -40,9 +41,10 @@ export interface EnhancedNotes {
 const TITLE_PATTERN = /^#\s+(.+)$/;
 
 export const parseEnhancedNotes = (output: string): EnhancedNotes => {
-  const lines = output.trim().split("\n");
+  const cleaned = normalizeTaskBullets(output.trim());
+  const lines = cleaned.split("\n");
   const titleMatch = lines[0]?.match(TITLE_PATTERN);
-  if (!titleMatch?.[1]) return { title: null, markdown: output.trim() };
+  if (!titleMatch?.[1]) return { title: null, markdown: cleaned };
   return {
     title: titleMatch[1].trim(),
     markdown: lines.slice(1).join("\n").trim(),

@@ -18,4 +18,13 @@ describe("parseEnhancedNotes", () => {
     expect(result.title).toBeNull();
     expect(result.markdown).toBe("### Resumo\n- Sem título");
   });
+
+  it("cleans checkbox bullets written by small models", () => {
+    const result = parseEnhancedNotes(
+      "# Kickoff\n### Próximos passos\n*   - [ ] Ana — revisar fluxo",
+    );
+    expect(result.markdown).toBe(
+      "### Próximos passos\n- [ ] Ana — revisar fluxo",
+    );
+  });
 });

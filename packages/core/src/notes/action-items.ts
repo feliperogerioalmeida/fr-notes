@@ -1,4 +1,7 @@
-const TASK_LINE = /^(\s*)[-*]\s+\[( |x|X)\]\s+(.+?)\s*$/;
+const TASK_LINE = /^(\s*)(?:[-*+]\s+)?[-*+]\s+\[( |x|X)\]\s+(.+?)\s*$/;
+const DOUBLE_BULLET_TASK = /^(\s*)[-*+]\s+[-*+]\s+(\[[ xX]\])/gm;
+const STAR_BULLET_TASK = /^(\s*)[*+]\s+(\[[ xX]\])/gm;
+const DUE_LABEL = /^(prazo|deadline|due)\s*:\s*/i;
 const OWNER_SEPARATOR = /\s+[—–-]\s+/;
 const DUE_SUFFIX = /\s*\(([^()]+)\)\s*$/;
 const MAX_OWNER_WORDS = 4;
@@ -37,9 +40,14 @@ const splitDue = (task: string) => {
   if (!match?.[1]) return { text: task.trim(), dueText: null };
   return {
     text: task.slice(0, match.index).trim(),
-    dueText: match[1].trim(),
+    dueText: match[1].replace(DUE_LABEL, "").trim(),
   };
 };
+
+export const normalizeTaskBullets = (markdown: string): string =>
+  markdown
+    .replace(DOUBLE_BULLET_TASK, "$1- $2")
+    .replace(STAR_BULLET_TASK, "$1- $2");
 
 const parseTaskLine = (line: string): ParsedActionItem | null => {
   const match = line.match(TASK_LINE);
