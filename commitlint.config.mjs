@@ -10,6 +10,7 @@ export default {
         "core",
         "desktop",
         "frontend",
+        "infra",
         "mobile",
         "types",
         "ui",

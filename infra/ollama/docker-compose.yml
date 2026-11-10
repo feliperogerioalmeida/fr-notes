@@ -1,0 +1,54 @@
+services:
+  ollama:
+    image: ollama/ollama:0.40.11
+    restart: unless-stopped
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_KEEP_ALIVE=15m
+      - OLLAMA_FLASH_ATTENTION=1
+      - OLLAMA_KV_CACHE_TYPE=q8_0
+    volumes:
+      - ollama-models:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ollama serve &
+        until ollama list >/dev/null 2>&1; do sleep 1; done
+        ollama pull qwen3.5:4b
+        printf 'FROM qwen3.5:4b\nPARAMETER num_ctx 16384\n' > /tmp/fr-notes.Modelfile
+        ollama create fr-notes -f /tmp/fr-notes.Modelfile
+        wait
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  gateway:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      - SERVICE_URL_GATEWAY_80
+      - FR_NOTES_API_KEY=${SERVICE_PASSWORD_64_FRNOTES}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        cat > /etc/caddy/Caddyfile <<'CADDY'
+        :80 {
+          @authorized header Authorization "Bearer {$$FR_NOTES_API_KEY}"
+          handle @authorized {
+            reverse_proxy ollama:11434 {
+              flush_interval -1
+            }
+          }
+          respond "Unauthorized" 401
+        }
+        CADDY
+        exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile
+    depends_on:
+      - ollama
+
+volumes:
+  ollama-models:
