@@ -19,6 +19,11 @@ type LlmSettings = Pick<
 const OPENAI_COMPATIBLE_NAME = "fr-notes-llm";
 const OPENAI_COMPATIBLE_OPTIONS_KEY = "frNotesLlm";
 
+const TRAILING_URL_JUNK = /[\s,;/]+$/;
+
+const normalizeBaseUrl = (url: string) =>
+  url.trim().replace(TRAILING_URL_JUNK, "");
+
 const buildModel = (settings: LlmSettings, apiKey: string | null) => {
   if (settings.llmProvider === "gateway") {
     return createGateway({ apiKey: apiKey ?? "", fetch: tauriFetch })(
@@ -27,7 +32,7 @@ const buildModel = (settings: LlmSettings, apiKey: string | null) => {
   }
   return createOpenAICompatible({
     name: OPENAI_COMPATIBLE_NAME,
-    baseURL: settings.llmBaseUrl.trim(),
+    baseURL: normalizeBaseUrl(settings.llmBaseUrl),
     apiKey: apiKey ?? undefined,
     fetch: tauriFetch,
   }).chatModel(settings.llmModel);
@@ -41,7 +46,7 @@ const buildProviderOptions = (settings: LlmSettings) =>
 const isConfigured = (settings: LlmSettings, apiKey: string | null) => {
   if (!settings.llmModel.trim()) return false;
   if (settings.llmProvider === "gateway") return Boolean(apiKey);
-  return Boolean(settings.llmBaseUrl.trim());
+  return Boolean(normalizeBaseUrl(settings.llmBaseUrl));
 };
 
 interface StreamCompletionInput {
