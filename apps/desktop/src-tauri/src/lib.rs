@@ -12,6 +12,7 @@ mod microphone_apps;
 mod permissions;
 mod secrets;
 mod session;
+mod speaker_ax;
 #[cfg(target_os = "macos")]
 mod tcc;
 mod text_insertion;
@@ -23,6 +24,7 @@ use tauri::{AppHandle, RunEvent, Window, WindowEvent};
 
 use dictation::DictationManager;
 use session::RecordingManager;
+use speaker_ax::SpeakerMonitor;
 use windows::{show_main_window, MAIN_WINDOW};
 
 pub fn run() {
@@ -35,6 +37,7 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(RecordingManager::default())
         .manage(DictationManager::default())
+        .manage(SpeakerMonitor::default())
         .setup(|app| {
             tray::install_tray(app.handle())?;
             microphone_apps::spawn_microphone_apps_poller(app.handle().clone());
@@ -66,6 +69,9 @@ pub fn run() {
             commands::hide_dictation_pill,
             commands::insert_text,
             commands::set_fn_key_monitoring,
+            commands::start_speaker_monitor,
+            commands::stop_speaker_monitor,
+            commands::reveal_speaker_diagnostics,
         ])
         .build(tauri::generate_context!())
         .expect("error while building FR Notes");

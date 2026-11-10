@@ -11,6 +11,7 @@ pub const DICTATION_LEVEL_EVENT: &str = "dictation:level";
 pub const DICTATION_PARTIAL_EVENT: &str = "dictation:partial";
 pub const DICTATION_STATE_EVENT: &str = "dictation:state";
 pub const DICTATION_FN_KEY_EVENT: &str = "dictation:fn-key";
+pub const SPEAKER_SNAPSHOT_EVENT: &str = "speaker-ax:snapshot";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AudioSource {

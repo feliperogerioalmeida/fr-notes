@@ -27,6 +27,7 @@ import {
 } from "@/features/settings/general-sections.js";
 import { MeetingsSection } from "@/features/settings/meetings-section.js";
 import { PermissionsSection } from "@/features/settings/permissions-section.js";
+import { SpeakersSection } from "@/features/settings/speakers-section.js";
 import { TranscriptionSection } from "@/features/settings/transcription-section.js";
 import {
   type SettingsSectionId,
@@ -79,6 +80,7 @@ const SECTIONS: SectionDefinition[] = [
     content: () => (
       <>
         <MeetingsSection />
+        <SpeakersSection />
         <CalendarsSection />
       </>
     ),

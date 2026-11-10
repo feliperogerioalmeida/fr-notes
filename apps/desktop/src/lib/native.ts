@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { emitTo, listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import type {
+  AxSnapshot,
   CalendarEvent,
   CalendarInfo,
   LiveSegmentEvent,
@@ -282,3 +283,20 @@ export const onFnKey = (handler: (pressed: boolean) => void) =>
   subscribe<{ pressed: boolean }>("dictation:fn-key", ({ pressed }) =>
     handler(pressed),
   );
+
+interface StartSpeakerMonitorArgs {
+  noteId: string;
+  bundleId: string;
+  diagnostics: boolean;
+}
+
+export const startSpeakerMonitor = (args: StartSpeakerMonitorArgs) =>
+  invoke<void>("start_speaker_monitor", { args });
+
+export const stopSpeakerMonitor = () => invoke<void>("stop_speaker_monitor");
+
+export const revealSpeakerDiagnostics = () =>
+  invoke<void>("reveal_speaker_diagnostics");
+
+export const onSpeakerSnapshot = (handler: (snapshot: AxSnapshot) => void) =>
+  subscribe("speaker-ax:snapshot", handler);

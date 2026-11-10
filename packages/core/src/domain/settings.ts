@@ -32,6 +32,8 @@ export const SettingsSchema = z.object({
   meetingDetection: z.enum(MEETING_DETECTION_MODES).default("ask"),
   autoStopRecording: z.boolean().default(true),
   meetingReminders: z.boolean().default(true),
+  speakerDetection: z.boolean().default(true),
+  speakerDiagnostics: z.boolean().default(true),
   hiddenCalendarIds: z.array(z.string()).default([]),
   dictationEnabled: z.boolean().default(true),
   dictationTrigger: z.enum(DICTATION_TRIGGERS).default("fn"),

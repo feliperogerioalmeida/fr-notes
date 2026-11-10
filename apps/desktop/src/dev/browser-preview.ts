@@ -105,8 +105,51 @@ const createHandler = (db: Database) => {
     handlers[cmd]?.(payload) ?? null;
 };
 
+const SCENE_STEP_MS = 1_000;
+const SCENE_STEPS = 10;
+
+const buildSceneSnapshot = (bundleId: string, observedAtMs: number) => ({
+  bundleId,
+  pid: 4242,
+  observedAtMs,
+  truncated: false,
+  nodes: [
+    { role: "AXWindow", title: "Reunião" },
+    { parent: 0, role: "AXGroup", classes: ["tile"] },
+    { parent: 1, role: "AXStaticText", value: "Marina Souza" },
+    { parent: 1, role: "AXGroup", classes: ["is-speaking"] },
+    { parent: 0, role: "AXGroup", classes: ["tile"] },
+    { parent: 4, role: "AXStaticText", value: "João Lima" },
+  ],
+});
+
+const simulateSpeakerScene = (noteId: string, bundleId = "us.zoom.xos") => {
+  const startedAt = Date.now();
+  void emit("transcript:segment", {
+    noteId,
+    source: "system",
+    text: "Hoje tudo chega pelo WhatsApp e a gente perde pedidos toda semana.",
+    isFinal: true,
+    startMs: startedAt,
+    endMs: startedAt + SCENE_STEPS * SCENE_STEP_MS,
+    segmentKey: `system:${startedAt}`,
+    speaker: 0,
+  });
+  for (let step = 0; step <= SCENE_STEPS; step++) {
+    setTimeout(
+      () =>
+        void emit(
+          "speaker-ax:snapshot",
+          buildSceneSnapshot(bundleId, startedAt + step * SCENE_STEP_MS),
+        ),
+      step * SCENE_STEP_MS,
+    );
+  }
+};
+
 const exposePreviewControls = () => {
   Object.assign(window, {
+    simulateSpeakerScene,
     simulateMeetingApp: (active = true) =>
       emit("microphone-apps:changed", {
         apps: active

@@ -8,6 +8,7 @@ use crate::microphone_apps::{self, MicApp};
 use crate::permissions::{self, Permissions};
 use crate::secrets::{read_secret, remove_secret, write_secret};
 use crate::session::{RecordingManager, RecordingStarted, RecordingStatus, StartRecordingArgs};
+use crate::speaker_ax::{self, SpeakerMonitor, StartSpeakerMonitorArgs};
 use crate::windows::set_nub_visible;
 use crate::{fn_key, text_insertion};
 
@@ -153,6 +154,26 @@ pub async fn insert_text(
 #[tauri::command]
 pub async fn set_fn_key_monitoring(app: AppHandle, enabled: bool) -> Result<(), String> {
     fn_key::set_monitoring(&app, enabled).await
+}
+
+#[tauri::command]
+pub async fn start_speaker_monitor(
+    app: AppHandle,
+    monitor: State<'_, SpeakerMonitor>,
+    args: StartSpeakerMonitorArgs,
+) -> Result<(), String> {
+    monitor.start(&app, args).await
+}
+
+#[tauri::command]
+pub async fn stop_speaker_monitor(monitor: State<'_, SpeakerMonitor>) -> Result<(), String> {
+    monitor.stop().await;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn reveal_speaker_diagnostics(app: AppHandle) -> Result<(), String> {
+    speaker_ax::reveal_diagnostics(&app)
 }
 
 async fn run_blocking<T, F>(task: F) -> Result<T, String>
