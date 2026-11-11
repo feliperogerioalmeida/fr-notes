@@ -1,5 +1,4 @@
 import {
-  atMinute,
   buildMonthGrid,
   type CalendarEvent,
   DAYS_PER_WEEK,
@@ -9,11 +8,8 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 
 import { formatClock, formatWeekday } from "./calendar-format.js";
-import type { TimeRange } from "./use-grid-interactions.js";
 
 const VISIBLE_EVENTS = 3;
-const NEW_EVENT_MINUTE = 9 * 60;
-const NEW_EVENT_DURATION = 30;
 
 const sortForMonth = (events: CalendarEvent[]) =>
   [...events].sort(
@@ -29,7 +25,6 @@ interface MonthCellProps {
   events: CalendarEvent[];
   onOpen: (event: CalendarEvent, anchor: DOMRect) => void;
   onSelectDay: (day: number) => void;
-  onCreate: (range: TimeRange & { isAllDay: boolean }) => void;
 }
 
 const MonthEventChip = ({
@@ -69,19 +64,11 @@ const MonthCell = ({
   events,
   onOpen,
   onSelectDay,
-  onCreate,
 }: MonthCellProps) => {
   const sorted = sortForMonth(events);
   const hidden = sorted.length - VISIBLE_EVENTS;
   return (
     <div
-      onDoubleClick={() =>
-        onCreate({
-          startMs: atMinute(day, NEW_EVENT_MINUTE),
-          endMs: atMinute(day, NEW_EVENT_MINUTE + NEW_EVENT_DURATION),
-          isAllDay: false,
-        })
-      }
       className={cn(
         "flex min-h-0 flex-col gap-0.5 overflow-hidden border-t border-l p-1",
         !inMonth && "bg-muted/30",
@@ -119,7 +106,7 @@ const MonthCell = ({
 
 interface MonthGridProps extends Pick<
   MonthCellProps,
-  "onOpen" | "onSelectDay" | "onCreate"
+  "onOpen" | "onSelectDay"
 > {
   anchorMs: number;
   events: CalendarEvent[];

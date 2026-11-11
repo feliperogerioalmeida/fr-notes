@@ -220,8 +220,6 @@ const buildEvent = (
   calendarColor: "#FF6B1A",
   attendees: [],
   organizer: null,
-  canEdit: true,
-  isRecurring: false,
   ...overrides,
 });
 
@@ -290,7 +288,6 @@ const buildWeekEvents = (): CalendarEvent[] => [
     calendarId: "preview-holidays",
     calendarTitle: "Feriados",
     calendarColor: "#8E8E93",
-    canEdit: false,
   }),
   buildEvent({
     id: "preview-convite:3",
@@ -302,7 +299,6 @@ const buildWeekEvents = (): CalendarEvent[] => [
       email: "marina@cliente.com",
       isCurrentUser: false,
     },
-    canEdit: false,
   }),
 ];
 

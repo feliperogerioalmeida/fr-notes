@@ -1,7 +1,6 @@
 import {
   addDays,
   addMonths,
-  atMinute,
   buildDays,
   buildMonthGrid,
   type CalendarEvent,
@@ -12,9 +11,8 @@ import {
 import { Button } from "@workspace/ui/components/ui/button";
 import { ScrollArea } from "@workspace/ui/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/ui/tabs";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header.js";
 import {
@@ -28,20 +26,11 @@ import {
   EventDetails,
   type EventSelection,
 } from "@/features/calendar/event-details.js";
-import {
-  type EditorDraft,
-  EventEditorDialog,
-} from "@/features/calendar/event-editor-dialog.js";
 import { MonthGrid } from "@/features/calendar/month-grid.js";
 import { TimeGrid } from "@/features/calendar/time-grid.js";
-import {
-  useRangeEvents,
-  useSaveCalendarEvent,
-} from "@/features/calendar/use-calendar-data.js";
-import type { TimeRange } from "@/features/calendar/use-grid-interactions.js";
+import { useRangeEvents } from "@/features/calendar/use-calendar-data.js";
 import { useNotesQuery } from "@/features/notes/use-notes.js";
 import { usePermissions } from "@/features/settings/use-settings.js";
-import { describeError } from "@/lib/errors.js";
 
 type CalendarView = "day" | "week" | "month" | "list";
 
@@ -52,7 +41,6 @@ const VIEW_LABELS: Record<CalendarView, string> = {
   list: "Lista",
 };
 const VIEW_STORAGE_KEY = "fr-notes:calendar-view";
-const NEW_EVENT_DURATION_MINUTES = 30;
 
 const isCalendarView = (value: string): value is CalendarView =>
   value in VIEW_LABELS;
@@ -125,7 +113,6 @@ interface ToolbarProps {
   onView: (view: CalendarView) => void;
   onToday: () => void;
   onStep: (direction: number) => void;
-  onNew: () => void;
 }
 
 const CalendarToolbar = ({
@@ -134,7 +121,6 @@ const CalendarToolbar = ({
   onView,
   onToday,
   onStep,
-  onNew,
 }: ToolbarProps) => (
   <div className="flex flex-wrap items-center gap-3 px-8 pb-4">
     <Button size="sm" variant="secondary" onClick={onToday}>
@@ -171,10 +157,6 @@ const CalendarToolbar = ({
         ))}
       </TabsList>
     </Tabs>
-    <Button size="sm" onClick={onNew}>
-      <Plus />
-      Novo evento
-    </Button>
   </div>
 );
 
@@ -190,24 +172,6 @@ const useCalendarState = () => {
     }
   };
   return { view, anchorMs, setAnchorMs, changeView };
-};
-
-const useMoveEvent = () => {
-  const save = useSaveCalendarEvent();
-  return (event: CalendarEvent, range: TimeRange) =>
-    save.mutate(
-      {
-        id: event.id,
-        calendarId: event.calendarId,
-        title: event.title,
-        startMs: range.startMs,
-        endMs: range.endMs,
-        isAllDay: event.isAllDay,
-        location: null,
-        notes: null,
-      },
-      { onError: (error) => toast.error(describeError(error)) },
-    );
 };
 
 const CalendarBody = ({
@@ -226,12 +190,8 @@ const CalendarBody = ({
     notes.map((note) => [note.calendarEventId, note]),
   );
   const [selection, setSelection] = useState<EventSelection | null>(null);
-  const [draft, setDraft] = useState<EditorDraft | null>(null);
-  const moveEvent = useMoveEvent();
   const open = (event: CalendarEvent, anchor: DOMRect) =>
     setSelection({ event, anchor });
-  const create = (created: TimeRange & { isAllDay: boolean }) =>
-    setDraft({ event: null, ...created });
   const grid =
     view === "month" ? (
       <MonthGrid
@@ -239,7 +199,6 @@ const CalendarBody = ({
         events={events}
         onOpen={open}
         onSelectDay={onSelectDay}
-        onCreate={create}
       />
     ) : view === "list" ? (
       <ScrollArea className="min-h-0 flex-1">
@@ -252,8 +211,6 @@ const CalendarBody = ({
         days={range.days}
         events={events}
         notesByEvent={notesByEvent}
-        onCreate={create}
-        onMove={moveEvent}
         onOpen={open}
       />
     );
@@ -264,53 +221,18 @@ const CalendarBody = ({
         selection={selection}
         notesByEvent={notesByEvent}
         onClose={() => setSelection(null)}
-        onEdit={(event) =>
-          setDraft({
-            event,
-            startMs: event.startMs,
-            endMs: event.endMs,
-            isAllDay: event.isAllDay,
-          })
-        }
       />
-      {draft && (
-        <EventEditorDialog
-          key={`${draft.event?.id ?? "new"}-${draft.startMs}`}
-          draft={draft}
-          onClose={() => setDraft(null)}
-        />
-      )}
     </>
-  );
-};
-
-const nextHalfHour = () => {
-  const now = new Date();
-  const minutes = now.getHours() * 60 + now.getMinutes();
-  return atMinute(
-    startOfDay(now.getTime()),
-    Math.ceil(minutes / NEW_EVENT_DURATION_MINUTES) *
-      NEW_EVENT_DURATION_MINUTES,
   );
 };
 
 export const AgendaPage = () => {
   const granted = usePermissions().data?.calendar === "granted";
   const { view, anchorMs, setAnchorMs, changeView } = useCalendarState();
-  const [newDraft, setNewDraft] = useState<EditorDraft | null>(null);
   const step = (direction: number) =>
     setAnchorMs((current) => stepFor(view, current, direction));
   const today = () => setAnchorMs(Date.now());
   useCalendarShortcuts(today, step);
-  const openNew = () => {
-    const startMs = nextHalfHour();
-    setNewDraft({
-      event: null,
-      startMs,
-      endMs: startMs + NEW_EVENT_DURATION_MINUTES * 60_000,
-      isAllDay: false,
-    });
-  };
   const days = rangeFor(view, anchorMs).days;
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -321,7 +243,6 @@ export const AgendaPage = () => {
         onView={changeView}
         onToday={today}
         onStep={step}
-        onNew={openNew}
       />
       <div className="bg-card mx-8 mb-6 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
         {granted ? (
@@ -339,9 +260,6 @@ export const AgendaPage = () => {
           </div>
         )}
       </div>
-      {newDraft && (
-        <EventEditorDialog draft={newDraft} onClose={() => setNewDraft(null)} />
-      )}
     </div>
   );
 };

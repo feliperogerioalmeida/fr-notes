@@ -60,47 +60,6 @@ const createRecordingSimulator = () => {
 
 let calendarEvents: CalendarEvent[] = [];
 
-interface PreviewSaveArgs {
-  id: string | null;
-  calendarId: string | null;
-  title: string;
-  startMs: number;
-  endMs: number;
-  isAllDay: boolean;
-  location: string | null;
-  notes: string | null;
-}
-
-const saveCalendarEvent = (payload: InvokeArgs | undefined) => {
-  const { args } = payload as unknown as { args: PreviewSaveArgs };
-  const calendar = buildPreviewCalendars().find(
-    (item) => item.id === (args.calendarId ?? "preview-work"),
-  );
-  const existing = calendarEvents.find((event) => event.id === args.id);
-  const id = existing ? existing.id.split(":")[0] : `preview-${Date.now()}`;
-  const saved: CalendarEvent = {
-    ...(existing ?? buildPreviewEvents()[0]!),
-    id: `${id}:${args.startMs}`,
-    title: args.title,
-    startMs: args.startMs,
-    endMs: args.endMs,
-    isAllDay: args.isAllDay,
-    location: args.location ?? existing?.location ?? null,
-    notes: args.notes ?? existing?.notes ?? null,
-    calendarId: calendar?.id ?? "preview-work",
-    calendarTitle: calendar?.title ?? "Trabalho",
-    calendarColor: calendar?.color ?? null,
-    attendees: existing?.attendees ?? [],
-    organizer: null,
-    canEdit: true,
-  };
-  calendarEvents = [
-    ...calendarEvents.filter((event) => event.id !== args.id),
-    saved,
-  ];
-  return saved;
-};
-
 const createHandler = (db: Database) => {
   const secrets = new Map<string, string>();
   const recorder = createRecordingSimulator();
@@ -149,11 +108,6 @@ const createHandler = (db: Database) => {
         return calendarEvents.filter(
           (event) => event.startMs < args.toMs && event.endMs > args.fromMs,
         );
-      },
-      save_calendar_event: (payload) => saveCalendarEvent(payload),
-      delete_calendar_event: (payload) => {
-        const { args } = payload as { args: { id: string } };
-        calendarEvents = calendarEvents.filter((event) => event.id !== args.id);
       },
       list_calendars: () => buildPreviewCalendars(),
       list_microphone_apps: () => [],

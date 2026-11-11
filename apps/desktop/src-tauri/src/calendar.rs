@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 pub const CALENDAR_ACCESS_DENIED: &str = "calendar_access_denied";
-pub const EVENT_READ_ONLY: &str = "calendar_event_read_only";
-pub const EVENT_NOT_FOUND: &str = "calendar_event_not_found";
 const MAILTO_PREFIX: &str = "mailto:";
 const MAX_NOTES_CHARS: usize = 4000;
 
@@ -39,33 +37,6 @@ pub struct CalendarEvent {
     pub calendar_color: Option<String>,
     pub attendees: Vec<CalendarAttendee>,
     pub organizer: Option<CalendarAttendee>,
-    pub can_edit: bool,
-    pub is_recurring: bool,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct SaveEventArgs {
-    pub id: Option<String>,
-    pub calendar_id: Option<String>,
-    pub title: String,
-    pub start_ms: f64,
-    pub end_ms: f64,
-    pub is_all_day: bool,
-    pub location: Option<String>,
-    pub notes: Option<String>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct DeleteEventArgs {
-    pub id: String,
-}
-
-pub fn split_event_id(id: &str) -> Option<(String, f64)> {
-    let (identifier, start) = id.rsplit_once(':')?;
-    let start_ms = start.parse::<i64>().ok()? as f64;
-    (!identifier.is_empty()).then(|| (identifier.to_string(), start_ms))
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -123,9 +94,7 @@ pub fn sort_calendars(calendars: &mut [CalendarInfo]) {
 }
 
 #[cfg(target_os = "macos")]
-pub use platform::{
-    authorization_status, delete_event, list_calendars, list_events, request_access, save_event,
-};
+pub use platform::{authorization_status, list_calendars, list_events, request_access};
 
 #[cfg(target_os = "macos")]
 mod platform {
@@ -139,21 +108,17 @@ mod platform {
     use objc2_app_kit::{NSColor, NSColorSpace};
     use objc2_event_kit::{
         EKAuthorizationStatus, EKCalendar, EKEntityType, EKEvent, EKEventStore, EKParticipant,
-        EKSpan,
     };
-    use objc2_foundation::{NSArray, NSDate, NSError, NSObjectProtocol, NSString};
+    use objc2_foundation::{NSArray, NSDate, NSError, NSObjectProtocol};
 
     use super::{
-        format_hex_color, non_empty, notes_excerpt, parse_mailto, sort_calendars, split_event_id,
-        CalendarAttendee, CalendarEvent, CalendarInfo, DeleteEventArgs, ListEventsArgs,
-        SaveEventArgs, CALENDAR_ACCESS_DENIED, EVENT_NOT_FOUND, EVENT_READ_ONLY,
+        format_hex_color, non_empty, notes_excerpt, parse_mailto, sort_calendars, CalendarAttendee,
+        CalendarEvent, CalendarInfo, ListEventsArgs, CALENDAR_ACCESS_DENIED,
     };
     use crate::permissions::{DENIED, GRANTED, RESTRICTED, UNDETERMINED};
 
     const MILLIS_PER_SECOND: f64 = 1000.0;
     const ACCESS_PROMPT_TIMEOUT: Duration = Duration::from_secs(300);
-    const OCCURRENCE_SEARCH_MS: f64 = 36.0 * 60.0 * 60.0 * 1000.0;
-    const SAME_START_TOLERANCE_MS: f64 = 1000.0;
 
     fn current_status() -> EKAuthorizationStatus {
         unsafe { EKEventStore::authorizationStatusForEntityType(EKEntityType::Event) }
@@ -316,120 +281,7 @@ mod platform {
             calendar_color: calendar.as_ref().and_then(|calendar| hex_color(calendar)),
             attendees,
             organizer: unsafe { event.organizer() }.map(|organizer| to_attendee(&organizer)),
-            can_edit: can_edit(event),
-            is_recurring: unsafe { event.hasRecurrenceRules() },
         }
-    }
-
-    fn can_edit(event: &EKEvent) -> bool {
-        let calendar_allows = unsafe { event.calendar() }
-            .is_some_and(|calendar| unsafe { calendar.allowsContentModifications() });
-        let organized_by_me = unsafe { event.organizer() }
-            .is_none_or(|organizer| unsafe { organizer.isCurrentUser() });
-        calendar_allows && organized_by_me
-    }
-
-    fn date_from_millis(millis: f64) -> Retained<NSDate> {
-        NSDate::dateWithTimeIntervalSince1970(millis / MILLIS_PER_SECOND)
-    }
-
-    fn find_occurrence(store: &EKEventStore, id: &str) -> Result<Retained<EKEvent>, String> {
-        let (identifier, start_ms) =
-            split_event_id(id).ok_or_else(|| EVENT_NOT_FOUND.to_string())?;
-        let predicate = unsafe {
-            store.predicateForEventsWithStartDate_endDate_calendars(
-                &date_from_millis(start_ms - OCCURRENCE_SEARCH_MS),
-                &date_from_millis(start_ms + OCCURRENCE_SEARCH_MS),
-                None,
-            )
-        };
-        unsafe { store.eventsMatchingPredicate(&predicate) }
-            .iter()
-            .find(|event| {
-                let same_id = unsafe { event.eventIdentifier() }
-                    .is_some_and(|value| value.to_string() == identifier);
-                let start = to_millis(&*unsafe { event.startDate() });
-                same_id && (start - start_ms).abs() < SAME_START_TOLERANCE_MS
-            })
-            .ok_or_else(|| EVENT_NOT_FOUND.to_string())
-    }
-
-    fn resolve_calendar(
-        store: &EKEventStore,
-        event: &EKEvent,
-        calendar_id: &Option<String>,
-    ) -> Option<Retained<EKCalendar>> {
-        match calendar_id {
-            Some(id) => unsafe { store.calendarWithIdentifier(&NSString::from_str(id)) },
-            None => unsafe { event.calendar() }
-                .or_else(|| unsafe { store.defaultCalendarForNewEvents() }),
-        }
-    }
-
-    fn optional_text(value: &str) -> Option<Retained<NSString>> {
-        let trimmed = value.trim();
-        (!trimmed.is_empty()).then(|| NSString::from_str(trimmed))
-    }
-
-    fn apply_fields(
-        store: &EKEventStore,
-        event: &EKEvent,
-        args: &SaveEventArgs,
-    ) -> Result<(), String> {
-        unsafe {
-            event.setTitle(Some(&NSString::from_str(args.title.trim())));
-            event.setAllDay(args.is_all_day);
-            event.setStartDate(Some(&date_from_millis(args.start_ms)));
-            event.setEndDate(Some(&date_from_millis(args.end_ms)));
-            if let Some(location) = &args.location {
-                event.setLocation(optional_text(location).as_deref());
-            }
-            if let Some(notes) = &args.notes {
-                event.setNotes(optional_text(notes).as_deref());
-            }
-        }
-        let calendar = resolve_calendar(store, event, &args.calendar_id)
-            .ok_or_else(|| EVENT_READ_ONLY.to_string())?;
-        if !unsafe { calendar.allowsContentModifications() } {
-            return Err(EVENT_READ_ONLY.into());
-        }
-        unsafe { event.setCalendar(Some(&calendar)) };
-        Ok(())
-    }
-
-    fn describe_error(error: Retained<NSError>) -> String {
-        error.localizedDescription().to_string()
-    }
-
-    pub fn save_event(args: &SaveEventArgs) -> Result<CalendarEvent, String> {
-        ensure_authorized()?;
-        autoreleasepool(|_| {
-            let store = new_store();
-            let event = match &args.id {
-                Some(id) => find_occurrence(&store, id)?,
-                None => unsafe { EKEvent::eventWithEventStore(&store) },
-            };
-            if args.id.is_some() && !can_edit(&event) {
-                return Err(EVENT_READ_ONLY.into());
-            }
-            apply_fields(&store, &event, args)?;
-            unsafe { store.saveEvent_span_commit_error(&event, EKSpan::ThisEvent, true) }
-                .map_err(describe_error)?;
-            Ok(to_calendar_event(&event))
-        })
-    }
-
-    pub fn delete_event(args: &DeleteEventArgs) -> Result<(), String> {
-        ensure_authorized()?;
-        autoreleasepool(|_| {
-            let store = new_store();
-            let event = find_occurrence(&store, &args.id)?;
-            if !can_edit(&event) {
-                return Err(EVENT_READ_ONLY.into());
-            }
-            unsafe { store.removeEvent_span_commit_error(&event, EKSpan::ThisEvent, true) }
-                .map_err(describe_error)
-        })
     }
 
     pub fn list_events(args: &ListEventsArgs) -> Result<Vec<CalendarEvent>, String> {
@@ -476,32 +328,12 @@ pub fn list_calendars() -> Result<Vec<CalendarInfo>, String> {
 }
 
 #[cfg(not(target_os = "macos"))]
-pub fn save_event(_args: &SaveEventArgs) -> Result<CalendarEvent, String> {
-    Err(CALENDAR_ACCESS_DENIED.into())
-}
-
-#[cfg(not(target_os = "macos"))]
-pub fn delete_event(_args: &DeleteEventArgs) -> Result<(), String> {
-    Err(CALENDAR_ACCESS_DENIED.into())
-}
-
-#[cfg(not(target_os = "macos"))]
 pub fn list_events(_args: &ListEventsArgs) -> Result<Vec<CalendarEvent>, String> {
     Err(CALENDAR_ACCESS_DENIED.into())
 }
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn splits_event_ids_keeping_colons_in_the_identifier() {
-        assert_eq!(
-            split_event_id("ABC:DEF-123:1794365416848"),
-            Some(("ABC:DEF-123".to_string(), 1_794_365_416_848.0))
-        );
-        assert_eq!(split_event_id("no-start"), None);
-        assert_eq!(split_event_id(":1794365416848"), None);
-    }
-
     use super::*;
 
     #[test]

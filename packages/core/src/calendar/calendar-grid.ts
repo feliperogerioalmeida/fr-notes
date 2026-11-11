@@ -4,7 +4,6 @@ export const MINUTES_PER_DAY = 24 * 60;
 export const DAYS_PER_WEEK = 7;
 const MS_PER_MINUTE = 60_000;
 const MONTH_GRID_WEEKS = 6;
-const DEFAULT_SNAP_MINUTES = 15;
 
 export const startOfDay = (ms: number): number => {
   const date = new Date(ms);
@@ -63,19 +62,8 @@ export const eventsOnDay = (
   );
 };
 
-export const snapMinutes = (
-  minutes: number,
-  step = DEFAULT_SNAP_MINUTES,
-): number => Math.round(minutes / step) * step;
-
 export const minutesIntoDay = (ms: number, dayStartMs: number): number =>
   Math.round((ms - dayStartMs) / MS_PER_MINUTE);
-
-export const atMinute = (dayStartMs: number, minutes: number): number => {
-  const date = new Date(dayStartMs);
-  date.setMinutes(minutes);
-  return date.getTime();
-};
 
 export interface PositionedEvent {
   event: CalendarEvent;

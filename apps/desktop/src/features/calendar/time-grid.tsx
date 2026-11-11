@@ -1,6 +1,4 @@
 import {
-  addDays,
-  atMinute,
   type CalendarEvent,
   eventsOnDay,
   isSameDay,
@@ -11,14 +9,9 @@ import {
 import { cn } from "@workspace/ui/lib/utils";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 
-import { formatClock, formatHour, formatWeekday } from "./calendar-format.js";
+import { formatHour, formatWeekday } from "./calendar-format.js";
+import { GUTTER_WIDTH, HOUR_HEIGHT } from "./calendar-layout.js";
 import { EventBlock, eventColorStyle } from "./event-block.js";
-import {
-  GUTTER_WIDTH,
-  HOUR_HEIGHT,
-  type TimeRange,
-  useGridInteractions,
-} from "./use-grid-interactions.js";
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const INITIAL_SCROLL_HOUR = 7;
@@ -65,14 +58,15 @@ const DayHeader = ({ days, now }: { days: number[]; now: number }) => (
   </div>
 );
 
+type OpenEvent = (event: CalendarEvent, anchor: DOMRect) => void;
+
 interface AllDayRowProps {
   days: number[];
   events: CalendarEvent[];
-  onOpen: (event: CalendarEvent, anchor: DOMRect) => void;
-  onCreate: (range: TimeRange & { isAllDay: boolean }) => void;
+  onOpen: OpenEvent;
 }
 
-const AllDayRow = ({ days, events, onOpen, onCreate }: AllDayRowProps) => {
+const AllDayRow = ({ days, events, onOpen }: AllDayRowProps) => {
   const allDay = events.filter((event) => event.isAllDay);
   return (
     <div className="grid border-b" style={columnsTemplate(days.length)}>
@@ -80,13 +74,7 @@ const AllDayRow = ({ days, events, onOpen, onCreate }: AllDayRowProps) => {
         dia todo
       </span>
       {days.map((day) => (
-        <div
-          key={day}
-          onDoubleClick={() =>
-            onCreate({ startMs: day, endMs: addDays(day, 1), isAllDay: true })
-          }
-          className="flex min-h-7 flex-col gap-0.5 border-l p-0.5"
-        >
+        <div key={day} className="flex min-h-7 flex-col gap-0.5 border-l p-0.5">
           {eventsOnDay(allDay, day).map((event) => (
             <button
               key={event.id}
@@ -130,34 +118,6 @@ const NowLine = ({ day, now }: { day: number; now: number }) => (
   </div>
 );
 
-interface DraftBlockProps {
-  day: number;
-  startMinute: number;
-  endMinute: number;
-}
-
-const DraftBlock = ({ day, startMinute, endMinute }: DraftBlockProps) => (
-  <div
-    className="border-brand bg-brand-subtle text-caption text-heading pointer-events-none absolute inset-x-0.5 rounded-md border px-1.5 py-0.5"
-    style={{
-      top: (startMinute / MINUTES_PER_HOUR) * HOUR_HEIGHT,
-      height: ((endMinute - startMinute) / MINUTES_PER_HOUR) * HOUR_HEIGHT - 2,
-    }}
-  >
-    Novo evento · {formatClock(atMinute(day, startMinute))} –{" "}
-    {formatClock(atMinute(day, endMinute))}
-  </div>
-);
-
-export interface TimeGridProps {
-  days: number[];
-  events: CalendarEvent[];
-  notesByEvent: Map<string | null, Note>;
-  onCreate: (range: TimeRange & { isAllDay: boolean }) => void;
-  onMove: (event: CalendarEvent, range: TimeRange) => void;
-  onOpen: (event: CalendarEvent, anchor: DOMRect) => void;
-}
-
 const useInitialScroll = (
   scrollRef: React.RefObject<HTMLDivElement | null>,
   days: number[],
@@ -175,52 +135,36 @@ const useInitialScroll = (
   }, [firstDay, days.length]);
 };
 
+export interface TimeGridProps {
+  days: number[];
+  events: CalendarEvent[];
+  notesByEvent: Map<string | null, Note>;
+  onOpen: OpenEvent;
+}
+
 export const TimeGrid = ({
   days,
   events,
   notesByEvent,
-  onCreate,
-  onMove,
   onOpen,
 }: TimeGridProps) => {
   const now = useNow();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
   useInitialScroll(scrollRef, days, now);
-  const { createDraft, override, beginEventGesture, gridHandlers } =
-    useGridInteractions({
-      gridRef,
-      days,
-      onCreate: (range) => onCreate({ ...range, isAllDay: false }),
-      onMove,
-      onOpen,
-    });
-  const displayed = override
-    ? events.map((event) =>
-        event.id === override.id ? { ...event, ...override } : event,
-      )
-    : events;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <DayHeader days={days} now={now} />
-      <AllDayRow
-        days={days}
-        events={displayed}
-        onOpen={onOpen}
-        onCreate={onCreate}
-      />
+      <AllDayRow days={days} events={events} onOpen={onOpen} />
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         <div
-          ref={gridRef}
-          {...gridHandlers}
-          className="relative grid touch-none select-none"
+          className="relative grid"
           style={{
             ...columnsTemplate(days.length),
             height: HOURS.length * HOUR_HEIGHT,
           }}
         >
           <HourGutter />
-          {days.map((day, index) => (
+          {days.map((day) => (
             <div key={day} className="relative border-l">
               {HOURS.map((hour) => (
                 <div
@@ -229,18 +173,14 @@ export const TimeGrid = ({
                   style={{ height: HOUR_HEIGHT }}
                 />
               ))}
-              {layoutDayEvents(displayed, day).map((positioned) => (
+              {layoutDayEvents(events, day).map((positioned) => (
                 <EventBlock
                   key={positioned.event.id}
                   positioned={positioned}
                   hasNote={notesByEvent.has(positioned.event.id)}
-                  dragging={override?.id === positioned.event.id}
-                  onPointerDown={beginEventGesture}
+                  onOpen={onOpen}
                 />
               ))}
-              {createDraft?.dayIndex === index && (
-                <DraftBlock day={day} {...createDraft} />
-              )}
               {isSameDay(day, now) && <NowLine day={day} now={now} />}
             </div>
           ))}
