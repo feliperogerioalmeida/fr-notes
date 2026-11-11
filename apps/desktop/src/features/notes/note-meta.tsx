@@ -1,4 +1,5 @@
 import {
+  describeFolderPath,
   describeParticipant,
   formatDayLabel,
   formatTime,
@@ -29,7 +30,11 @@ const MetaChip = ({ icon, label }: { icon: ReactNode; label: string }) => (
 export const NoteMeta = ({ note }: { note: Note }) => {
   const { data: folders = [] } = useFoldersQuery();
   const { data: templates = [] } = useTemplatesQuery();
-  const folder = folders.find((item) => item.id === note.folderId);
+  const folderPath = note.folderId
+    ? describeFolderPath(folders, note.folderId)
+        .map((item) => item.name)
+        .join(" / ")
+    : "";
   const template = templates.find((item) => item.id === note.templateId);
   const startedAt = note.recordingStartedAt ?? note.createdAt;
   return (
@@ -41,7 +46,7 @@ export const NoteMeta = ({ note }: { note: Note }) => {
       {note.participants.length > 0 && (
         <MetaChip icon={<Users />} label={describeParticipants(note)} />
       )}
-      {folder && <MetaChip icon={<Folder />} label={folder.name} />}
+      {folderPath && <MetaChip icon={<Folder />} label={folderPath} />}
       {template && note.enhancedMarkdown && (
         <MetaChip icon={<LayoutTemplate />} label={template.name} />
       )}

@@ -162,8 +162,14 @@ const seedConnections = async () => {
 export const seedPreviewData = async () => {
   const storage = await getStorage();
   await storage.settings.writeSettings({ userName: "Felipe Rogério" });
-  await storage.folders.createFolder("FR Digital");
-  await storage.folders.createFolder("Clientes");
+  await storage.folders.createFolder({ name: "FR Digital" });
+  const clients = await storage.folders.createFolder({ name: "Clientes" });
+  const marina = await storage.folders.createFolder({
+    name: "Marina Souza",
+    parentId: clients,
+  });
+  await storage.folders.createFolder({ name: "Kickoff", parentId: marina });
+  await storage.folders.createFolder({ name: "Pedidos", parentId: clients });
   await seedSprintReview();
   await seedDemoMeeting();
   await storage.notes.createNote({ title: "1:1 com o time" });

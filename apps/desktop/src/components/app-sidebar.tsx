@@ -1,27 +1,20 @@
-import { Button } from "@workspace/ui/components/ui/button";
 import { Input } from "@workspace/ui/components/ui/input";
 import { ScrollArea } from "@workspace/ui/components/ui/scroll-area";
 import { cn } from "@workspace/ui/lib/utils";
 import {
   AudioLines,
   CalendarDays,
-  Folder,
   House,
   LayoutTemplate,
   ListChecks,
   type LucideIcon,
   Plug,
-  Plus,
   Search,
   Settings,
 } from "lucide-react";
-import { type FormEvent, useState } from "react";
 import { NavLink } from "react-router";
 
-import {
-  useCreateFolder,
-  useFoldersQuery,
-} from "@/features/folders/use-folders.js";
+import { FolderTreeNav } from "@/features/folders/folder-tree-nav.js";
 import { AudioLevelBars } from "@/features/recording/audio-level-bars.js";
 import { useRecordingStore } from "@/features/recording/recording-store.js";
 import { useElapsed } from "@/hooks/use-elapsed.js";
@@ -52,59 +45,6 @@ const SidebarLink = ({ to, icon: Icon, label, end }: SidebarLinkProps) => (
     <span className="truncate">{label}</span>
   </NavLink>
 );
-
-const NewFolderInput = ({ onDone }: { onDone: () => void }) => {
-  const [name, setName] = useState("");
-  const createFolder = useCreateFolder();
-  const submit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (name.trim()) await createFolder.mutateAsync(name);
-    onDone();
-  };
-  return (
-    <form onSubmit={submit} className="px-1">
-      <Input
-        autoFocus
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-        onBlur={onDone}
-        placeholder="Nome da pasta"
-        className="h-8"
-      />
-    </form>
-  );
-};
-
-const FoldersSection = () => {
-  const { data: folders = [] } = useFoldersQuery();
-  const [isCreating, setIsCreating] = useState(false);
-  return (
-    <section className="flex flex-col gap-0.5">
-      <div className="flex items-center justify-between px-2.5 pt-4 pb-1">
-        <span className="text-label text-muted-foreground uppercase">
-          Pastas
-        </span>
-        <Button
-          size="icon-xs"
-          variant="ghost"
-          aria-label="Nova pasta"
-          onClick={() => setIsCreating(true)}
-        >
-          <Plus />
-        </Button>
-      </div>
-      {isCreating && <NewFolderInput onDone={() => setIsCreating(false)} />}
-      {folders.map((folder) => (
-        <SidebarLink
-          key={folder.id}
-          to={`/folders/${folder.id}`}
-          icon={Folder}
-          label={folder.name}
-        />
-      ))}
-    </section>
-  );
-};
 
 const RecordingCard = () => {
   const noteId = useRecordingStore((state) => state.noteId);
@@ -164,7 +104,7 @@ export const AppSidebar = ({
         <SidebarLink to="/dictations" icon={AudioLines} label="Ditados" />
         <SidebarLink to="/templates" icon={LayoutTemplate} label="Templates" />
         <SidebarLink to="/connections" icon={Plug} label="Conexões" />
-        <FoldersSection />
+        <FolderTreeNav />
       </nav>
     </ScrollArea>
     <div className="flex flex-col gap-2 p-3">

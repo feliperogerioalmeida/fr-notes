@@ -16,6 +16,7 @@ export * from "./domain/settings.js";
 export * from "./domain/template.js";
 export * from "./domain/transcript.js";
 export * from "./domain/webhook.js";
+export * from "./folders/folder-tree.js";
 export * from "./integrations/webhook-payload.js";
 export * from "./meetings/meeting-apps.js";
 export * from "./meetings/speaker-roster.js";

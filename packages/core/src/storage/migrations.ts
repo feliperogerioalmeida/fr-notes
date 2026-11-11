@@ -130,6 +130,13 @@ const MIGRATIONS: Migration[] = [
       )`,
     ],
   },
+  {
+    version: 7,
+    statements: [
+      "ALTER TABLE folders ADD COLUMN parent_id TEXT",
+      "CREATE INDEX IF NOT EXISTS idx_folders_parent ON folders (parent_id)",
+    ],
+  },
 ];
 
 const ensureMigrationsTable = (db: SqlClient): Promise<void> =>

@@ -3,6 +3,7 @@ import { z } from "zod";
 export const FolderSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
+  parentId: z.string().nullable().default(null),
   createdAt: z.string(),
   updatedAt: z.string(),
   deletedAt: z.string().nullable(),

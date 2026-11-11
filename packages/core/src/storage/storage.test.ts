@@ -189,4 +189,33 @@ describe("storage", () => {
     const [connection] = await storage.connections.listConnections();
     expect(connection?.config).toEqual({ listId: "901", listName: "Backlog" });
   });
+
+  it("nests folders, refuses cycles and keeps notes when deleting", async () => {
+    const storage = await initializeStorage(await createMemoryClient());
+    const clients = await storage.folders.createFolder({ name: "Clientes" });
+    const marina = await storage.folders.createFolder({
+      name: "Marina",
+      parentId: clients,
+    });
+    const kickoff = await storage.folders.createFolder({
+      name: "Kickoff",
+      parentId: marina,
+    });
+    const note = await storage.notes.createNote({ folderId: marina });
+
+    await expect(
+      storage.folders.moveFolder({ id: clients, parentId: kickoff }),
+    ).rejects.toThrow("folder_cycle");
+
+    await storage.folders.deleteFolder(marina);
+    const folders = await storage.folders.listFolders();
+    expect(folders.map((folder) => folder.name)).toEqual([
+      "Clientes",
+      "Kickoff",
+    ]);
+    expect(folders.find((folder) => folder.id === kickoff)?.parentId).toBe(
+      clients,
+    );
+    expect((await storage.notes.findNote(note.id))?.folderId).toBe(clients);
+  });
 });

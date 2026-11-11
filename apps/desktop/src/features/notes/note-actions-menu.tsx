@@ -23,6 +23,7 @@ import { toast } from "sonner";
 
 import { sendNoteTo } from "@/features/action-items/send-to-connection.js";
 import { ConnectionMenuItems } from "@/features/connections/connection-menu-items.js";
+import { FolderOptions } from "@/features/folders/folder-actions-menu.js";
 import { useFoldersQuery } from "@/features/folders/use-folders.js";
 import { dispatchCurrentState } from "@/features/integrations/deliver-webhooks.js";
 
@@ -47,15 +48,19 @@ const FolderSubmenu = ({ note }: { note: Note }) => {
         <FolderInput />
         Mover para pasta
       </DropdownMenuSubTrigger>
-      <DropdownMenuSubContent>
-        <DropdownMenuItem onSelect={() => moveTo(null)}>
+      <DropdownMenuSubContent className="max-h-80 w-56 overflow-y-auto">
+        <DropdownMenuItem
+          disabled={!note.folderId}
+          onSelect={() => moveTo(null)}
+        >
           Sem pasta
         </DropdownMenuItem>
-        {folders.map((folder) => (
-          <DropdownMenuItem key={folder.id} onSelect={() => moveTo(folder.id)}>
-            {folder.name}
-          </DropdownMenuItem>
-        ))}
+        <DropdownMenuSeparator />
+        <FolderOptions
+          folders={folders}
+          isDisabled={(node) => node.folder.id === note.folderId}
+          onSelect={moveTo}
+        />
       </DropdownMenuSubContent>
     </DropdownMenuSub>
   );

@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { CreateFolderInput } from "@workspace/core";
 
 import { getStorage } from "@/lib/database.js";
 import { QUERY_KEYS } from "@/lib/query-keys.js";
@@ -21,8 +22,26 @@ const useInvalidateFolders = () => {
 export const useCreateFolder = () => {
   const invalidate = useInvalidateFolders();
   return useMutation({
-    mutationFn: async (name: string) =>
-      (await getStorage()).folders.createFolder(name),
+    mutationFn: async (input: CreateFolderInput) =>
+      (await getStorage()).folders.createFolder(input),
+    onSuccess: invalidate,
+  });
+};
+
+export const useRenameFolder = () => {
+  const invalidate = useInvalidateFolders();
+  return useMutation({
+    mutationFn: async (input: { id: string; name: string }) =>
+      (await getStorage()).folders.renameFolder(input),
+    onSuccess: invalidate,
+  });
+};
+
+export const useMoveFolder = () => {
+  const invalidate = useInvalidateFolders();
+  return useMutation({
+    mutationFn: async (input: { id: string; parentId: string | null }) =>
+      (await getStorage()).folders.moveFolder(input),
     onSuccess: invalidate,
   });
 };
