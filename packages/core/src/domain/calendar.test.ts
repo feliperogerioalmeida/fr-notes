@@ -26,6 +26,8 @@ const buildEvent = (overrides: Partial<CalendarEvent> = {}): CalendarEvent => ({
   calendarColor: "#FF6B1A",
   attendees: [],
   organizer: null,
+  canEdit: false,
+  isRecurring: false,
   ...overrides,
 });
 

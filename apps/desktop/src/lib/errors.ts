@@ -16,6 +16,10 @@ const MESSAGES: Record<string, string> = {
     "Permita o FR Notes em Acessibilidade para digitar o ditado nos outros apps.",
   [CALENDAR_DENIED_ERROR]:
     "Permita o acesso ao Calendário em Configurações para ver suas reuniões.",
+  calendar_event_read_only:
+    "Este evento é só leitura: é um convite de outra pessoa ou de uma agenda que não aceita alterações.",
+  calendar_event_not_found:
+    "Não encontrei este evento no Calendário. Ele pode ter mudado em outro aparelho; atualize a agenda.",
   [NO_RECORDINGS_ERROR]:
     "Esta reunião não tem áudio guardado. Ligue “Guardar o áudio” em Configurações → Transcrição.",
 };

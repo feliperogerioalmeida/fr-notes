@@ -1,6 +1,8 @@
 use tauri::{AppHandle, State};
 
-use crate::calendar::{self, CalendarEvent, CalendarInfo, ListEventsArgs};
+use crate::calendar::{
+    self, CalendarEvent, CalendarInfo, DeleteEventArgs, ListEventsArgs, SaveEventArgs,
+};
 use crate::dictation::{
     hide_and_idle, DictationManager, DictationResult, DictationStarted, StartDictationArgs,
 };
@@ -106,6 +108,16 @@ pub async fn list_calendars() -> Result<Vec<CalendarInfo>, String> {
 #[tauri::command]
 pub async fn list_calendar_events(args: ListEventsArgs) -> Result<Vec<CalendarEvent>, String> {
     run_blocking(move || calendar::list_events(&args)).await
+}
+
+#[tauri::command]
+pub async fn save_calendar_event(args: SaveEventArgs) -> Result<CalendarEvent, String> {
+    run_blocking(move || calendar::save_event(&args)).await
+}
+
+#[tauri::command]
+pub async fn delete_calendar_event(args: DeleteEventArgs) -> Result<(), String> {
+    run_blocking(move || calendar::delete_event(&args)).await
 }
 
 #[tauri::command]

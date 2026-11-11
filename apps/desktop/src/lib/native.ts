@@ -142,6 +142,23 @@ export const listCalendars = () => invoke<CalendarInfo[]>("list_calendars");
 export const listCalendarEvents = (range: ListEventsRange) =>
   invoke<CalendarEvent[]>("list_calendar_events", { args: range });
 
+export interface SaveCalendarEventArgs {
+  id: string | null;
+  calendarId: string | null;
+  title: string;
+  startMs: number;
+  endMs: number;
+  isAllDay: boolean;
+  location: string | null;
+  notes: string | null;
+}
+
+export const saveCalendarEvent = (args: SaveCalendarEventArgs) =>
+  invoke<CalendarEvent>("save_calendar_event", { args });
+
+export const deleteCalendarEvent = (id: string) =>
+  invoke<void>("delete_calendar_event", { args: { id } });
+
 export const listMicrophoneApps = () =>
   invoke<MicrophoneApp[]>("list_microphone_apps");
 

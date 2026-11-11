@@ -1,3 +1,4 @@
+export * from "./calendar/calendar-grid.js";
 export * from "./connections/clickup.js";
 export * from "./connections/describe.js";
 export * from "./connections/http.js";

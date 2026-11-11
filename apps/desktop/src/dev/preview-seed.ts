@@ -220,12 +220,96 @@ const buildEvent = (
   calendarColor: "#FF6B1A",
   attendees: [],
   organizer: null,
+  canEdit: true,
+  isRecurring: false,
   ...overrides,
 });
+
+const atToday = (dayOffset: number, hour: number, minute = 0) => {
+  const date = new Date();
+  date.setDate(date.getDate() + dayOffset);
+  date.setHours(hour, minute, 0, 0);
+  return date.getTime();
+};
+
+const buildWeekEvents = (): CalendarEvent[] => [
+  buildEvent({
+    id: "preview-daily:1",
+    title: "Daily — time FR",
+    startMs: atToday(1, 9),
+    endMs: atToday(1, 9, 15),
+  }),
+  buildEvent({
+    id: "preview-govbot:1",
+    title: "Weekly — GovBot",
+    startMs: atToday(1, 9),
+    endMs: atToday(1, 9, 30),
+    calendarTitle: "Ingenious",
+    notes: "https://meet.google.com/xyz-abcd-efg",
+  }),
+  buildEvent({
+    id: "preview-ingenious:1",
+    title: "Ingenious Brazil",
+    startMs: atToday(1, 10, 30),
+    endMs: atToday(1, 11, 30),
+    calendarTitle: "Ingenious",
+  }),
+  buildEvent({
+    id: "preview-psico:1",
+    title: "Psicólogo",
+    startMs: atToday(1, 16),
+    endMs: atToday(1, 17),
+    calendarId: "preview-icloud",
+    calendarTitle: "Health",
+    calendarColor: "#1F9D6B",
+  }),
+  buildEvent({
+    id: "preview-rpg:2",
+    title: "RPG",
+    startMs: atToday(2, 10, 30),
+    endMs: atToday(2, 11, 30),
+    calendarId: "preview-icloud",
+    calendarTitle: "Health",
+    calendarColor: "#1F9D6B",
+  }),
+  buildEvent({
+    id: "preview-salao:2",
+    title: "Salão — Savio",
+    startMs: atToday(2, 12, 30),
+    endMs: atToday(2, 13),
+    calendarId: "preview-icloud",
+    calendarTitle: "Pessoal",
+    calendarColor: "#3E7BFA",
+  }),
+  buildEvent({
+    id: "preview-feriado:4",
+    title: "Proclamação da República",
+    startMs: atToday(4, 0),
+    endMs: atToday(5, 0),
+    isAllDay: true,
+    calendarId: "preview-holidays",
+    calendarTitle: "Feriados",
+    calendarColor: "#8E8E93",
+    canEdit: false,
+  }),
+  buildEvent({
+    id: "preview-convite:3",
+    title: "Planejamento Q1 (convite)",
+    startMs: atToday(3, 14),
+    endMs: atToday(3, 15, 30),
+    organizer: {
+      name: "Marina Souza",
+      email: "marina@cliente.com",
+      isCurrentUser: false,
+    },
+    canEdit: false,
+  }),
+];
 
 export const buildPreviewEvents = (): CalendarEvent[] => {
   const now = Date.now();
   return [
+    ...buildWeekEvents(),
     buildEvent({
       id: "preview-kickoff",
       title: "Kickoff — App de pedidos",

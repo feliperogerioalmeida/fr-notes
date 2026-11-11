@@ -22,6 +22,8 @@ export const CalendarEventSchema = z.object({
   calendarColor: z.string().nullable(),
   attendees: z.array(CalendarAttendeeSchema),
   organizer: CalendarAttendeeSchema.nullable(),
+  canEdit: z.boolean().default(false),
+  isRecurring: z.boolean().default(false),
 });
 
 export type CalendarEvent = z.infer<typeof CalendarEventSchema>;
