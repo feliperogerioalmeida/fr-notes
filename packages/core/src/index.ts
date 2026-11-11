@@ -20,6 +20,7 @@ export * from "./domain/webhook.js";
 export * from "./folders/folder-tree.js";
 export * from "./integrations/webhook-payload.js";
 export * from "./meetings/meeting-apps.js";
+export * from "./meetings/meeting-countdown.js";
 export * from "./meetings/speaker-roster.js";
 export * from "./notes/action-items.js";
 export * from "./notes/note-stats.js";

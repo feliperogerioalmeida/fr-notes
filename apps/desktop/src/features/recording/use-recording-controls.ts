@@ -14,7 +14,7 @@ import {
 } from "@/features/speakers/speaker-tracking.js";
 import { getStorage } from "@/lib/database.js";
 import { describeError } from "@/lib/errors.js";
-import { setNubVisible, startRecording, stopRecording } from "@/lib/native.js";
+import { startRecording, stopRecording } from "@/lib/native.js";
 import { queryClient } from "@/lib/query-client.js";
 import { QUERY_KEYS } from "@/lib/query-keys.js";
 
@@ -57,7 +57,6 @@ export const beginRecording = async (
     store.markRecording({ noteId, startedAtMs: session.startedAtMs, origin });
     void startSpeakerTracking(noteId);
     startDigestTracking(noteId);
-    await setNubVisible(true);
     await refreshNote(noteId);
   } catch (error) {
     store.markIdle();

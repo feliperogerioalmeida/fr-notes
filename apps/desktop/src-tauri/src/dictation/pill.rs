@@ -1,6 +1,7 @@
 use tauri::{AppHandle, Manager, Monitor, PhysicalPosition, WebviewWindow};
 
 use crate::main_thread::run_on_main;
+use crate::windows::order_front_without_focus;
 
 pub const DICTATION_WINDOW: &str = "dictation";
 const PILL_WIDTH: f64 = 360.0;
@@ -27,7 +28,7 @@ pub async fn show_pill(app: &AppHandle) -> Result<(), String> {
     let window = pill_window(app)?;
     position_pill(app, &window)?;
     let _ = window.set_focusable(false);
-    run_on_main(app, move || platform::order_front_without_focus(&window)).await?
+    run_on_main(app, move || order_front_without_focus(&window)).await?
 }
 
 pub fn hide_pill(app: &AppHandle) -> Result<(), String> {
@@ -58,37 +59,6 @@ fn position_pill(app: &AppHandle, window: &WebviewWindow) -> Result<(), String> 
     window
         .set_position(PhysicalPosition::new(x, y))
         .map_err(|error| error.to_string())
-}
-
-#[cfg(target_os = "macos")]
-mod platform {
-    use objc2_app_kit::{NSStatusWindowLevel, NSWindow, NSWindowCollectionBehavior};
-    use tauri::WebviewWindow;
-
-    pub fn order_front_without_focus(window: &WebviewWindow) -> Result<(), String> {
-        let pointer = window.ns_window().map_err(|error| error.to_string())?;
-        if pointer.is_null() {
-            return Err("dictation_window_unavailable".into());
-        }
-        let ns_window = unsafe { &*(pointer as *const NSWindow) };
-        ns_window.setCollectionBehavior(
-            NSWindowCollectionBehavior::CanJoinAllSpaces
-                | NSWindowCollectionBehavior::FullScreenAuxiliary
-                | NSWindowCollectionBehavior::Stationary,
-        );
-        ns_window.setLevel(NSStatusWindowLevel);
-        ns_window.orderFrontRegardless();
-        Ok(())
-    }
-}
-
-#[cfg(not(target_os = "macos"))]
-mod platform {
-    use tauri::WebviewWindow;
-
-    pub fn order_front_without_focus(window: &WebviewWindow) -> Result<(), String> {
-        window.show().map_err(|error| error.to_string())
-    }
 }
 
 #[cfg(test)]

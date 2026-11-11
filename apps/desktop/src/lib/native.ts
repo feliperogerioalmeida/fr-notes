@@ -186,14 +186,30 @@ const MAIN_WINDOW_LABEL = "main";
 const NUB_WINDOW_LABEL = "nub";
 const OPEN_NOTE_EVENT = "nub:open-note";
 const STOP_RECORDING_EVENT = "nub:stop-recording";
-const START_RECORDING_EVENT = "nub:start-recording";
-const DISMISS_PROMPT_EVENT = "nub:dismiss-prompt";
 const PROMPT_EVENT = "nub:prompt";
 
 export interface NubPrompt {
   title: string;
   subtitle: string;
+  startsAtMs: number | null;
+  endsAtMs: number | null;
+  accentColor: string | null;
+  joinUrl: string | null;
+  provider: string | null;
 }
+
+export type PromptAction = "join-and-record" | "record" | "join" | "dismiss";
+
+const PROMPT_ACTION_EVENT = "nub:prompt-action";
+
+export const requestPromptAction = (action: PromptAction) =>
+  emitTo(MAIN_WINDOW_LABEL, PROMPT_ACTION_EVENT, action);
+
+export const onPromptAction = (handler: (action: PromptAction) => void) =>
+  subscribe(PROMPT_ACTION_EVENT, handler);
+
+export const setTrayTitle = (title: string | null) =>
+  invoke<void>("set_tray_title", { title });
 
 export const requestOpenNote = (noteId: string) =>
   emitTo(MAIN_WINDOW_LABEL, OPEN_NOTE_EVENT, noteId);
@@ -206,18 +222,6 @@ export const onOpenNoteRequest = (handler: (noteId: string) => void) =>
 
 export const onStopRecordingRequest = (handler: () => void) =>
   subscribe(STOP_RECORDING_EVENT, handler);
-
-export const requestStartRecording = () =>
-  emitTo(MAIN_WINDOW_LABEL, START_RECORDING_EVENT);
-
-export const requestDismissPrompt = () =>
-  emitTo(MAIN_WINDOW_LABEL, DISMISS_PROMPT_EVENT);
-
-export const onStartRecordingRequest = (handler: () => void) =>
-  subscribe(START_RECORDING_EVENT, handler);
-
-export const onDismissPromptRequest = (handler: () => void) =>
-  subscribe(DISMISS_PROMPT_EVENT, handler);
 
 export const sendNubPrompt = (prompt: NubPrompt | null) =>
   emitTo(NUB_WINDOW_LABEL, PROMPT_EVENT, prompt);

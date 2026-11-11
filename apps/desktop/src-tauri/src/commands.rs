@@ -10,7 +10,7 @@ use crate::recordings::{self, RecordingFile, RetranscribeRequest, RetranscribedS
 use crate::secrets::{read_secret, remove_secret, write_secret};
 use crate::session::{RecordingManager, RecordingStarted, RecordingStatus, StartRecordingArgs};
 use crate::speaker_ax::{self, SpeakerMonitor, StartSpeakerMonitorArgs};
-use crate::windows::set_nub_visible;
+use crate::windows::{hide_nub, set_nub_visible};
 use crate::{fn_key, text_insertion};
 
 #[tauri::command]
@@ -47,7 +47,7 @@ pub async fn stop_recording(
     app: AppHandle,
     manager: State<'_, RecordingManager>,
 ) -> Result<(), String> {
-    let _ = set_nub_visible(&app, false);
+    let _ = hide_nub(&app);
     manager.stop(&app).await
 }
 
@@ -79,8 +79,13 @@ pub fn open_privacy_settings(pane: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub fn show_nub(app: AppHandle, visible: bool) -> Result<(), String> {
-    set_nub_visible(&app, visible)
+pub async fn show_nub(app: AppHandle, visible: bool) -> Result<(), String> {
+    set_nub_visible(&app, visible).await
+}
+
+#[tauri::command]
+pub fn set_tray_title(app: AppHandle, title: Option<String>) -> Result<(), String> {
+    crate::tray::set_tray_title(&app, title)
 }
 
 #[tauri::command]

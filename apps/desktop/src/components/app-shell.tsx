@@ -4,6 +4,7 @@ import { Outlet, useNavigate } from "react-router";
 
 import { useGlobalShortcuts } from "@/features/dictation/use-global-shortcuts.js";
 import { useMeetingDetection } from "@/features/meetings/use-meeting-detection.js";
+import { useTrayCountdown } from "@/features/meetings/use-tray-countdown.js";
 import { useStartNote } from "@/features/notes/use-start-note.js";
 import { endRecording } from "@/features/recording/use-recording-controls.js";
 import { useRecordingListeners } from "@/features/recording/use-recording-listeners.js";
@@ -44,6 +45,7 @@ export const AppShell = () => {
   useRecordingMaintenance();
   useShellEvents();
   useMeetingDetection(startNote);
+  useTrayCountdown();
   useGlobalShortcuts(startNote);
   useThemeSync();
   useAutoUpdate();

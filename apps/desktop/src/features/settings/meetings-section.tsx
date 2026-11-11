@@ -39,8 +39,8 @@ export const MeetingsSection = () => {
       />
       <SwitchSetting
         settingKey="meetingReminders"
-        title="Avisar no início das reuniões da agenda"
-        description="Mostra o convite para gravar no canto da tela quando um evento começa."
+        title="Avisar antes das reuniões da agenda"
+        description="1 minuto antes, mostra no canto da tela o convite para entrar e gravar, e a contagem regressiva na barra de menus."
       />
     </SettingsSection>
   );

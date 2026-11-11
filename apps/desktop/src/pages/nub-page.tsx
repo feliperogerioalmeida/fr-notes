@@ -1,10 +1,11 @@
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { Button } from "@workspace/ui/components/ui/button";
-import { Mic, Square, X } from "lucide-react";
+import { Square } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { FrSymbol } from "@/components/fr-logo.js";
 import { applyNubLayout, type NubMode } from "@/features/nub/nub-layout.js";
+import { PromptCard } from "@/features/nub/prompt-card.js";
 import { AudioLevelBars } from "@/features/recording/audio-level-bars.js";
 import { useRecordingStore } from "@/features/recording/recording-store.js";
 import { useRecordingListeners } from "@/features/recording/use-recording-listeners.js";
@@ -13,10 +14,9 @@ import {
   focusMainWindow,
   type NubPrompt,
   onNubPrompt,
-  requestDismissPrompt,
   requestOpenNote,
-  requestStartRecording,
   requestStopRecording,
+  setNubVisible,
 } from "@/lib/native.js";
 
 const TRANSPARENT_CLASS = "bg-transparent";
@@ -37,12 +37,17 @@ const usePrompt = () => {
     });
     return () => unlisten?.();
   }, []);
-  return prompt;
+  return [prompt, setPrompt] as const;
 };
 
-const useNubMode = (mode: NubMode) => {
+const useNubWindow = (mode: NubMode | null) => {
   useEffect(() => {
-    void applyNubLayout(mode);
+    const apply = async () => {
+      if (!mode) return setNubVisible(false);
+      await applyNubLayout(mode);
+      await setNubVisible(true);
+    };
+    void apply();
   }, [mode]);
 };
 
@@ -50,35 +55,6 @@ const openActiveNote = async (noteId: string | null) => {
   await focusMainWindow();
   if (noteId) await requestOpenNote(noteId);
 };
-
-const PromptCard = ({ prompt }: { prompt: NubPrompt }) => (
-  <div
-    data-tauri-drag-region
-    className="bg-card/95 flex h-full w-full items-center gap-3 rounded-2xl border px-3 shadow-lg"
-  >
-    <FrSymbol className="h-6 w-[26px]" />
-    <div data-tauri-drag-region className="flex min-w-0 flex-1 flex-col">
-      <span className="text-body-sm text-heading truncate font-semibold">
-        {prompt.title}
-      </span>
-      <span className="text-caption text-muted-foreground truncate">
-        {prompt.subtitle}
-      </span>
-    </div>
-    <Button size="sm" onClick={() => void requestStartRecording()}>
-      <Mic />
-      Gravar
-    </Button>
-    <Button
-      size="icon-xs"
-      variant="ghost"
-      onClick={() => void requestDismissPrompt()}
-      aria-label="Agora não"
-    >
-      <X />
-    </Button>
-  </div>
-);
 
 const RecordingPill = () => {
   const noteId = useRecordingStore((state) => state.noteId);
@@ -120,23 +96,46 @@ const RecordingPill = () => {
   );
 };
 
+const resolveMode = (
+  isRecording: boolean,
+  hasPrompt: boolean,
+  expanded: boolean,
+): NubMode | null => {
+  if (isRecording) return "recording";
+  if (!hasPrompt) return null;
+  return expanded ? "prompt-expanded" : "prompt";
+};
+
 export const NubPage = () => {
   useTransparentWindow();
   useRecordingListeners({ persistSegments: false });
-  const prompt = usePrompt();
+  const [prompt, setPrompt] = usePrompt();
+  const [expanded, setExpanded] = useState(false);
   const isRecording = useRecordingStore((state) => state.phase !== "idle");
-  const showPrompt = Boolean(prompt) && !isRecording;
-  useNubMode(showPrompt ? "prompt" : "recording");
-  return (
-    <div
-      data-tauri-drag-region
-      className="flex h-screen items-center justify-center p-1.5"
-    >
-      {showPrompt && prompt ? (
-        <PromptCard prompt={prompt} />
-      ) : (
+  useEffect(() => {
+    if (isRecording) setPrompt(null);
+  }, [isRecording, setPrompt]);
+  useEffect(() => setExpanded(false), [prompt]);
+  const mode = resolveMode(isRecording, Boolean(prompt), expanded);
+  useNubWindow(mode);
+  if (mode === "recording") {
+    return (
+      <div
+        data-tauri-drag-region
+        className="flex h-screen items-center justify-center p-1.5"
+      >
         <RecordingPill />
-      )}
+      </div>
+    );
+  }
+  if (!prompt) return null;
+  return (
+    <div className="flex h-screen flex-col p-1.5">
+      <PromptCard
+        prompt={prompt}
+        expanded={expanded}
+        onToggle={() => setExpanded((value) => !value)}
+      />
     </div>
   );
 };

@@ -74,6 +74,7 @@ pub fn run() {
             commands::request_screen_capture_permission,
             commands::open_privacy_settings,
             commands::show_nub,
+            commands::set_tray_title,
             commands::request_system_audio_permission,
             commands::request_calendar_access,
             commands::list_calendars,

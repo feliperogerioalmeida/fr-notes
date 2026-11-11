@@ -10,10 +10,11 @@ const TRAY_ICON: &[u8] = include_bytes!("../icons/tray-template.png");
 const NEW_NOTE_ID: &str = "new-note";
 const OPEN_ID: &str = "open";
 const QUIT_ID: &str = "quit";
+const TRAY_ID: &str = "fr-notes-tray";
 
 pub fn install_tray(app: &AppHandle) -> tauri::Result<()> {
     let menu = build_menu(app)?;
-    TrayIconBuilder::with_id("fr-notes-tray")
+    TrayIconBuilder::with_id(TRAY_ID)
         .icon(Image::from_bytes(TRAY_ICON)?)
         .icon_as_template(true)
         .tooltip("FR Notes")
@@ -42,4 +43,12 @@ fn handle_menu_event(app: &AppHandle, event: MenuEvent) {
         QUIT_ID => app.exit(0),
         _ => {}
     }
+}
+
+pub fn set_tray_title(app: &AppHandle, title: Option<String>) -> Result<(), String> {
+    let Some(tray) = app.tray_by_id(TRAY_ID) else {
+        return Ok(());
+    };
+    tray.set_title(title.filter(|text| !text.trim().is_empty()))
+        .map_err(|error| error.to_string())
 }

@@ -177,10 +177,17 @@ const exposePreviewControls = () => {
         text: "Oi Marina, te mando a proposta revisada até sexta com o cronograma",
       });
     },
-    simulateNubPrompt: () =>
+    simulateNubPrompt: (
+      joinUrl: string | null = "https://meet.google.com/abc-defg-hij",
+    ) =>
       emit("nub:prompt", {
-        title: "Kickoff — App de pedidos",
-        subtitle: "Zoom está usando o microfone",
+        title: "Ingenious Brazil - Marketing",
+        subtitle: "",
+        startsAtMs: Date.now() + 60_000,
+        endsAtMs: Date.now() + 61 * 60_000,
+        accentColor: "#FF6B1A",
+        joinUrl,
+        provider: joinUrl ? "Google Meet" : null,
       }),
   });
 };

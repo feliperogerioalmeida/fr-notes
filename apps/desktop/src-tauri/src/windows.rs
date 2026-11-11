@@ -1,9 +1,9 @@
-use tauri::{AppHandle, LogicalPosition, Manager, WebviewWindow};
+use tauri::{AppHandle, Manager, WebviewWindow};
+
+use crate::main_thread::run_on_main;
 
 pub const MAIN_WINDOW: &str = "main";
 pub const NUB_WINDOW: &str = "nub";
-const NUB_EDGE_MARGIN: f64 = 12.0;
-const NUB_VERTICAL_RATIO: f64 = 0.38;
 
 pub fn show_main_window(app: &AppHandle) {
     let Some(window) = app.get_webview_window(MAIN_WINDOW) else {
@@ -14,33 +14,44 @@ pub fn show_main_window(app: &AppHandle) {
     let _ = window.set_focus();
 }
 
-pub fn set_nub_visible(app: &AppHandle, visible: bool) -> Result<(), String> {
-    let nub = app
-        .get_webview_window(NUB_WINDOW)
-        .ok_or_else(|| "nub_window_missing".to_string())?;
+fn nub_window(app: &AppHandle) -> Result<WebviewWindow, String> {
+    app.get_webview_window(NUB_WINDOW)
+        .ok_or_else(|| "nub_window_missing".to_string())
+}
+
+pub fn hide_nub(app: &AppHandle) -> Result<(), String> {
+    nub_window(app)?.hide().map_err(|error| error.to_string())
+}
+
+pub async fn set_nub_visible(app: &AppHandle, visible: bool) -> Result<(), String> {
+    let nub = nub_window(app)?;
     if !visible {
         return nub.hide().map_err(|error| error.to_string());
     }
-    position_nub(app, &nub)?;
     let _ = nub.set_focusable(false);
-    nub.show().map_err(|error| error.to_string())
+    run_on_main(app, move || order_front_without_focus(&nub)).await?
 }
 
-fn position_nub(app: &AppHandle, nub: &WebviewWindow) -> Result<(), String> {
-    let monitor = app
-        .get_webview_window(MAIN_WINDOW)
-        .and_then(|main| main.current_monitor().ok().flatten())
-        .or_else(|| nub.primary_monitor().ok().flatten())
-        .ok_or_else(|| "monitor_unavailable".to_string())?;
-    let scale = monitor.scale_factor();
-    let origin = monitor.position().to_logical::<f64>(scale);
-    let size = monitor.size().to_logical::<f64>(scale);
-    let nub_size = nub
-        .outer_size()
-        .map_err(|error| error.to_string())?
-        .to_logical::<f64>(scale);
-    let x = origin.x + size.width - nub_size.width - NUB_EDGE_MARGIN;
-    let y = origin.y + size.height * NUB_VERTICAL_RATIO;
-    nub.set_position(LogicalPosition::new(x, y))
-        .map_err(|error| error.to_string())
+#[cfg(target_os = "macos")]
+pub fn order_front_without_focus(window: &WebviewWindow) -> Result<(), String> {
+    use objc2_app_kit::{NSStatusWindowLevel, NSWindow, NSWindowCollectionBehavior};
+
+    let pointer = window.ns_window().map_err(|error| error.to_string())?;
+    if pointer.is_null() {
+        return Err("window_unavailable".into());
+    }
+    let ns_window = unsafe { &*(pointer as *const NSWindow) };
+    ns_window.setCollectionBehavior(
+        NSWindowCollectionBehavior::CanJoinAllSpaces
+            | NSWindowCollectionBehavior::FullScreenAuxiliary
+            | NSWindowCollectionBehavior::Stationary,
+    );
+    ns_window.setLevel(NSStatusWindowLevel);
+    ns_window.orderFrontRegardless();
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn order_front_without_focus(window: &WebviewWindow) -> Result<(), String> {
+    window.show().map_err(|error| error.to_string())
 }
