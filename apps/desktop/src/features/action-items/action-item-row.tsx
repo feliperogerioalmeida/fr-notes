@@ -16,6 +16,7 @@ import { CalendarClock, Check, LoaderCircle, Send, User } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
 import { ConnectionMenuItems } from "@/features/connections/connection-menu-items.js";
+import { ProviderLogo } from "@/features/connections/provider-logo.js";
 
 import { sendItemTo, wasSentTo } from "./send-to-connection.js";
 import { useToggleActionItem } from "./use-action-items.js";
@@ -42,8 +43,13 @@ const CheckButton = ({ item }: { item: ActionItem }) => {
 };
 
 const SentBadge = ({ sent }: { sent: SentRef }) => {
-  const label = `Em ${describeProviderName(sent.provider)}`;
-  if (!sent.url) return <Badge variant="secondary">{label}</Badge>;
+  const content = (
+    <>
+      <ProviderLogo provider={sent.provider} className="size-3" />
+      Em {describeProviderName(sent.provider)}
+    </>
+  );
+  if (!sent.url) return <Badge variant="secondary">{content}</Badge>;
   return (
     <Badge variant="secondary" asChild>
       <button
@@ -51,7 +57,7 @@ const SentBadge = ({ sent }: { sent: SentRef }) => {
         onClick={() => void openUrl(sent.url ?? "")}
         className="hover:bg-accent cursor-pointer"
       >
-        {label}
+        {content}
       </button>
     </Badge>
   );

@@ -230,6 +230,8 @@ O código é distribuído sob a [licença MIT](LICENSE).
 
 O nome **FR Notes**, o símbolo **FR** e a identidade visual da marca Felipe Rogério **não** fazem parte da licença MIT. Se você fizer um fork e distribuir, use outro nome e outro ícone.
 
+Os logos de ClickUp, Linear, Notion e Slack vêm do conjunto [Logos do Iconify](https://icon-sets.iconify.design/logos/) (CC0) e são marcas dos seus donos, usadas só para identificar as integrações.
+
 <br />
 
 <p align="center">Feito por <a href="https://github.com/feliperogerioalmeida">Felipe Rogério</a>.</p>

@@ -11,6 +11,7 @@ import {
 import { Check, Plug } from "lucide-react";
 import { useNavigate } from "react-router";
 
+import { ProviderLogo } from "./provider-logo.js";
 import { useConnectionsQuery } from "./use-connections.js";
 
 export const useCapableConnections = (capability: ConnectionCapability) => {
@@ -49,6 +50,7 @@ export const ConnectionMenuItems = ({
           key={connection.id}
           onSelect={() => onSelect(connection)}
         >
+          <ProviderLogo provider={connection.provider} className="size-4" />
           <span className="flex-1 truncate">{connection.name}</span>
           {isDone?.(connection) && <Check className="text-success" />}
         </DropdownMenuItem>
