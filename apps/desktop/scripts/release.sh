@@ -79,6 +79,9 @@ latest = {
 pathlib.Path(output).write_text(json.dumps(latest, indent=2, ensure_ascii=False) + "\n")
 PY
 
+rm -rf "$BUNDLE_DIR/macos/FR Notes.app"
+hdiutil detach "/Volumes/FR Notes" >/dev/null 2>&1 || true
+
 echo "Arquivos da versão $VERSION em apps/desktop/$OUT_DIR"
 
 if [ "$PUBLISH" != "true" ]; then
