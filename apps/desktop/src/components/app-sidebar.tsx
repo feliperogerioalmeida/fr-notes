@@ -8,6 +8,7 @@ import {
   LayoutTemplate,
   ListChecks,
   type LucideIcon,
+  MessagesSquare,
   Plug,
   Search,
   Settings,
@@ -134,6 +135,7 @@ export const AppSidebar = ({
       <nav className="flex flex-col gap-0.5 px-3">
         <SidebarLink to="/" icon={House} label="Início" end />
         <SidebarLink to="/agenda" icon={CalendarDays} label="Agenda" />
+        <SidebarLink to="/ask" icon={MessagesSquare} label="Perguntar" />
         <SidebarLink to="/tasks" icon={ListChecks} label="Próximos passos" />
         <SidebarLink to="/dictations" icon={AudioLines} label="Ditados" />
         <SidebarLink to="/templates" icon={LayoutTemplate} label="Templates" />

@@ -15,10 +15,8 @@ import { PageHeader } from "@/components/page-header.js";
 import { useNotesQuery } from "@/features/notes/use-notes.js";
 
 import { HighlightedText } from "./highlighted-text.js";
+import { buildNoteLink } from "./note-link.js";
 import { useSearchResults } from "./use-search.js";
-
-export const buildNoteLink = (noteId: string, atMs: number | null) =>
-  atMs === null ? `/notes/${noteId}` : `/notes/${noteId}?at=${atMs}`;
 
 const describeMoment = (hit: SearchHit, note: Note) => {
   if (hit.startMs === null || hit.source === null) return "Nas notas";

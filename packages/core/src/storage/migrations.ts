@@ -179,6 +179,25 @@ const MIGRATIONS: Migration[] = [
        SELECT rowid, text FROM transcript_segments WHERE deleted_at IS NULL`,
     ],
   },
+  {
+    version: 9,
+    statements: [
+      "ALTER TABLE chat_messages ADD COLUMN sources_json TEXT NOT NULL DEFAULT '[]'",
+    ],
+  },
+  {
+    version: 10,
+    statements: [
+      `CREATE TABLE IF NOT EXISTS transcript_digests (
+        id TEXT PRIMARY KEY,
+        note_id TEXT NOT NULL,
+        start_ms INTEGER NOT NULL,
+        end_ms INTEGER NOT NULL,
+        text TEXT NOT NULL,${SYNCED_COLUMNS}
+      )`,
+      "CREATE INDEX IF NOT EXISTS idx_digests_note ON transcript_digests (note_id, start_ms)",
+    ],
+  },
 ];
 
 const ensureMigrationsTable = (db: SqlClient): Promise<void> =>

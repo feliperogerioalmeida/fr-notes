@@ -2,6 +2,7 @@ import { createHashRouter } from "react-router";
 
 import { AppShell } from "@/components/app-shell.js";
 import { AgendaPage } from "@/pages/agenda-page.js";
+import { AskPage } from "@/pages/ask-page.js";
 import { ConnectionsPage } from "@/pages/connections-page.js";
 import { DictationPillPage } from "@/pages/dictation-pill-page.js";
 import { DictationsPage } from "@/pages/dictations-page.js";
@@ -22,6 +23,7 @@ export const router = createHashRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "agenda", element: <AgendaPage /> },
+      { path: "ask", element: <AskPage /> },
       { path: "tasks", element: <TasksPage /> },
       { path: "dictations", element: <DictationsPage /> },
       { path: "connections", element: <ConnectionsPage /> },

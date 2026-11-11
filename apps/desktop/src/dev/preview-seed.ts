@@ -1,6 +1,10 @@
 import {
+  ALL_MEETINGS_THREAD_ID,
+  buildMeetingSources,
   type CalendarEvent,
+  type Note,
   nowIso,
+  toChatSources,
   type TranscriptSource,
 } from "@workspace/core";
 
@@ -159,6 +163,31 @@ const seedConnections = async () => {
   });
 };
 
+const seedAskConversation = async () => {
+  const storage = await getStorage();
+  const question = "Quando falamos do orçamento e qual foi o valor?";
+  const context = await storage.search.findMeetingContext({ question });
+  const notes = await Promise.all(
+    context.excerpts.map((excerpt) => storage.notes.findNote(excerpt.noteId)),
+  );
+  const sources = buildMeetingSources({
+    context,
+    notes: notes.filter((note): note is Note => Boolean(note)),
+  });
+  await storage.chat.appendMessage({
+    noteId: ALL_MEETINGS_THREAD_ID,
+    role: "user",
+    content: question,
+  });
+  await storage.chat.appendMessage({
+    noteId: ALL_MEETINGS_THREAD_ID,
+    role: "assistant",
+    content:
+      "Na **Descoberta — Pedidos da Marina**, a Marina contou que o orçamento aprovado é de **R$ 40 mil** e que o sistema precisa estar no ar até março [1]. As notas da reunião registram o mesmo valor [2].",
+    sources: toChatSources(sources),
+  });
+};
+
 export const seedPreviewData = async () => {
   const storage = await getStorage();
   await storage.settings.writeSettings({ userName: "Felipe Rogério" });
@@ -174,6 +203,7 @@ export const seedPreviewData = async () => {
   await seedDemoMeeting();
   await storage.notes.createNote({ title: "1:1 com o time" });
   await seedConnections();
+  await seedAskConversation();
 };
 
 const buildEvent = (

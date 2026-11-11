@@ -2,6 +2,10 @@ import { nowIso } from "@workspace/core";
 import { useCallback } from "react";
 import { toast } from "sonner";
 
+import {
+  startDigestTracking,
+  stopDigestTracking,
+} from "@/features/enhance/digest-tracker.js";
 import { runEnhancement } from "@/features/enhance/run-enhancement.js";
 import { dispatchNoteEvent } from "@/features/integrations/deliver-webhooks.js";
 import {
@@ -51,6 +55,7 @@ export const beginRecording = async (
     });
     store.markRecording({ noteId, startedAtMs: session.startedAtMs, origin });
     void startSpeakerTracking(noteId);
+    startDigestTracking(noteId);
     await setNubVisible(true);
     await refreshNote(noteId);
   } catch (error) {
@@ -83,6 +88,7 @@ export const endRecording = async (): Promise<void> => {
   } catch (error) {
     toast.error(describeError(error));
   } finally {
+    stopDigestTracking();
     await stopSpeakerTracking().catch(() => undefined);
     store.markIdle();
     await refreshNote(noteId);

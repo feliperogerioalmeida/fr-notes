@@ -45,6 +45,7 @@ export const SettingsSchema = z.object({
   llmModel: z.string().default(""),
   llmBaseUrl: z.string().default(""),
   llmThinking: z.boolean().default(false),
+  llmDigestDuringMeeting: z.boolean().default(true),
   theme: z.enum(THEMES).default("dark"),
 });
 

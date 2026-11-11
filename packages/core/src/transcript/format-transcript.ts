@@ -57,12 +57,19 @@ export const groupIntoTurns = (
     return turns;
   }, []);
 
-export const formatTranscriptForPrompt = (
-  segments: TranscriptSegment[],
-  speakerNames: SpeakerNames = {},
-): string => {
+interface FormatTranscriptInput {
+  segments: TranscriptSegment[];
+  speakerNames?: SpeakerNames;
+  originMs?: number;
+}
+
+export const formatTranscriptFrom = ({
+  segments,
+  speakerNames = {},
+  originMs,
+}: FormatTranscriptInput): string => {
   const turns = groupIntoTurns(segments, speakerNames);
-  const origin = turns[0]?.startMs ?? 0;
+  const origin = originMs ?? turns[0]?.startMs ?? 0;
   return turns
     .map(
       (turn) =>
@@ -70,3 +77,8 @@ export const formatTranscriptForPrompt = (
     )
     .join("\n");
 };
+
+export const formatTranscriptForPrompt = (
+  segments: TranscriptSegment[],
+  speakerNames: SpeakerNames = {},
+): string => formatTranscriptFrom({ segments, speakerNames });

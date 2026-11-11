@@ -3,6 +3,7 @@ import type { LiveSegmentEvent } from "@workspace/core";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
+import { stopDigestTracking } from "@/features/enhance/digest-tracker.js";
 import { stopSpeakerTracking } from "@/features/speakers/speaker-tracking.js";
 import { getStorage } from "@/lib/database.js";
 import {
@@ -82,7 +83,9 @@ const registerListeners = ({ persistSegments }: RecordingListenersOptions) =>
     onRecordingState((state) => {
       if (state.status === "recording") return void syncInitialStatus();
       useRecordingStore.getState().markIdle();
-      if (persistSegments) void stopSpeakerTracking();
+      if (!persistSegments) return;
+      stopDigestTracking();
+      void stopSpeakerTracking();
     }),
     onRecordingError((error) => {
       if (!persistSegments) return;

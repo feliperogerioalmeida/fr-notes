@@ -68,6 +68,11 @@ export const AiSection = () => {
             : "Crie em vercel.com → AI Gateway → API Keys."
         }
       />
+      <SwitchSetting
+        settingKey="llmDigestDuringMeeting"
+        title="Adiantar as notas durante a reunião"
+        description="A cada 10 minutos de conversa, resume a transcrição em segundo plano. Quando a reunião acaba, as notas saem bem mais rápido, principalmente em modelos no seu servidor."
+      />
       {isCompatible && (
         <SwitchSetting
           settingKey="llmThinking"

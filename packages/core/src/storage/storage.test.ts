@@ -270,4 +270,25 @@ describe("storage", () => {
     await storage.notes.deleteNote(note.id);
     expect(await storage.search.search("orcamento")).toEqual([]);
   });
+
+  it("saves, lists and clears transcript digests", async () => {
+    const storage = await initializeStorage(await createMemoryClient());
+    await storage.digests.saveDigest({
+      noteId: "n",
+      startMs: 0,
+      endMs: 600_000,
+      text: " - A ",
+    });
+    await storage.digests.saveDigest({
+      noteId: "n",
+      startMs: 600_000,
+      endMs: 1_200_000,
+      text: "- B",
+    });
+    expect(
+      (await storage.digests.listDigests("n")).map((digest) => digest.text),
+    ).toEqual(["- A", "- B"]);
+    await storage.digests.clearDigests("n");
+    expect(await storage.digests.listDigests("n")).toEqual([]);
+  });
 });

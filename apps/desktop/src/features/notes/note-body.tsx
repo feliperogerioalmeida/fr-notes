@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/ui/tabs";
 import { Sparkles } from "lucide-react";
 
 import { MarkdownEditor } from "@/components/markdown-editor.js";
+import { EnhanceProgress } from "@/features/enhance/enhance-progress.js";
 import { useEnhanceStore } from "@/features/enhance/enhance-store.js";
 
 export type NoteView = "mine" | "enhanced";
@@ -58,6 +59,7 @@ export const NoteBody = ({
   const draft = useEnhanceStore((state) => state.draft);
   const isStreaming = streamingNoteId === note.id;
 
+  if (isStreaming && !draft) return <EnhanceProgress noteId={note.id} />;
   if (isStreaming || view === "enhanced") {
     return (
       <MarkdownEditor

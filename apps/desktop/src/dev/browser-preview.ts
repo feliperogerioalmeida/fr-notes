@@ -4,6 +4,8 @@ import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 import initSqlJs, { type Database, type SqlValue } from "sql.js";
 import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 
+import { useEnhanceStore } from "@/features/enhance/enhance-store.js";
+
 import {
   buildPreviewCalendars,
   buildPreviewEvents,
@@ -158,6 +160,8 @@ const simulateSpeakerScene = (noteId: string, bundleId = "us.zoom.xos") => {
 const exposePreviewControls = () => {
   Object.assign(window, {
     simulateSpeakerScene,
+    simulateEnhanceProgress: (noteId: string, estimatedReadMs = 150_000) =>
+      useEnhanceStore.getState().begin({ noteId, estimatedReadMs }),
     simulateMeetingApp: (active = true) =>
       emit("microphone-apps:changed", {
         apps: active

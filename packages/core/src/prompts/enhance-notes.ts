@@ -10,6 +10,7 @@ export const ENHANCE_SYSTEM_PROMPT = `You are the note-taking assistant inside F
 How to read the input:
 - <my_notes> are the user's own quick notes. They show what mattered to the user, so they are the backbone of the result: keep every point they wrote and expand it with the matching details from the transcript.
 - In <transcript>, "Eu" is the user (their microphone). Everyone else comes from the computer's audio: by name when the user identified them, as "Pessoa 1", "Pessoa 2"… when the voices were separated automatically, or as "Eles" otherwise. Automatic separation is approximate, and the speech-to-text can mishear names and terms; use the user's notes, the participants list and the context to correct obvious mistakes, and only attribute something to a named person when it is clear.
+- When <transcript_summary> is present, it condenses the earlier parts of the meeting (written during the call, with the time range of each part); <transcript> then holds only the rest. Treat both as the transcript.
 - <template> defines the structure to follow. Skip any section that would be empty instead of writing filler.
 
 How to write:
@@ -30,7 +31,7 @@ export const buildEnhancePrompt = ({
   [
     buildMeetingContext(context),
     `<template name="${template.name}">\n${template.instructions.trim()}\n</template>`,
-    "Write the final notes for this meeting.",
+    'Write the final notes for this meeting. Every action item must be a task-list bullet in the form "- [ ] Owner — task (deadline)".',
   ].join("\n\n");
 
 export interface EnhancedNotes {

@@ -14,6 +14,7 @@ import { queryClient } from "@/lib/query-client.js";
 import { QUERY_KEYS } from "@/lib/query-keys.js";
 
 import { useEnhanceStore } from "./enhance-store.js";
+import { estimateReadMs, recordReadRate } from "./read-rate.js";
 
 export class NothingToEnhanceError extends Error {
   constructor() {
@@ -31,7 +32,8 @@ const loadInputs = async (storage: Storage, noteId: string) => {
   if (!note) throw new Error("Nota não encontrada.");
   const segments = await storage.transcript.listSegments(noteId);
   const settings = await storage.settings.readSettings();
-  return { note, segments, settings };
+  const digests = await storage.digests.listDigests(noteId);
+  return { note, segments, settings, digests };
 };
 
 const resolveTemplate = async (
@@ -48,12 +50,41 @@ const resolveTemplate = async (
 const pickTitle = (note: Note, generatedTitle: string | null) =>
   note.title.trim() ? undefined : (generatedTitle ?? undefined);
 
+interface StreamNotesInput {
+  noteId: string;
+  prompt: string;
+  settings: Awaited<ReturnType<typeof loadInputs>>["settings"];
+}
+
+const streamNotes = async ({ noteId, prompt, settings }: StreamNotesInput) => {
+  const chars = ENHANCE_SYSTEM_PROMPT.length + prompt.length;
+  const store = useEnhanceStore.getState();
+  store.begin({ noteId, estimatedReadMs: estimateReadMs(settings, chars) });
+  const startedAt = Date.now();
+  let isFirstText = true;
+  return streamCompletion({
+    settings,
+    instructions: ENHANCE_SYSTEM_PROMPT,
+    messages: [{ role: "user", content: prompt }],
+    onText: (text) => {
+      if (isFirstText) {
+        isFirstText = false;
+        recordReadRate({ settings, chars, elapsedMs: Date.now() - startedAt });
+      }
+      store.update(parseEnhancedNotes(text).markdown);
+    },
+  });
+};
+
 export const runEnhancement = async ({
   noteId,
   templateId,
 }: RunEnhancementInput): Promise<void> => {
   const storage = await getStorage();
-  const { note, segments, settings } = await loadInputs(storage, noteId);
+  const { note, segments, settings, digests } = await loadInputs(
+    storage,
+    noteId,
+  );
   if (segments.length === 0 && !note.notesMarkdown.trim()) {
     throw new NothingToEnhanceError();
   }
@@ -62,19 +93,17 @@ export const runEnhancement = async ({
     note.templateId,
     settings.defaultTemplateId,
   ]);
-  const store = useEnhanceStore.getState();
-  store.begin(noteId);
   try {
-    const output = await streamCompletion({
+    const output = await streamNotes({
+      noteId,
       settings,
-      instructions: ENHANCE_SYSTEM_PROMPT,
-      messages: [
-        {
-          role: "user",
-          content: buildEnhancePrompt({ note, segments, settings, template }),
-        },
-      ],
-      onText: (text) => store.update(parseEnhancedNotes(text).markdown),
+      prompt: buildEnhancePrompt({
+        note,
+        segments,
+        settings,
+        template,
+        digests,
+      }),
     });
     const enhanced = parseEnhancedNotes(output);
     await storage.notes.updateNote({
@@ -88,7 +117,7 @@ export const runEnhancement = async ({
     await syncActionItems(noteId, enhanced.markdown);
     void dispatchNoteEvent({ noteId, event: "note.enhanced" });
   } finally {
-    store.finish();
+    useEnhanceStore.getState().finish();
     await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.note(noteId) });
     await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allNotes });
   }

@@ -2,6 +2,7 @@ import {
   type ChatMessage,
   ChatMessageSchema,
   type ChatRole,
+  type ChatSource,
 } from "../domain/chat.js";
 import { createId, nowIso } from "../utils/ids.js";
 import type { SqlClient } from "./sql-client.js";
@@ -11,8 +12,17 @@ interface ChatRow {
   note_id: string;
   role: string;
   content: string;
+  sources_json: string | null;
   created_at: string;
 }
+
+const parseSources = (raw: string | null): unknown => {
+  try {
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
 
 const toMessage = (row: ChatRow): ChatMessage =>
   ChatMessageSchema.parse({
@@ -20,6 +30,7 @@ const toMessage = (row: ChatRow): ChatMessage =>
     noteId: row.note_id,
     role: row.role,
     content: row.content,
+    sources: parseSources(row.sources_json),
     createdAt: row.created_at,
   });
 
@@ -27,6 +38,7 @@ interface AppendMessageInput {
   noteId: string;
   role: ChatRole;
   content: string;
+  sources?: ChatSource[];
 }
 
 export const createChatRepository = (db: SqlClient) => {
@@ -45,15 +57,17 @@ export const createChatRepository = (db: SqlClient) => {
       id: createId(),
       createdAt: nowIso(),
       ...input,
+      sources: input.sources ?? [],
     };
     await db.execute(
-      `INSERT INTO chat_messages (id, note_id, role, content, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO chat_messages (id, note_id, role, content, sources_json, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         message.id,
         message.noteId,
         message.role,
         message.content,
+        JSON.stringify(message.sources),
         message.createdAt,
         message.createdAt,
       ],
