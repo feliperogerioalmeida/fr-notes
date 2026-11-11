@@ -21,11 +21,18 @@ mod tray;
 mod windows;
 
 use tauri::{AppHandle, RunEvent, Window, WindowEvent};
+use tauri_plugin_autostart::MacosLauncher;
 
 use dictation::DictationManager;
 use session::RecordingManager;
 use speaker_ax::SpeakerMonitor;
 use windows::{show_main_window, MAIN_WINDOW};
+
+const HIDDEN_LAUNCH_ARG: &str = "--hidden";
+
+fn launched_hidden() -> bool {
+    std::env::args().any(|arg| arg == HIDDEN_LAUNCH_ARG)
+}
 
 pub fn run() {
     let app = tauri::Builder::default()
@@ -35,12 +42,19 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec![HIDDEN_LAUNCH_ARG]),
+        ))
         .manage(RecordingManager::default())
         .manage(DictationManager::default())
         .manage(SpeakerMonitor::default())
         .setup(|app| {
             tray::install_tray(app.handle())?;
             microphone_apps::spawn_microphone_apps_poller(app.handle().clone());
+            if !launched_hidden() {
+                show_main_window(app.handle());
+            }
             Ok(())
         })
         .on_window_event(hide_main_window_on_close)

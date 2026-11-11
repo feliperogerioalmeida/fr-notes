@@ -25,7 +25,8 @@
           "x": 18,
           "y": 22
         },
-        "backgroundColor": "#0C0C0D"
+        "backgroundColor": "#0C0C0D",
+        "visible": false
       },
       {
         "label": "nub",
@@ -71,10 +72,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "app",
-      "dmg"
-    ],
+    "targets": ["app", "dmg"],
     "category": "public.app-category.productivity",
     "shortDescription": "Notas de reunião com IA",
     "copyright": "© 2026 Felipe Rogério",

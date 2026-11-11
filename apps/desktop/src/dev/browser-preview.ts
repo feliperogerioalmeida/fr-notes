@@ -58,11 +58,19 @@ const createRecordingSimulator = () => {
 const createHandler = (db: Database) => {
   const secrets = new Map<string, string>();
   const recorder = createRecordingSimulator();
+  const launchAtLogin = { enabled: false };
   const handlers: Record<string, (payload: InvokeArgs | undefined) => unknown> =
     {
       "plugin:sql|load": () => "sqlite:fr-notes.db",
       "plugin:app|version": () => "0.1.0-preview",
       "plugin:updater|check": () => null,
+      "plugin:autostart|is_enabled": () => launchAtLogin.enabled,
+      "plugin:autostart|enable": () => {
+        launchAtLogin.enabled = true;
+      },
+      "plugin:autostart|disable": () => {
+        launchAtLogin.enabled = false;
+      },
       "plugin:sql|select": (payload) =>
         selectRows(db, payload as unknown as SqlPayload),
       "plugin:sql|execute": (payload) =>

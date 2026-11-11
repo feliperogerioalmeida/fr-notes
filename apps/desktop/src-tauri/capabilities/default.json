@@ -2,11 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Main window permissions",
-  "windows": [
-    "main",
-    "nub",
-    "dictation"
-  ],
+  "windows": ["main", "nub", "dictation"],
   "permissions": [
     "core:default",
     "core:window:allow-start-dragging",
@@ -49,6 +45,9 @@
     "global-shortcut:allow-register",
     "global-shortcut:allow-unregister",
     "global-shortcut:allow-unregister-all",
-    "global-shortcut:allow-is-registered"
+    "global-shortcut:allow-is-registered",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled"
   ]
 }

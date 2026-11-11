@@ -28,6 +28,7 @@ import {
 import { MeetingsSection } from "@/features/settings/meetings-section.js";
 import { PermissionsSection } from "@/features/settings/permissions-section.js";
 import { SpeakersSection } from "@/features/settings/speakers-section.js";
+import { StartupSection } from "@/features/settings/startup-section.js";
 import { TranscriptionSection } from "@/features/settings/transcription-section.js";
 import {
   type SettingsSectionId,
@@ -47,11 +48,12 @@ const SECTIONS: SectionDefinition[] = [
     id: "geral",
     label: "Geral",
     icon: UserRound,
-    description: "Quem você é, template padrão e aparência.",
+    description: "Quem você é, template padrão, aparência e inicialização.",
     content: () => (
       <>
         <ProfileSection />
         <PreferencesSection />
+        <StartupSection />
       </>
     ),
   },
