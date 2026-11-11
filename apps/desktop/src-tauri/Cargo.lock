@@ -1418,7 +1418,7 @@ dependencies = [
 
 [[package]]
 name = "fr-notes"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "aec3",
  "block2",
