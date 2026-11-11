@@ -1,21 +1,12 @@
 import {
   type Connection,
   CONNECTION_CATALOG,
-  type ConnectionCapability,
   type ConnectionCatalogEntry,
 } from "@workspace/core";
 import { Button } from "@workspace/ui/components/ui/button";
 import { ScrollArea } from "@workspace/ui/components/ui/scroll-area";
 import { cn } from "@workspace/ui/lib/utils";
-import {
-  ArrowRight,
-  FileText,
-  ListChecks,
-  type LucideIcon,
-  Plus,
-  Trash2,
-  Webhook,
-} from "lucide-react";
+import { Plus, Webhook, X } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { Link } from "react-router";
 
@@ -28,158 +19,138 @@ import {
   useDeleteConnection,
 } from "@/features/connections/use-connections.js";
 
-const CAPABILITIES: Record<
-  ConnectionCapability,
-  { label: string; icon: LucideIcon }
-> = {
-  task: { label: "Próximos passos", icon: ListChecks },
-  note: { label: "Notas", icon: FileText },
-};
-
-interface IntegrationCardProps {
+interface IntegrationRowProps {
   tile: ReactNode;
   title: string;
-  description: string;
+  subtitle: ReactNode;
   isConnected?: boolean;
-  details?: ReactNode;
-  footer: ReactNode;
+  action: ReactNode;
 }
 
-const ConnectedPill = () => (
-  <span className="text-caption text-success inline-flex items-center gap-1.5 font-medium">
-    <span className="bg-success size-1.5 rounded-full" />
-    Conectado
-  </span>
-);
-
-const IntegrationCard = ({
+const IntegrationRow = ({
   tile,
   title,
-  description,
+  subtitle,
   isConnected = false,
-  details,
-  footer,
-}: IntegrationCardProps) => (
+  action,
+}: IntegrationRowProps) => (
   <article
     className={cn(
-      "bg-card ease-brand flex flex-col gap-5 rounded-xl border p-5 transition-colors duration-150",
+      "bg-card ease-brand flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors duration-150",
       isConnected ? "border-border-strong" : "hover:border-border-strong",
     )}
   >
-    <header className="flex items-start gap-4">
-      <span className="bg-secondary flex size-12 shrink-0 items-center justify-center rounded-xl border p-2.5">
-        {tile}
-      </span>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-body text-heading font-semibold">{title}</h2>
-          {isConnected && <ConnectedPill />}
-        </div>
-        <p className="text-caption text-muted-foreground">{description}</p>
+    <span className="bg-secondary flex size-9 shrink-0 items-center justify-center rounded-lg border p-2">
+      {tile}
+    </span>
+    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <div className="flex items-center gap-2">
+        <h2 className="text-body-sm text-heading font-semibold">{title}</h2>
+        {isConnected && (
+          <span className="text-caption text-success inline-flex items-center gap-1">
+            <span className="bg-success size-1.5 rounded-full" />
+            Conectado
+          </span>
+        )}
       </div>
-    </header>
-    {details}
-    <footer className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-      {footer}
-    </footer>
+      {subtitle}
+    </div>
+    {action}
   </article>
 );
 
-const CapabilityList = ({
-  capabilities,
-}: {
-  capabilities: ConnectionCapability[];
-}) => (
-  <div className="flex flex-wrap items-center gap-3">
-    {capabilities.map((capability) => {
-      const { label, icon: Icon } = CAPABILITIES[capability];
-      return (
-        <span
-          key={capability}
-          className="text-caption text-muted-foreground inline-flex items-center gap-1.5"
-        >
-          <Icon className="size-3.5" />
-          {label}
-        </span>
-      );
-    })}
-  </div>
+const Description = ({ children }: { children: ReactNode }) => (
+  <p className="text-caption text-muted-foreground truncate">{children}</p>
 );
 
-const DestinationList = ({ connections }: { connections: Connection[] }) => {
+const describeDestination = (connection: Connection, providerName: string) =>
+  connection.name.replace(`${providerName} · `, "");
+
+interface DestinationChipsProps {
+  connections: Connection[];
+  providerName: string;
+}
+
+const DestinationChips = ({
+  connections,
+  providerName,
+}: DestinationChipsProps) => {
   const remove = useDeleteConnection();
   return (
-    <ul className="flex flex-col gap-1">
+    <ul className="flex flex-wrap gap-1">
       {connections.map((connection) => (
         <li
           key={connection.id}
-          className="bg-secondary/60 flex items-center gap-2.5 rounded-lg py-1.5 pr-1.5 pl-3"
+          className="bg-secondary text-caption text-foreground inline-flex h-[1.125rem] items-center gap-0.5 rounded pl-1.5"
         >
-          <ProviderLogo provider={connection.provider} className="size-3.5" />
-          <span className="text-body-sm flex-1 truncate">
-            {connection.name}
-          </span>
-          <Button
-            size="icon-xs"
-            variant="ghost"
+          {describeDestination(connection, providerName)}
+          <button
+            type="button"
             onClick={() => remove.mutate(connection)}
             aria-label={`Desconectar ${connection.name}`}
+            className="text-muted-foreground hover:text-foreground flex h-full items-center rounded px-1"
           >
-            <Trash2 />
-          </Button>
+            <X className="size-3" />
+          </button>
         </li>
       ))}
     </ul>
   );
 };
 
-interface ProviderCardProps {
+interface ProviderRowProps {
   entry: ConnectionCatalogEntry;
   connections: Connection[];
   onConnect: () => void;
 }
 
-const ProviderCard = ({ entry, connections, onConnect }: ProviderCardProps) => {
+const ProviderRow = ({ entry, connections, onConnect }: ProviderRowProps) => {
   const isConnected = connections.length > 0;
   return (
-    <IntegrationCard
+    <IntegrationRow
       tile={<ProviderLogo provider={entry.provider} className="size-full" />}
       title={entry.name}
-      description={entry.description}
       isConnected={isConnected}
-      details={isConnected && <DestinationList connections={connections} />}
-      footer={
-        <>
-          <CapabilityList capabilities={entry.capabilities} />
+      subtitle={
+        isConnected ? (
+          <DestinationChips
+            connections={connections}
+            providerName={entry.name}
+          />
+        ) : (
+          <Description>{entry.description}</Description>
+        )
+      }
+      action={
+        isConnected ? (
           <Button
-            size="sm"
-            variant={isConnected ? "ghost" : "secondary"}
+            size="icon-sm"
+            variant="ghost"
             onClick={onConnect}
+            aria-label={`Adicionar outro destino do ${entry.name}`}
+            title="Adicionar outro destino"
           >
             <Plus />
-            {isConnected ? "Outro destino" : "Conectar"}
           </Button>
-        </>
+        ) : (
+          <Button size="sm" variant="secondary" onClick={onConnect}>
+            Conectar
+          </Button>
+        )
       }
     />
   );
 };
 
-const WebhookCard = () => (
-  <IntegrationCard
+const WebhookRow = () => (
+  <IntegrationRow
     tile={<Webhook className="text-heading size-full" strokeWidth={1.75} />}
     title="Webhooks"
-    description="Envie cada nota automaticamente para qualquer sistema: FR Hub, n8n, Make ou o seu backend."
-    footer={
-      <>
-        <CapabilityList capabilities={["note"]} />
-        <Button size="sm" variant="secondary" asChild>
-          <Link to="/settings/integracoes">
-            Configurar
-            <ArrowRight />
-          </Link>
-        </Button>
-      </>
+    subtitle={<Description>Cada nota no seu sistema.</Description>}
+    action={
+      <Button size="sm" variant="secondary" asChild>
+        <Link to="/settings/integracoes">Configurar</Link>
+      </Button>
     }
   />
 );
@@ -198,9 +169,9 @@ export const ConnectionsPage = () => {
             title="Conexões"
             description="Conecte só o que você usa. Na hora de enviar um próximo passo ou uma nota, você escolhe o destino."
           />
-          <div className="grid gap-4 @2xl:grid-cols-2 @5xl:grid-cols-3">
+          <div className="grid gap-3 @2xl:grid-cols-2 @5xl:grid-cols-3">
             {CONNECTION_CATALOG.map((entry) => (
-              <ProviderCard
+              <ProviderRow
                 key={entry.provider}
                 entry={entry}
                 connections={connections.filter(
@@ -209,7 +180,7 @@ export const ConnectionsPage = () => {
                 onConnect={() => setConnecting(entry)}
               />
             ))}
-            <WebhookCard />
+            <WebhookRow />
           </div>
         </PageContainer>
       </ScrollArea>

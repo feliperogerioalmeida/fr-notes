@@ -39,8 +39,7 @@ export const CONNECTION_CATALOG: ConnectionCatalogEntry[] = [
   {
     provider: "clickup",
     name: "ClickUp",
-    description:
-      "Transforme próximos passos em tarefas na lista que você escolher.",
+    description: "Tarefas na lista que você escolher.",
     capabilities: ["task"],
     tokenLabel: "Token pessoal da API",
     tokenHint: "ClickUp → Settings → Apps → API Token (começa com pk_).",
@@ -48,7 +47,7 @@ export const CONNECTION_CATALOG: ConnectionCatalogEntry[] = [
   {
     provider: "linear",
     name: "Linear",
-    description: "Crie issues no time certo a partir dos próximos passos.",
+    description: "Issues no time que você escolher.",
     capabilities: ["task"],
     tokenLabel: "Personal API key",
     tokenHint: "Linear → Settings → Security & access → Personal API keys.",
@@ -56,8 +55,7 @@ export const CONNECTION_CATALOG: ConnectionCatalogEntry[] = [
   {
     provider: "notion",
     name: "Notion",
-    description:
-      "Salve as notas da reunião como páginas num banco de dados do Notion.",
+    description: "Notas como páginas num banco.",
     capabilities: ["note"],
     tokenLabel: "Token da integração interna",
     tokenHint:
@@ -66,7 +64,7 @@ export const CONNECTION_CATALOG: ConnectionCatalogEntry[] = [
   {
     provider: "slack",
     name: "Slack",
-    description: "Mande o resumo ou um próximo passo para um canal.",
+    description: "Resumo e tarefas num canal.",
     capabilities: ["note", "task"],
     tokenLabel: "URL do Incoming Webhook",
     tokenHint:
