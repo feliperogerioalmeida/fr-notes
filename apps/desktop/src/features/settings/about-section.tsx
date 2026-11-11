@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getVersion } from "@tauri-apps/api/app";
+import { formatTime } from "@workspace/core";
 import { Button } from "@workspace/ui/components/ui/button";
 import { LoaderCircle, RefreshCw, RotateCw } from "lucide-react";
 import { toast } from "sonner";
 
+import { useRecordingStore } from "@/features/recording/recording-store.js";
 import {
   checkForUpdates,
   restartToApplyUpdate,
@@ -17,17 +19,37 @@ import { SettingsSection } from "./settings-section.js";
 
 const PERCENT = 100;
 
-const describeStatus = (status: UpdateStatus, progress: number) => {
+interface DescribeStatusInput {
+  status: UpdateStatus;
+  progress: number;
+  checkedAt: number | null;
+}
+
+const describeCheckTime = (checkedAt: number | null) =>
+  checkedAt
+    ? ` (verificado às ${formatTime(new Date(checkedAt).toISOString())})`
+    : "";
+
+const describeStatus = ({
+  status,
+  progress,
+  checkedAt,
+}: DescribeStatusInput) => {
   if (status === "checking") return "Procurando atualizações…";
   if (status === "downloading")
     return `Baixando atualização… ${Math.round(progress * PERCENT)}%`;
   if (status === "ready") return "Atualização instalada. Reinicie para usar.";
-  if (status === "up-to-date") return "Você está na versão mais recente.";
+  if (status === "up-to-date")
+    return `Você está na versão mais recente${describeCheckTime(checkedAt)}.`;
   if (status === "error") return "Não consegui verificar agora.";
   return "Atualiza sozinho ao abrir o app e a cada 6 horas.";
 };
 
 const checkManually = async () => {
+  if (useRecordingStore.getState().phase !== "idle") {
+    toast.message("Termine a gravação para procurar atualizações.");
+    return;
+  }
   try {
     const version = await checkForUpdates();
     if (version) toast.success(`FR Notes ${version} instalado`);
@@ -48,6 +70,7 @@ export const AboutSection = () => {
   });
   const status = useUpdateStore((state) => state.status);
   const progress = useUpdateStore((state) => state.progress);
+  const checkedAt = useUpdateStore((state) => state.checkedAt);
   const busy = status === "checking" || status === "downloading";
   return (
     <SettingsSection>
@@ -57,7 +80,7 @@ export const AboutSection = () => {
             FR Notes {version ?? ""}
           </span>
           <span className="text-caption text-muted-foreground">
-            {describeStatus(status, progress)}
+            {describeStatus({ status, progress, checkedAt })}
           </span>
         </div>
         {status === "ready" ? (

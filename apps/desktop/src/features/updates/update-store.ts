@@ -10,6 +10,7 @@ export type UpdateStatus =
 
 interface UpdateState {
   status: UpdateStatus;
+  checkedAt: number | null;
   version: string | null;
   progress: number;
   setStatus: (status: UpdateStatus) => void;
@@ -20,9 +21,13 @@ interface UpdateState {
 
 export const useUpdateStore = create<UpdateState>((set) => ({
   status: "idle",
+  checkedAt: null,
   version: null,
   progress: 0,
-  setStatus: (status) => set({ status }),
+  setStatus: (status) =>
+    set(
+      status === "up-to-date" ? { status, checkedAt: Date.now() } : { status },
+    ),
   beginDownload: (version) =>
     set({ status: "downloading", version, progress: 0 }),
   setProgress: (progress) => set({ progress }),
