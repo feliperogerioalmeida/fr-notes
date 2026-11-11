@@ -5,6 +5,7 @@ import { createDictationsRepository } from "./dictations-repository.js";
 import { createFoldersRepository } from "./folders-repository.js";
 import { runMigrations } from "./migrations.js";
 import { createNotesRepository } from "./notes-repository.js";
+import { createSearchRepository } from "./search-repository.js";
 import { createSettingsRepository } from "./settings-repository.js";
 import type { SqlClient } from "./sql-client.js";
 import { createTemplatesRepository } from "./templates-repository.js";
@@ -22,6 +23,7 @@ export const createStorage = (db: SqlClient) => ({
   dictations: createDictationsRepository(db),
   actionItems: createActionItemsRepository(db),
   connections: createConnectionsRepository(db),
+  search: createSearchRepository(db),
 });
 
 export type Storage = ReturnType<typeof createStorage>;

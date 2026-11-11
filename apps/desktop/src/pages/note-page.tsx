@@ -2,7 +2,7 @@ import type { Note, Template } from "@workspace/core";
 import { Input } from "@workspace/ui/components/ui/input";
 import { ScrollArea } from "@workspace/ui/components/ui/scroll-area";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header.js";
@@ -89,8 +89,20 @@ const NoteEditorColumn = ({ note }: { note: Note }) => {
   );
 };
 
+const useFocusMoment = () => {
+  const [searchParams] = useSearchParams();
+  const at = Number(searchParams.get("at"));
+  return Number.isFinite(at) && at > 0 ? at : null;
+};
+
 const NoteWorkspace = ({ note }: { note: Note }) => {
-  const [panel, setPanel] = useState<SidePanel | null>(null);
+  const focusMs = useFocusMoment();
+  const [panel, setPanel] = useState<SidePanel | null>(
+    focusMs ? "transcript" : null,
+  );
+  useEffect(() => {
+    if (focusMs) setPanel("transcript");
+  }, [focusMs]);
   const chat = useNoteChat(note.id);
   const { data: segments = [] } = useTranscriptQuery(note.id);
   const togglePanel = (next: SidePanel) =>
@@ -122,6 +134,7 @@ const NoteWorkspace = ({ note }: { note: Note }) => {
       {panel && (
         <NoteSidePanel
           noteId={note.id}
+          focusMs={focusMs}
           panel={panel}
           chat={chat}
           onClose={() => setPanel(null)}

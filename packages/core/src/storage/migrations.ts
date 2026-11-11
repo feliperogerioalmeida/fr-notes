@@ -10,6 +10,11 @@ const SYNCED_COLUMNS = `
   updated_at TEXT NOT NULL,
   deleted_at TEXT`;
 
+const FTS_TOKENIZER = `tokenize=unicode61 "remove_diacritics=2"`;
+
+const NOTE_SEARCH_BODY = (row: string) =>
+  `COALESCE(${row}.title, '') || char(10) || COALESCE(${row}.notes_markdown, '') || char(10) || COALESCE(${row}.enhanced_markdown, '')`;
+
 const MIGRATIONS: Migration[] = [
   {
     version: 1,
@@ -135,6 +140,43 @@ const MIGRATIONS: Migration[] = [
     statements: [
       "ALTER TABLE folders ADD COLUMN parent_id TEXT",
       "CREATE INDEX IF NOT EXISTS idx_folders_parent ON folders (parent_id)",
+    ],
+  },
+  {
+    version: 8,
+    statements: [
+      `CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts4(body, ${FTS_TOKENIZER})`,
+      `CREATE VIRTUAL TABLE IF NOT EXISTS segments_fts USING fts4(body, ${FTS_TOKENIZER})`,
+      `CREATE TRIGGER IF NOT EXISTS notes_fts_insert AFTER INSERT ON notes
+       WHEN new.deleted_at IS NULL BEGIN
+         INSERT INTO notes_fts(docid, body) VALUES (new.rowid, ${NOTE_SEARCH_BODY("new")});
+       END`,
+      `CREATE TRIGGER IF NOT EXISTS notes_fts_update
+       AFTER UPDATE OF title, notes_markdown, enhanced_markdown, deleted_at ON notes BEGIN
+         DELETE FROM notes_fts WHERE docid = old.rowid;
+         INSERT INTO notes_fts(docid, body)
+           SELECT new.rowid, ${NOTE_SEARCH_BODY("new")} WHERE new.deleted_at IS NULL;
+       END`,
+      `CREATE TRIGGER IF NOT EXISTS notes_fts_delete AFTER DELETE ON notes BEGIN
+         DELETE FROM notes_fts WHERE docid = old.rowid;
+       END`,
+      `CREATE TRIGGER IF NOT EXISTS segments_fts_insert AFTER INSERT ON transcript_segments
+       WHEN new.deleted_at IS NULL BEGIN
+         INSERT INTO segments_fts(docid, body) VALUES (new.rowid, new.text);
+       END`,
+      `CREATE TRIGGER IF NOT EXISTS segments_fts_update
+       AFTER UPDATE OF text, deleted_at ON transcript_segments BEGIN
+         DELETE FROM segments_fts WHERE docid = old.rowid;
+         INSERT INTO segments_fts(docid, body)
+           SELECT new.rowid, new.text WHERE new.deleted_at IS NULL;
+       END`,
+      `CREATE TRIGGER IF NOT EXISTS segments_fts_delete AFTER DELETE ON transcript_segments BEGIN
+         DELETE FROM segments_fts WHERE docid = old.rowid;
+       END`,
+      `INSERT INTO notes_fts(docid, body)
+       SELECT rowid, ${NOTE_SEARCH_BODY("notes")} FROM notes WHERE deleted_at IS NULL`,
+      `INSERT INTO segments_fts(docid, body)
+       SELECT rowid, text FROM transcript_segments WHERE deleted_at IS NULL`,
     ],
   },
 ];

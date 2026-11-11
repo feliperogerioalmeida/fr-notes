@@ -218,4 +218,56 @@ describe("storage", () => {
     );
     expect((await storage.notes.findNote(note.id))?.folderId).toBe(clients);
   });
+
+  it("finds notes and transcript moments ignoring accents", async () => {
+    const storage = await initializeStorage(await createMemoryClient());
+    const note = await storage.notes.createNote({
+      title: "Descoberta — Pedidos",
+    });
+    await storage.notes.updateNote({
+      id: note.id,
+      patch: { enhancedMarkdown: "### Orçamento\n- Aprovado: R$ 40 mil" },
+    });
+    const base = Date.UTC(2026, 10, 10, 13);
+    const lines = [
+      "Bom dia, vamos começar.",
+      "O orçamento aprovado é de quarenta mil.",
+      "Precisamos estar no ar até março.",
+    ];
+    for (const [index, text] of lines.entries()) {
+      await storage.transcript.appendSegment({
+        noteId: note.id,
+        source: "system",
+        text,
+        startMs: base + index * 10_000,
+        endMs: base + index * 10_000 + 9_000,
+        speaker: 0,
+      });
+    }
+
+    const [result] = await storage.search.search("orcamento");
+    expect(result?.noteId).toBe(note.id);
+    expect(result?.hits.map((hit) => hit.snippet)).toEqual([
+      expect.stringContaining("\u0002Orçamento\u0003"),
+      expect.stringContaining("\u0002orçamento\u0003"),
+    ]);
+    expect(await storage.search.search("marco")).toHaveLength(1);
+
+    const context = await storage.search.findMeetingContext({
+      question: "Quando falamos do orçamento?",
+    });
+    expect(context.excerpts).toHaveLength(1);
+    expect(
+      context.excerpts[0]?.segments.map((segment) => segment.text),
+    ).toEqual(lines);
+    expect(context.summaries[0]?.summary).toContain("40 mil");
+
+    await storage.notes.updateNote({
+      id: note.id,
+      patch: { enhancedMarkdown: "### Cronograma\n- Campanha de outono" },
+    });
+    expect((await storage.search.search("outono"))[0]?.hits).toHaveLength(1);
+    await storage.notes.deleteNote(note.id);
+    expect(await storage.search.search("orcamento")).toEqual([]);
+  });
 });

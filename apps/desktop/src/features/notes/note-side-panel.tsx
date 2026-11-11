@@ -21,6 +21,7 @@ const PANEL_TITLES: Record<SidePanel, string> = {
 
 interface NoteSidePanelProps {
   noteId: string;
+  focusMs?: number | null;
   panel: SidePanel;
   chat: ReturnType<typeof useNoteChat>;
   onClose: () => void;
@@ -75,10 +76,13 @@ const PanelActions = ({
 
 const PanelContent = ({
   noteId,
+  focusMs,
   panel,
   chat,
 }: Omit<NoteSidePanelProps, "onClose">) => {
-  if (panel === "transcript") return <TranscriptPanel noteId={noteId} />;
+  if (panel === "transcript") {
+    return <TranscriptPanel noteId={noteId} focusMs={focusMs ?? null} />;
+  }
   if (panel === "tasks") return <ActionItemsPanel noteId={noteId} />;
   return (
     <ChatPanel
@@ -91,6 +95,7 @@ const PanelContent = ({
 
 export const NoteSidePanel = ({
   noteId,
+  focusMs = null,
   panel,
   chat,
   onClose,
@@ -103,7 +108,12 @@ export const NoteSidePanel = ({
     />
     <ScrollArea className="min-h-0 flex-1">
       <div className="px-4 py-4 pb-28">
-        <PanelContent noteId={noteId} panel={panel} chat={chat} />
+        <PanelContent
+          noteId={noteId}
+          focusMs={focusMs}
+          panel={panel}
+          chat={chat}
+        />
       </div>
     </ScrollArea>
   </aside>

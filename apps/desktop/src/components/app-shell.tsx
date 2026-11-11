@@ -7,6 +7,7 @@ import { useMeetingDetection } from "@/features/meetings/use-meeting-detection.j
 import { useStartNote } from "@/features/notes/use-start-note.js";
 import { endRecording } from "@/features/recording/use-recording-controls.js";
 import { useRecordingListeners } from "@/features/recording/use-recording-listeners.js";
+import { SearchResults } from "@/features/search/search-results.js";
 import { useThemeSync } from "@/features/settings/use-theme-sync.js";
 import { useAutoUpdate } from "@/features/updates/use-auto-update.js";
 import {
@@ -49,7 +50,14 @@ export const AppShell = () => {
     <div className="bg-background flex h-screen overflow-hidden">
       <AppSidebar searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       <main className="min-w-0 flex-1">
-        <Outlet context={context} />
+        {searchQuery.trim() ? (
+          <SearchResults
+            query={searchQuery}
+            onOpen={() => setSearchQuery("")}
+          />
+        ) : (
+          <Outlet context={context} />
+        )}
       </main>
     </div>
   );

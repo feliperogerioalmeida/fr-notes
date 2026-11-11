@@ -12,6 +12,7 @@ import {
   Search,
   Settings,
 } from "lucide-react";
+import { type RefObject, useEffect, useRef } from "react";
 import { NavLink } from "react-router";
 
 import { FolderTreeNav } from "@/features/folders/folder-tree-nav.js";
@@ -71,6 +72,47 @@ const RecordingCard = () => {
   );
 };
 
+const useFocusShortcut = (inputRef: RefObject<HTMLInputElement | null>) => {
+  useEffect(() => {
+    const focusOnShortcut = (event: KeyboardEvent) => {
+      if (!event.metaKey || event.key.toLowerCase() !== "k") return;
+      event.preventDefault();
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    };
+    window.addEventListener("keydown", focusOnShortcut);
+    return () => window.removeEventListener("keydown", focusOnShortcut);
+  }, [inputRef]);
+};
+
+interface SearchFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+}
+
+const SearchField = ({ value, onChange }: SearchFieldProps) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  useFocusShortcut(inputRef);
+  return (
+    <div className="relative px-3 pt-3 pb-2">
+      <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-5.5 mt-0.5 size-3.5 -translate-y-1/2" />
+      <Input
+        ref={inputRef}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") onChange("");
+        }}
+        placeholder="Buscar em tudo"
+        className="h-8 pr-10 pl-8"
+      />
+      <kbd className="text-caption text-muted-foreground pointer-events-none absolute top-1/2 right-5.5 mt-0.5 -translate-y-1/2 font-sans">
+        ⌘K
+      </kbd>
+    </div>
+  );
+};
+
 interface AppSidebarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
@@ -87,15 +129,7 @@ export const AppSidebar = ({
     >
       <FrLogo />
     </div>
-    <div className="relative px-3 pt-3 pb-2">
-      <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-5.5 mt-0.5 size-3.5 -translate-y-1/2" />
-      <Input
-        value={searchQuery}
-        onChange={(event) => onSearchChange(event.target.value)}
-        placeholder="Buscar notas"
-        className="h-8 pl-8"
-      />
-    </div>
+    <SearchField value={searchQuery} onChange={onSearchChange} />
     <ScrollArea className="min-h-0 flex-1">
       <nav className="flex flex-col gap-0.5 px-3">
         <SidebarLink to="/" icon={House} label="Início" end />

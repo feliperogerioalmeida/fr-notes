@@ -7,7 +7,7 @@ import {
   type TranscriptTurn,
 } from "@workspace/core";
 import { cn } from "@workspace/ui/lib/utils";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useNoteQuery } from "@/features/notes/use-notes.js";
 import { useRecordingStore } from "@/features/recording/recording-store.js";
@@ -15,8 +15,12 @@ import { useRecordingStore } from "@/features/recording/recording-store.js";
 import { SpeakerNamePopover } from "./speaker-name-popover.js";
 import { useTranscriptQuery } from "./use-transcript.js";
 
+const FOCUS_HIGHLIGHT_MS = 2_500;
+
 interface TranscriptBubbleProps {
   note: Note | null | undefined;
+  startMs?: number;
+  focused?: boolean;
   source: TranscriptSource;
   speakerIndex: number | null;
   speaker: string;
@@ -47,6 +51,8 @@ const SpeakerLabel = ({
 
 const TranscriptBubble = ({
   note,
+  startMs,
+  focused = false,
   source,
   speakerIndex,
   speaker,
@@ -55,7 +61,10 @@ const TranscriptBubble = ({
 }: TranscriptBubbleProps) => {
   const isMine = source === "microphone";
   return (
-    <div className={cn("flex flex-col gap-1", isMine && "items-end")}>
+    <div
+      data-turn-start={startMs}
+      className={cn("flex flex-col gap-1", isMine && "items-end")}
+    >
       <SpeakerLabel note={note} speakerIndex={speakerIndex} speaker={speaker} />
       <p
         className={cn(
@@ -64,6 +73,7 @@ const TranscriptBubble = ({
             ? "bg-secondary text-secondary-foreground"
             : "bg-card text-card-foreground border",
           live && "text-muted-foreground italic",
+          focused && "ring-brand ring-offset-sidebar ring-2 ring-offset-2",
         )}
       >
         {text}
@@ -86,7 +96,44 @@ const EmptyTranscript = () => (
   </p>
 );
 
-export const TranscriptPanel = ({ noteId }: { noteId: string }) => {
+const findFocusedTurn = (turns: TranscriptTurn[], focusMs: number | null) => {
+  if (focusMs === null || turns.length === 0) return null;
+  const containing = turns.find(
+    (turn) => turn.startMs <= focusMs && focusMs <= turn.endMs,
+  );
+  if (containing) return containing;
+  return turns.reduce((closest, turn) =>
+    Math.abs(turn.startMs - focusMs) < Math.abs(closest.startMs - focusMs)
+      ? turn
+      : closest,
+  );
+};
+
+const useFocusedTurn = (turns: TranscriptTurn[], focusMs: number | null) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [highlighted, setHighlighted] = useState<string | null>(null);
+  const target = findFocusedTurn(turns, focusMs);
+  useEffect(() => {
+    if (!target) return;
+    containerRef.current
+      ?.querySelector(`[data-turn-start="${target.startMs}"]`)
+      ?.scrollIntoView({ block: "center" });
+    setHighlighted(target.key);
+    const timer = setTimeout(() => setHighlighted(null), FOCUS_HIGHLIGHT_MS);
+    return () => clearTimeout(timer);
+  }, [target?.key, target?.startMs]);
+  return { containerRef, highlighted, isFocusing: target !== null };
+};
+
+interface TranscriptPanelProps {
+  noteId: string;
+  focusMs?: number | null;
+}
+
+export const TranscriptPanel = ({
+  noteId,
+  focusMs = null,
+}: TranscriptPanelProps) => {
   const { data: segments = [] } = useTranscriptQuery(noteId);
   const { data: note } = useNoteQuery(noteId);
   const recordingNoteId = useRecordingStore((state) => state.noteId);
@@ -98,18 +145,25 @@ export const TranscriptPanel = ({ noteId }: { noteId: string }) => {
   );
   const live = recordingNoteId === noteId ? toLiveBubbles(interim) : [];
   const endRef = useRef<HTMLDivElement>(null);
+  const { containerRef, highlighted, isFocusing } = useFocusedTurn(
+    turns,
+    focusMs,
+  );
 
   useEffect(() => {
+    if (isFocusing) return;
     endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
-  }, [turns.length, live.length]);
+  }, [turns.length, live.length, isFocusing]);
 
   if (turns.length === 0 && live.length === 0) return <EmptyTranscript />;
   return (
-    <div className="flex flex-col gap-4">
+    <div ref={containerRef} className="flex flex-col gap-4">
       {turns.map((turn) => (
         <TranscriptBubble
           key={turn.key}
           note={note}
+          startMs={turn.startMs}
+          focused={highlighted === turn.key}
           source={turn.source}
           speakerIndex={turn.speakerIndex}
           speaker={turn.speaker}

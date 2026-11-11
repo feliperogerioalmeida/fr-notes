@@ -6,7 +6,7 @@ import {
 import { createId, nowIso } from "../utils/ids.js";
 import type { SqlClient } from "./sql-client.js";
 
-interface SegmentRow {
+export interface TranscriptRow {
   id: string;
   note_id: string;
   source: string;
@@ -17,7 +17,7 @@ interface SegmentRow {
   created_at: string;
 }
 
-const toSegment = (row: SegmentRow): TranscriptSegment =>
+export const toTranscriptSegment = (row: TranscriptRow): TranscriptSegment =>
   TranscriptSegmentSchema.parse({
     id: row.id,
     noteId: row.note_id,
@@ -40,11 +40,11 @@ export interface AppendSegmentInput {
 
 export const createTranscriptRepository = (db: SqlClient) => {
   const listSegments = async (noteId: string): Promise<TranscriptSegment[]> => {
-    const rows = await db.select<SegmentRow>(
+    const rows = await db.select<TranscriptRow>(
       "SELECT * FROM transcript_segments WHERE note_id = ? AND deleted_at IS NULL ORDER BY start_ms ASC",
       [noteId],
     );
-    return rows.map(toSegment);
+    return rows.map(toTranscriptSegment);
   };
 
   const appendSegment = async (
