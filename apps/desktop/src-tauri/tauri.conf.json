@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "FR Notes",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "identifier": "dev.feliperogerio.notes",
   "build": {
     "beforeDevCommand": "pnpm web:dev",
@@ -72,7 +72,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
+    "targets": [
+      "app",
+      "dmg"
+    ],
     "category": "public.app-category.productivity",
     "shortDescription": "Notas de reunião com IA",
     "copyright": "© 2026 Felipe Rogério",
