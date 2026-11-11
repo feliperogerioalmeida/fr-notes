@@ -24,8 +24,6 @@ const event = (
   calendarColor: "#FF6B1A",
   attendees: [],
   organizer: null,
-  canEdit: false,
-  isRecurring: false,
   ...overrides,
 });
 

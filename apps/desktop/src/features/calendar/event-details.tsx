@@ -16,24 +16,17 @@ import {
 import {
   CalendarDays,
   FileText,
-  Lock,
   MapPin,
   Mic,
-  Pencil,
-  Repeat,
-  Trash2,
   Users,
   Video,
 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import type { ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
 
 import { useStartNote } from "@/features/notes/use-start-note.js";
-import { describeError } from "@/lib/errors.js";
 
 import { formatEventWhen } from "./calendar-format.js";
-import { useDeleteCalendarEvent } from "./use-calendar-data.js";
 
 const LIVE_LEAD_MS = 5 * 60_000;
 const VISIBLE_PEOPLE = 5;
@@ -108,17 +101,6 @@ const EventFacts = ({ event }: { event: CalendarEvent }) => {
             ` e mais ${people.length - VISIBLE_PEOPLE}`}
         </Row>
       )}
-      {event.isRecurring && (
-        <Row icon={<Repeat />}>
-          Repete. Mudanças daqui valem só para esta ocorrência.
-        </Row>
-      )}
-      {!event.canEdit && (
-        <Row icon={<Lock />}>
-          Só leitura: convite de outra pessoa ou agenda que não aceita
-          alterações.
-        </Row>
-      )}
       {description && (
         <p className="text-caption text-muted-foreground border-t pt-2 whitespace-pre-wrap">
           {description.length > DESCRIPTION_PREVIEW_CHARS
@@ -130,75 +112,16 @@ const EventFacts = ({ event }: { event: CalendarEvent }) => {
   );
 };
 
-interface EditActionsProps {
-  event: CalendarEvent;
-  onEdit: (event: CalendarEvent) => void;
-  onClose: () => void;
-}
-
-const EditActions = ({ event, onEdit, onClose }: EditActionsProps) => {
-  const remove = useDeleteCalendarEvent();
-  const [confirming, setConfirming] = useState(false);
-  if (!event.canEdit) return null;
-  const confirmDelete = async () => {
-    try {
-      await remove.mutateAsync(event.id);
-      onClose();
-      toast.success("Evento apagado");
-    } catch (error) {
-      toast.error(describeError(error));
-    }
-  };
-  if (confirming) {
-    return (
-      <div className="flex items-center justify-end gap-1">
-        <span className="text-caption text-muted-foreground mr-auto">
-          Apagar este evento?
-        </span>
-        <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
-          Não
-        </Button>
-        <Button
-          size="sm"
-          variant="destructive"
-          disabled={remove.isPending}
-          onClick={() => void confirmDelete()}
-        >
-          Apagar
-        </Button>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center justify-end gap-1">
-      <Button
-        size="icon-sm"
-        variant="ghost"
-        aria-label="Apagar evento"
-        onClick={() => setConfirming(true)}
-      >
-        <Trash2 />
-      </Button>
-      <Button size="sm" variant="ghost" onClick={() => onEdit(event)}>
-        <Pencil />
-        Editar
-      </Button>
-    </div>
-  );
-};
-
 interface EventDetailsProps {
   selection: EventSelection | null;
   notesByEvent: Map<string | null, Note>;
   onClose: () => void;
-  onEdit: (event: CalendarEvent) => void;
 }
 
 export const EventDetails = ({
   selection,
   notesByEvent,
   onClose,
-  onEdit,
 }: EventDetailsProps) => {
   if (!selection) return null;
   const { event, anchor } = selection;
@@ -250,14 +173,6 @@ export const EventDetails = ({
             onDone={onClose}
           />
         </div>
-        <EditActions
-          event={event}
-          onEdit={(target) => {
-            onClose();
-            onEdit(target);
-          }}
-          onClose={onClose}
-        />
       </PopoverContent>
     </Popover>
   );

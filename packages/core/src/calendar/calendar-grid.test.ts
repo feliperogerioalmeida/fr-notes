@@ -2,11 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import type { CalendarEvent } from "../domain/calendar.js";
 import {
-  atMinute,
   buildMonthGrid,
   eventsOnDay,
   layoutDayEvents,
-  snapMinutes,
   startOfWeek,
 } from "./calendar-grid.js";
 
@@ -32,8 +30,6 @@ const event = (
   calendarColor: "#FF6B1A",
   attendees: [],
   organizer: null,
-  canEdit: true,
-  isRecurring: false,
 });
 
 describe("calendar grid", () => {
@@ -43,12 +39,6 @@ describe("calendar grid", () => {
     expect(grid).toHaveLength(42);
     expect(new Date(grid[0] as number).getDate()).toBe(1);
     expect(new Date(grid[41] as number).getDate()).toBe(12);
-  });
-
-  it("snaps minutes and builds times inside a day", () => {
-    expect(snapMinutes(52)).toBe(45);
-    expect(snapMinutes(53)).toBe(60);
-    expect(atMinute(at(11, 0), 9 * 60 + 30)).toBe(at(11, 9, 30));
   });
 
   it("finds events that touch a day, including multi-day ones", () => {

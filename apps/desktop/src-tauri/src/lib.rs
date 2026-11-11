@@ -79,8 +79,6 @@ pub fn run() {
             commands::request_calendar_access,
             commands::list_calendars,
             commands::list_calendar_events,
-            commands::save_calendar_event,
-            commands::delete_calendar_event,
             commands::list_microphone_apps,
             commands::request_accessibility_permission,
             commands::start_dictation,

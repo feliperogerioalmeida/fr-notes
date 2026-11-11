@@ -3,15 +3,15 @@ import {
   extractMeetingLink,
   type PositionedEvent,
 } from "@workspace/core";
-import { cn } from "@workspace/ui/lib/utils";
 import { FileText, Video } from "lucide-react";
-import type { CSSProperties, PointerEvent } from "react";
+import type { CSSProperties } from "react";
 
 import { formatClock } from "./calendar-format.js";
-import { HOUR_HEIGHT } from "./use-grid-interactions.js";
+import { HOUR_HEIGHT } from "./calendar-layout.js";
 
 const MINUTES_PER_HOUR = 60;
 const BLOCK_GAP_PX = 2;
+const MIN_BLOCK_HEIGHT = 16;
 const SHOW_TIME_MIN_HEIGHT = 34;
 const FALLBACK_COLOR = "var(--brand)";
 
@@ -31,7 +31,7 @@ const positionStyle = (positioned: PositionedEvent): CSSProperties => {
       ((positioned.endMinute - positioned.startMinute) / MINUTES_PER_HOUR) *
         HOUR_HEIGHT -
         BLOCK_GAP_PX,
-      16,
+      MIN_BLOCK_HEIGHT,
     ),
     left: `calc(${positioned.column * width}% + 1px)`,
     width: `calc(${width}% - 3px)`,
@@ -41,36 +41,27 @@ const positionStyle = (positioned: PositionedEvent): CSSProperties => {
 interface EventBlockProps {
   positioned: PositionedEvent;
   hasNote: boolean;
-  dragging: boolean;
-  onPointerDown: (
-    pointer: PointerEvent<HTMLElement>,
-    event: CalendarEvent,
-    kind: "move" | "resize",
-  ) => void;
+  onOpen: (event: CalendarEvent, anchor: DOMRect) => void;
 }
 
 export const EventBlock = ({
   positioned,
   hasNote,
-  dragging,
-  onPointerDown,
+  onOpen,
 }: EventBlockProps) => {
   const { event } = positioned;
   const style = positionStyle(positioned);
   const showTime = Number(style.height) >= SHOW_TIME_MIN_HEIGHT;
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onPointerDown={(pointer) => onPointerDown(pointer, event, "move")}
+    <button
+      type="button"
+      onClick={(click) =>
+        onOpen(event, click.currentTarget.getBoundingClientRect())
+      }
       style={{ ...style, ...eventColorStyle(event) }}
-      className={cn(
-        "text-caption absolute flex flex-col overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-left shadow-xs",
-        event.canEdit ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
-        dragging && "ring-brand z-10 opacity-90 shadow-lg ring-1",
-      )}
+      className="text-caption hover:ring-border-strong absolute flex flex-col overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 text-left shadow-xs hover:ring-1"
     >
-      <span className="text-heading flex items-center gap-1 font-medium">
+      <span className="text-heading flex w-full items-center gap-1 font-medium">
         <span className="truncate">{event.title || "Sem título"}</span>
         {hasNote && (
           <FileText className="text-muted-foreground size-3 shrink-0" />
@@ -84,12 +75,6 @@ export const EventBlock = ({
           {formatClock(event.startMs)} – {formatClock(event.endMs)}
         </span>
       )}
-      {event.canEdit && (
-        <span
-          onPointerDown={(pointer) => onPointerDown(pointer, event, "resize")}
-          className="absolute inset-x-0 bottom-0 h-1.5 cursor-ns-resize"
-        />
-      )}
-    </div>
+    </button>
   );
 };
