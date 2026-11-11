@@ -7,6 +7,7 @@ import { useMeetingDetection } from "@/features/meetings/use-meeting-detection.j
 import { useStartNote } from "@/features/notes/use-start-note.js";
 import { endRecording } from "@/features/recording/use-recording-controls.js";
 import { useRecordingListeners } from "@/features/recording/use-recording-listeners.js";
+import { useRecordingMaintenance } from "@/features/recordings/use-recording-maintenance.js";
 import { SearchResults } from "@/features/search/search-results.js";
 import { useThemeSync } from "@/features/settings/use-theme-sync.js";
 import { useAutoUpdate } from "@/features/updates/use-auto-update.js";
@@ -40,6 +41,7 @@ export const AppShell = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const startNote = useStartNote();
   useRecordingListeners({ persistSegments: true });
+  useRecordingMaintenance();
   useShellEvents();
   useMeetingDetection(startNote);
   useGlobalShortcuts(startNote);

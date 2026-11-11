@@ -57,6 +57,7 @@ export interface StartRecordingArgs {
   keyterms: string[];
   captureSystemAudio: boolean;
   echoCancellation: boolean;
+  keepAudio: boolean;
 }
 
 export interface RecordingStarted {
@@ -300,3 +301,37 @@ export const revealSpeakerDiagnostics = () =>
 
 export const onSpeakerSnapshot = (handler: (snapshot: AxSnapshot) => void) =>
   subscribe("speaker-ax:snapshot", handler);
+
+export interface RecordingFile {
+  path: string;
+  source: TranscriptSource;
+  startedAtMs: number;
+}
+
+export interface RetranscribedSegment {
+  source: TranscriptSource;
+  startMs: number;
+  endMs: number;
+  text: string;
+  speaker: number | null;
+}
+
+export const NO_RECORDINGS_ERROR = "no_recordings";
+
+export const listRecordings = (noteId: string) =>
+  invoke<RecordingFile[]>("list_recordings", { noteId });
+
+export const revealRecordings = (noteId = "") =>
+  invoke<void>("reveal_recordings", { noteId });
+
+interface RetranscribeArgs {
+  noteId: string;
+  language: string;
+  keyterms: string[];
+}
+
+export const retranscribeRecordings = (args: RetranscribeArgs) =>
+  invoke<RetranscribedSegment[]>("retranscribe_recordings", { ...args });
+
+export const cleanupRecordings = (retentionDays: number) =>
+  invoke<number>("cleanup_recordings", { retentionDays });

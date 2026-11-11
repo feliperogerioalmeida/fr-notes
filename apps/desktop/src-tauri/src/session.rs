@@ -15,6 +15,7 @@ use crate::events::{
     emit_recording_error, emit_recording_state, AudioSource, RecordingLevelPayload,
     RECORDING_LEVEL_EVENT,
 };
+use crate::recordings::{self, writer::AudioFileWriter};
 use crate::secrets::{read_secret, DEEPGRAM_API_KEY};
 use crate::transcription::deepgram::DeepgramConfig;
 use crate::transcription::stream::{now_epoch_ms, run_source_stream, SourceStream};
@@ -34,6 +35,8 @@ pub struct StartRecordingArgs {
     pub capture_system_audio: bool,
     #[serde(default = "default_enabled")]
     pub echo_cancellation: bool,
+    #[serde(default)]
+    pub keep_audio: bool,
 }
 
 fn default_enabled() -> bool {
@@ -161,6 +164,13 @@ fn start_session(
         microphone_source,
         system_source,
     );
+    let started_at_ms = now_epoch_ms();
+    let recording = RecordingTarget {
+        app,
+        note_id: &args.note_id,
+        started_at_ms,
+        enabled: args.keep_audio,
+    };
     let mut stream_tasks = routing.tasks;
     stream_tasks.push(spawn_stream(
         app,
@@ -168,7 +178,7 @@ fn start_session(
         AudioSource::Microphone,
         &base_config,
         levels.microphone.clone(),
-        routing.microphone,
+        recording.attach(AudioSource::Microphone, routing.microphone),
         stop_rx.clone(),
     ));
     if let Some(source) = routing.system {
@@ -178,19 +188,51 @@ fn start_session(
             AudioSource::System,
             &base_config,
             levels.system.clone(),
-            source,
+            recording.attach(AudioSource::System, source),
             stop_rx,
         ));
     }
     Ok(ActiveSession {
         note_id: args.note_id,
-        started_at_ms: now_epoch_ms(),
+        started_at_ms,
         stop_tx,
         microphone,
         system,
         stream_tasks,
         level_task: spawn_level_emitter(app.clone(), levels),
     })
+}
+
+struct RecordingTarget<'a> {
+    app: &'a AppHandle,
+    note_id: &'a str,
+    started_at_ms: u64,
+    enabled: bool,
+}
+
+impl RecordingTarget<'_> {
+    fn attach(&self, source: AudioSource, routed: RoutedSource) -> RoutedSource {
+        if !self.enabled {
+            return routed;
+        }
+        let writer = recordings::files::new_recording_path(
+            self.app,
+            self.note_id,
+            self.started_at_ms,
+            source.as_str(),
+        )
+        .and_then(|path| AudioFileWriter::create(path, routed.sample_rate));
+        match writer {
+            Ok(writer) => RoutedSource {
+                receiver: recordings::tee_to_file(routed.receiver, writer),
+                sample_rate: routed.sample_rate,
+            },
+            Err(error) => {
+                emit_recording_error(self.app, "recording", error);
+                routed
+            }
+        }
+    }
 }
 
 fn spawn_stream(

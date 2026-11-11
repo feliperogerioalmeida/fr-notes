@@ -291,4 +291,32 @@ describe("storage", () => {
     await storage.digests.clearDigests("n");
     expect(await storage.digests.listDigests("n")).toEqual([]);
   });
+
+  it("replaces a transcript and keeps search in sync", async () => {
+    const storage = await initializeStorage(await createMemoryClient());
+    const note = await storage.notes.createNote({ title: "Kickoff" });
+    await storage.transcript.appendSegment({
+      noteId: note.id,
+      source: "system",
+      text: "versão ao vivo com erro",
+      startMs: 0,
+      endMs: 1_000,
+    });
+    const replaced = await storage.transcript.replaceSegments(note.id, [
+      {
+        source: "system",
+        text: "Versão corrigida do áudio",
+        startMs: 0,
+        endMs: 1_000,
+        speaker: 0,
+      },
+      { source: "microphone", text: "Combinado", startMs: 2_000, endMs: 3_000 },
+    ]);
+    expect(replaced).toBe(2);
+    expect(
+      (await storage.transcript.listSegments(note.id)).map((item) => item.text),
+    ).toEqual(["Versão corrigida do áudio", "Combinado"]);
+    expect(await storage.search.search("erro")).toEqual([]);
+    expect(await storage.search.search("corrigida")).toHaveLength(1);
+  });
 });

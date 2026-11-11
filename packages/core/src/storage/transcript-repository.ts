@@ -86,7 +86,22 @@ export const createTranscriptRepository = (db: SqlClient) => {
     );
   };
 
-  return { listSegments, appendSegment, deleteSegment };
+  const replaceSegments = async (
+    noteId: string,
+    segments: Omit<AppendSegmentInput, "noteId">[],
+  ): Promise<number> => {
+    const timestamp = nowIso();
+    await db.execute(
+      "UPDATE transcript_segments SET deleted_at = ?, updated_at = ? WHERE note_id = ? AND deleted_at IS NULL",
+      [timestamp, timestamp, noteId],
+    );
+    for (const segment of segments) {
+      await appendSegment({ ...segment, noteId });
+    }
+    return segments.length;
+  };
+
+  return { listSegments, appendSegment, deleteSegment, replaceSegments };
 };
 
 export type TranscriptRepository = ReturnType<

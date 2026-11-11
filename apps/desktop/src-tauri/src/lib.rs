@@ -10,6 +10,7 @@ mod fn_key;
 mod main_thread;
 mod microphone_apps;
 mod permissions;
+mod recordings;
 mod secrets;
 mod session;
 mod speaker_ax;
@@ -52,6 +53,8 @@ pub fn run() {
         .setup(|app| {
             tray::install_tray(app.handle())?;
             microphone_apps::spawn_microphone_apps_poller(app.handle().clone());
+            let recovery_handle = app.handle().clone();
+            std::thread::spawn(move || recordings::files::recover_leftovers(&recovery_handle));
             if !launched_hidden() {
                 show_main_window(app.handle());
             }
@@ -86,6 +89,10 @@ pub fn run() {
             commands::start_speaker_monitor,
             commands::stop_speaker_monitor,
             commands::reveal_speaker_diagnostics,
+            commands::list_recordings,
+            commands::reveal_recordings,
+            commands::retranscribe_recordings,
+            commands::cleanup_recordings,
         ])
         .build(tauri::generate_context!())
         .expect("error while building FR Notes");

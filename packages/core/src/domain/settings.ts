@@ -29,6 +29,8 @@ export const SettingsSchema = z.object({
   transcriptionLanguage: z.enum(TRANSCRIPTION_LANGUAGES).default("pt-BR"),
   captureSystemAudio: z.boolean().default(true),
   echoCancellation: z.boolean().default(true),
+  keepMeetingAudio: z.boolean().default(true),
+  audioRetentionDays: z.number().int().min(0).default(30),
   meetingDetection: z.enum(MEETING_DETECTION_MODES).default("ask"),
   autoStopRecording: z.boolean().default(true),
   meetingReminders: z.boolean().default(true),

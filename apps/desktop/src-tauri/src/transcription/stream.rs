@@ -22,8 +22,10 @@ use crate::events::{
 const CHUNKS_PER_SECOND: u32 = 10;
 const KEEP_ALIVE_INTERVAL: Duration = Duration::from_secs(5);
 const FINAL_RESULTS_TIMEOUT: Duration = Duration::from_secs(4);
-const RECONNECT_DELAY: Duration = Duration::from_secs(2);
-const MAX_RECONNECT_ATTEMPTS: u32 = 5;
+const RECONNECT_BASE_DELAY: Duration = Duration::from_secs(2);
+const RECONNECT_MAX_DELAY: Duration = Duration::from_secs(30);
+const MAX_BACKLOG_SECONDS: u32 = 600;
+const BYTES_PER_SAMPLE: u64 = 2;
 const MILLIS_PER_SECOND: f64 = 1000.0;
 
 type SocketWriter = SplitSink<DeepgramSocket, Message>;
@@ -40,6 +42,35 @@ pub struct SourceStream {
 enum PumpOutcome {
     Stopped,
     Disconnected,
+}
+
+pub(crate) struct AudioClock {
+    started_at_ms: u64,
+    sample_rate: u32,
+    consumed_samples: u64,
+}
+
+impl AudioClock {
+    pub(crate) fn new(started_at_ms: u64, sample_rate: u32) -> Self {
+        Self {
+            started_at_ms,
+            sample_rate: sample_rate.max(1),
+            consumed_samples: 0,
+        }
+    }
+
+    pub(crate) fn advance(&mut self, samples: u64) {
+        self.consumed_samples += samples;
+    }
+
+    pub(crate) fn now_ms(&self) -> u64 {
+        self.started_at_ms + self.consumed_samples * 1000 / u64::from(self.sample_rate)
+    }
+}
+
+pub(crate) fn reconnect_delay(failures: u32) -> Duration {
+    let factor = 2u32.saturating_pow(failures.saturating_sub(1).min(5));
+    (RECONNECT_BASE_DELAY * factor).min(RECONNECT_MAX_DELAY)
 }
 
 pub(crate) struct AudioBuffer {
@@ -68,11 +99,17 @@ impl AudioBuffer {
         Some(to_i16_le_bytes(&chunk))
     }
 
+    pub(crate) fn drop_oldest_beyond(&mut self, max_samples: usize) -> usize {
+        let excess = self.pending.len().saturating_sub(max_samples);
+        self.pending.drain(..excess);
+        excess
+    }
+
     pub(crate) fn take_remaining(&mut self) -> Option<Vec<u8>> {
         if self.pending.is_empty() {
             return None;
         }
-        let chunk: Vec<f32> = self.pending.drain(..).collect();
+        let chunk = std::mem::take(&mut self.pending);
         Some(to_i16_le_bytes(&chunk))
     }
 }
@@ -83,60 +120,117 @@ pub async fn run_source_stream(
     mut stop_rx: watch::Receiver<bool>,
 ) {
     let mut buffer = AudioBuffer::new(stream.config.sample_rate);
-    let mut attempts = 0;
+    let mut clock = AudioClock::new(now_epoch_ms(), stream.config.sample_rate);
+    let mut failures: u32 = 0;
     while !*stop_rx.borrow() {
-        let socket = match connect_deepgram(&stream.config).await {
-            Ok(socket) => socket,
-            Err(error) => {
-                emit_recording_error(
-                    &stream.app,
-                    "deepgram",
-                    format!("{}: {error}", stream.source.as_str()),
-                );
-                attempts += 1;
-                if attempts > MAX_RECONNECT_ATTEMPTS {
-                    drain_until_stopped(&stream, &mut audio_rx, &mut stop_rx).await;
+        match connect_deepgram(&stream.config).await {
+            Ok(socket) => {
+                failures = 0;
+                let mut io = StreamIo {
+                    buffer: &mut buffer,
+                    clock: &mut clock,
+                    audio_rx: &mut audio_rx,
+                    stop_rx: &mut stop_rx,
+                };
+                if matches!(
+                    pump_socket(&stream, socket, &mut io).await,
+                    PumpOutcome::Stopped
+                ) {
                     return;
                 }
-                tokio::time::sleep(RECONNECT_DELAY).await;
-                continue;
             }
+            Err(error) => {
+                if failures == 0 {
+                    emit_recording_error(
+                        &stream.app,
+                        "deepgram",
+                        format!("{}: {error}", stream.source.as_str()),
+                    );
+                }
+                failures += 1;
+            }
+        }
+        let mut io = StreamIo {
+            buffer: &mut buffer,
+            clock: &mut clock,
+            audio_rx: &mut audio_rx,
+            stop_rx: &mut stop_rx,
         };
-        attempts = 0;
-        let outcome = pump_socket(&stream, socket, &mut buffer, &mut audio_rx, &mut stop_rx).await;
-        if matches!(outcome, PumpOutcome::Stopped) {
+        if matches!(
+            buffer_while_waiting(&stream, &mut io, reconnect_delay(failures.max(1))).await,
+            PumpOutcome::Stopped
+        ) {
             return;
         }
-        tokio::time::sleep(RECONNECT_DELAY).await;
+    }
+}
+
+struct StreamIo<'a> {
+    buffer: &'a mut AudioBuffer,
+    clock: &'a mut AudioClock,
+    audio_rx: &'a mut UnboundedReceiver<Vec<f32>>,
+    stop_rx: &'a mut watch::Receiver<bool>,
+}
+
+fn receive_samples(stream: &SourceStream, io: &mut StreamIo<'_>, samples: &[f32]) {
+    stream
+        .level
+        .store(rms_level(samples).to_bits(), Ordering::Relaxed);
+    io.buffer.push(samples);
+    let max_samples = (stream.config.sample_rate * MAX_BACKLOG_SECONDS) as usize;
+    let dropped = io.buffer.drop_oldest_beyond(max_samples);
+    io.clock.advance(dropped as u64);
+}
+
+async fn buffer_while_waiting(
+    stream: &SourceStream,
+    io: &mut StreamIo<'_>,
+    delay: Duration,
+) -> PumpOutcome {
+    let wait = tokio::time::sleep(delay);
+    tokio::pin!(wait);
+    loop {
+        tokio::select! {
+            received = io.audio_rx.recv() => {
+                let Some(samples) = received else { return PumpOutcome::Stopped };
+                receive_samples(stream, io, &samples);
+            }
+            _ = io.stop_rx.changed() => return PumpOutcome::Stopped,
+            _ = &mut wait => return PumpOutcome::Disconnected,
+        }
     }
 }
 
 async fn pump_socket(
     stream: &SourceStream,
     socket: DeepgramSocket,
-    buffer: &mut AudioBuffer,
-    audio_rx: &mut UnboundedReceiver<Vec<f32>>,
-    stop_rx: &mut watch::Receiver<bool>,
+    io: &mut StreamIo<'_>,
 ) -> PumpOutcome {
     let (mut writer, reader) = socket.split();
-    let mut reader_task = spawn_result_reader(stream, reader);
+    let mut reader_task = spawn_result_reader(stream, reader, io.clock.now_ms());
     let mut keep_alive = tokio::time::interval(KEEP_ALIVE_INTERVAL);
     let mut last_sent = Instant::now();
+    if send_ready_chunks(&mut writer, io, &mut last_sent)
+        .await
+        .is_err()
+    {
+        reader_task.abort();
+        return PumpOutcome::Disconnected;
+    }
     loop {
         tokio::select! {
-            received = audio_rx.recv() => {
+            received = io.audio_rx.recv() => {
                 let Some(samples) = received else {
-                    return finish_socket(&mut writer, buffer, reader_task).await;
+                    return finish_socket(&mut writer, io.buffer, reader_task).await;
                 };
-                stream.level.store(rms_level(&samples).to_bits(), Ordering::Relaxed);
-                buffer.push(&samples);
-                if send_ready_chunks(&mut writer, buffer, &mut last_sent).await.is_err() {
+                receive_samples(stream, io, &samples);
+                if send_ready_chunks(&mut writer, io, &mut last_sent).await.is_err() {
                     reader_task.abort();
                     return PumpOutcome::Disconnected;
                 }
             }
-            _ = stop_rx.changed() => {
-                return finish_socket(&mut writer, buffer, reader_task).await;
+            _ = io.stop_rx.changed() => {
+                return finish_socket(&mut writer, io.buffer, reader_task).await;
             }
             _ = keep_alive.tick() => {
                 if last_sent.elapsed() >= KEEP_ALIVE_INTERVAL && send_text(&mut writer, KEEP_ALIVE_MESSAGE).await.is_err() {
@@ -153,14 +247,16 @@ async fn pump_socket(
 
 async fn send_ready_chunks(
     writer: &mut SocketWriter,
-    buffer: &mut AudioBuffer,
+    io: &mut StreamIo<'_>,
     last_sent: &mut Instant,
 ) -> Result<(), String> {
-    while let Some(chunk) = buffer.take_chunk() {
+    while let Some(chunk) = io.buffer.take_chunk() {
+        let samples = chunk.len() as u64 / BYTES_PER_SAMPLE;
         writer
             .send(Message::binary(chunk))
             .await
             .map_err(|error| error.to_string())?;
+        io.clock.advance(samples);
         *last_sent = Instant::now();
     }
     Ok(())
@@ -193,27 +289,14 @@ async fn finish_socket(
     PumpOutcome::Stopped
 }
 
-async fn drain_until_stopped(
+fn spawn_result_reader(
     stream: &SourceStream,
-    audio_rx: &mut UnboundedReceiver<Vec<f32>>,
-    stop_rx: &mut watch::Receiver<bool>,
-) {
-    loop {
-        tokio::select! {
-            received = audio_rx.recv() => {
-                let Some(samples) = received else { return };
-                stream.level.store(rms_level(&samples).to_bits(), Ordering::Relaxed);
-            }
-            _ = stop_rx.changed() => return,
-        }
-    }
-}
-
-fn spawn_result_reader(stream: &SourceStream, mut reader: SocketReader) -> JoinHandle<()> {
+    mut reader: SocketReader,
+    connection_epoch_ms: u64,
+) -> JoinHandle<()> {
     let app = stream.app.clone();
     let note_id = stream.note_id.clone();
     let source = stream.source;
-    let connection_epoch_ms = now_epoch_ms();
     tokio::spawn(async move {
         while let Some(Ok(message)) = reader.next().await {
             if let Message::Close(_) = message {
@@ -260,4 +343,35 @@ pub fn now_epoch_ms() -> u64 {
         .duration_since(UNIX_EPOCH)
         .map(|duration| duration.as_millis() as u64)
         .unwrap_or(0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn backs_off_exponentially_up_to_thirty_seconds() {
+        assert_eq!(reconnect_delay(1), Duration::from_secs(2));
+        assert_eq!(reconnect_delay(2), Duration::from_secs(4));
+        assert_eq!(reconnect_delay(4), Duration::from_secs(16));
+        assert_eq!(reconnect_delay(9), Duration::from_secs(30));
+    }
+
+    #[test]
+    fn audio_clock_counts_time_from_samples_not_wall_clock() {
+        let mut clock = AudioClock::new(1_000, 16_000);
+        clock.advance(8_000);
+        assert_eq!(clock.now_ms(), 1_500);
+        clock.advance(16_000);
+        assert_eq!(clock.now_ms(), 2_500);
+    }
+
+    #[test]
+    fn caps_the_backlog_by_dropping_the_oldest_audio() {
+        let mut buffer = AudioBuffer::new(10);
+        buffer.push(&[0.1; 25]);
+        assert_eq!(buffer.drop_oldest_beyond(20), 5);
+        assert_eq!(buffer.drop_oldest_beyond(20), 0);
+        assert!(buffer.take_chunk().is_some());
+    }
 }

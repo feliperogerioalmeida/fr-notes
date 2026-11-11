@@ -109,6 +109,8 @@ const createHandler = (db: Database) => {
         startedAtMs: null,
       }),
       start_recording: () => recorder.start(),
+      list_recordings: () => [],
+      cleanup_recordings: () => 0,
       stop_recording: () => recorder.stop(),
     };
   return (cmd: string, payload?: InvokeArgs) =>

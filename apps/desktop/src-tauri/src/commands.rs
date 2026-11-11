@@ -6,6 +6,7 @@ use crate::dictation::{
 };
 use crate::microphone_apps::{self, MicApp};
 use crate::permissions::{self, Permissions};
+use crate::recordings::{self, RecordingFile, RetranscribeRequest, RetranscribedSegment};
 use crate::secrets::{read_secret, remove_secret, write_secret};
 use crate::session::{RecordingManager, RecordingStarted, RecordingStatus, StartRecordingArgs};
 use crate::speaker_ax::{self, SpeakerMonitor, StartSpeakerMonitorArgs};
@@ -174,6 +175,39 @@ pub async fn stop_speaker_monitor(monitor: State<'_, SpeakerMonitor>) -> Result<
 #[tauri::command]
 pub fn reveal_speaker_diagnostics(app: AppHandle) -> Result<(), String> {
     speaker_ax::reveal_diagnostics(&app)
+}
+
+#[tauri::command]
+pub fn list_recordings(app: AppHandle, note_id: String) -> Result<Vec<RecordingFile>, String> {
+    recordings::files::list_recordings(&app, &note_id)
+}
+
+#[tauri::command]
+pub fn reveal_recordings(app: AppHandle, note_id: String) -> Result<(), String> {
+    recordings::reveal(&app, &note_id)
+}
+
+#[tauri::command]
+pub async fn retranscribe_recordings(
+    app: AppHandle,
+    note_id: String,
+    language: String,
+    keyterms: Vec<String>,
+) -> Result<Vec<RetranscribedSegment>, String> {
+    recordings::retranscribe(
+        &app,
+        RetranscribeRequest {
+            note_id,
+            language,
+            keyterms,
+        },
+    )
+    .await
+}
+
+#[tauri::command]
+pub async fn cleanup_recordings(app: AppHandle, retention_days: u64) -> Result<usize, String> {
+    run_blocking(move || recordings::files::cleanup_older_than(&app, retention_days)).await
 }
 
 async fn run_blocking<T, F>(task: F) -> Result<T, String>

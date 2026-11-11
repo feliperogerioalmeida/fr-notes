@@ -45,6 +45,7 @@ export const beginRecording = async (
       keyterms: settings.keyterms,
       captureSystemAudio: settings.captureSystemAudio,
       echoCancellation: settings.echoCancellation,
+      keepAudio: settings.keepMeetingAudio,
     });
     await storage.notes.updateNote({
       id: noteId,

@@ -25,6 +25,7 @@ import {
   PreferencesSection,
   ProfileSection,
 } from "@/features/settings/general-sections.js";
+import { MeetingAudioSection } from "@/features/settings/meeting-audio-section.js";
 import { MeetingsSection } from "@/features/settings/meetings-section.js";
 import { PermissionsSection } from "@/features/settings/permissions-section.js";
 import { SpeakersSection } from "@/features/settings/speakers-section.js";
@@ -71,7 +72,12 @@ const SECTIONS: SectionDefinition[] = [
     icon: AudioLines,
     description:
       "Deepgram nova-3 em tempo real: um canal para o seu microfone e outro para o áudio do computador.",
-    content: () => <TranscriptionSection />,
+    content: () => (
+      <>
+        <TranscriptionSection />
+        <MeetingAudioSection />
+      </>
+    ),
   },
   {
     id: "reunioes",
