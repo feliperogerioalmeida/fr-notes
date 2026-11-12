@@ -4,6 +4,7 @@ import type {
   ListNotesInput,
   Note,
   NotePatch,
+  RescheduleNoteInput,
 } from "@workspace/core";
 
 import { syncActionItems } from "@/features/action-items/sync-action-items.js";
@@ -56,6 +57,20 @@ export const useUpdateNote = () => {
       ),
     onSettled: () =>
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allNotes }),
+  });
+};
+
+export const useRescheduleNote = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: RescheduleNoteInput) =>
+      (await getStorage()).notes.rescheduleNote(input),
+    onSettled: (_data, _error, { id }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.note(id) }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.transcript(id) }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allNotes }),
+      ]),
   });
 };
 

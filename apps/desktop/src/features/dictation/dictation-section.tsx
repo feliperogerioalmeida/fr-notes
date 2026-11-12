@@ -1,15 +1,8 @@
-import type {
-  DictationLlmProvider,
-  DictationTrigger,
-  RecordingShortcut,
-} from "@workspace/core";
+import type { DictationTrigger, RecordingShortcut } from "@workspace/core";
 import { Button } from "@workspace/ui/components/ui/button";
 import { ShieldAlert } from "lucide-react";
 
-import {
-  SelectSetting,
-  TextSetting,
-} from "@/features/settings/settings-controls.js";
+import { SelectSetting } from "@/features/settings/settings-controls.js";
 import {
   SettingsField,
   SettingsSection,
@@ -65,52 +58,6 @@ const AccessibilityCallout = () => {
   );
 };
 
-const DICTATION_PROVIDER_LABELS: Record<DictationLlmProvider, string> = {
-  same: "O mesmo das notas",
-  gateway: "Vercel AI Gateway",
-  "openai-compatible": "Ollama ou compatível com OpenAI",
-};
-
-const DictationModelFields = () => {
-  const settings = useSettings();
-  const updateSettings = useUpdateSettings();
-  const isSeparate = settings.dictationLlmProvider !== "same";
-  return (
-    <>
-      <SettingsField
-        label="IA do ditado"
-        htmlFor="dictation-llm-provider"
-        hint="O ditado precisa de resposta rápida. Um modelo pequeno, separado do das notas, deixa o texto pronto em menos tempo. A chave é a mesma configurada em IA."
-      >
-        <SelectSetting
-          id="dictation-llm-provider"
-          value={settings.dictationLlmProvider}
-          options={toOptions<DictationLlmProvider>(DICTATION_PROVIDER_LABELS)}
-          onChange={(dictationLlmProvider) =>
-            updateSettings.mutate({ dictationLlmProvider })
-          }
-        />
-      </SettingsField>
-      {isSeparate && (
-        <SettingsField
-          label="Modelo do ditado"
-          htmlFor="dictationLlmModel"
-          hint="Vazio usa o modelo das notas desse provedor."
-        >
-          <TextSetting
-            settingKey="dictationLlmModel"
-            placeholder={
-              settings.dictationLlmProvider === "gateway"
-                ? "provedor/modelo"
-                : "Nome do modelo"
-            }
-          />
-        </SettingsField>
-      )}
-    </>
-  );
-};
-
 export const DictationSection = () => {
   const settings = useSettings();
   const updateSettings = useUpdateSettings();
@@ -144,9 +91,8 @@ export const DictationSection = () => {
         <SwitchSetting
           settingKey="dictationPolish"
           title="Polir com IA"
-          description="Tira vícios de fala, corrige pontuação e aplica comandos como “nova linha”."
+          description="Tira vícios de fala, corrige pontuação e aplica comandos como “nova linha”. O modelo é escolhido em Configurações → IA."
         />
-        {settings.dictationPolish && <DictationModelFields />}
       </SettingsSection>
       <SettingsSection title="Atalhos globais">
         <SettingsField

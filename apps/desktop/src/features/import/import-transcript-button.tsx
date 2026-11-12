@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/ui/dialog";
+import { Input } from "@workspace/ui/components/ui/input";
 import { Label } from "@workspace/ui/components/ui/label";
 import { Switch } from "@workspace/ui/components/ui/switch";
 import { Textarea } from "@workspace/ui/components/ui/textarea";
@@ -30,6 +31,7 @@ import {
 const ACCEPTED_FILES = ".txt,.md,.markdown,text/plain,text/markdown";
 const TURN_FORMS = { one: "fala", other: "falas" };
 const TRANSCRIPT_FORMS = { one: "transcrição", other: "transcrições" };
+const DEFAULT_START_TIME = "09:00";
 const PASTE_PLACEHOLDER =
   "Meeting Title: Kickoff do projeto\nDate: Nov 12\n\nTranscript:\nMarina: Bom dia, vamos começar?\nMe: Vamos.";
 
@@ -78,6 +80,7 @@ const useImportForm = () => {
   const [pasted, setPasted] = useState("");
   const [files, setFiles] = useState<TranscriptInput[]>([]);
   const [generate, setGenerate] = useState(true);
+  const [startTime, setStartTime] = useState(DEFAULT_START_TIME);
   const sources = useMemo<TranscriptInput[]>(() => {
     if (files.length > 0) return files;
     return pasted.trim() ? [{ text: pasted, fileName: null }] : [];
@@ -85,9 +88,11 @@ const useImportForm = () => {
   const previews = useMemo(
     () =>
       sources
-        .map((source) => previewTranscript(source, settings.userName))
+        .map((source) =>
+          previewTranscript({ source, userName: settings.userName, startTime }),
+        )
         .filter((preview) => preview.transcript.segments.length > 0),
-    [sources, settings.userName],
+    [sources, settings.userName, startTime],
   );
   const reset = () => {
     setPasted("");
@@ -100,6 +105,8 @@ const useImportForm = () => {
     setFiles,
     generate,
     setGenerate,
+    startTime,
+    setStartTime,
     sources,
     previews,
     reset,
@@ -132,6 +139,27 @@ const SourceField = ({ form }: { form: ImportForm }) => {
     </div>
   );
 };
+
+const StartTimeField = ({ form }: { form: ImportForm }) => (
+  <div className="flex items-center justify-between gap-4">
+    <Label
+      htmlFor="import-start-time"
+      className="flex flex-col items-start gap-0.5 text-left"
+    >
+      <span>Horário de início</span>
+      <span className="text-caption text-muted-foreground font-normal">
+        A cópia do Granola só traz a data. Dá para mudar depois na nota.
+      </span>
+    </Label>
+    <Input
+      id="import-start-time"
+      type="time"
+      value={form.startTime}
+      onChange={(event) => form.setStartTime(event.target.value)}
+      className="w-28"
+    />
+  </div>
+);
 
 const GenerateSwitch = ({ form }: { form: ImportForm }) => (
   <div className="flex items-center justify-between gap-4">
@@ -229,6 +257,7 @@ const ImportDialog = ({ open, onOpenChange }: ImportDialogProps) => {
         </DialogHeader>
         <SourceField form={form} />
         <PreviewList form={form} />
+        <StartTimeField form={form} />
         <GenerateSwitch form={form} />
         <DialogFooter className="sm:justify-between">
           <Button variant="ghost" onClick={() => fileInput.current?.click()}>

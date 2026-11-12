@@ -18,15 +18,23 @@ export interface TranscriptPreview {
   transcript: ImportedTranscript;
 }
 
-export const previewTranscript = (
-  source: TranscriptInput,
-  userName: string,
-): TranscriptPreview => ({
+interface PreviewInput {
+  source: TranscriptInput;
+  userName: string;
+  startTime: string;
+}
+
+export const previewTranscript = ({
+  source,
+  userName,
+  startTime,
+}: PreviewInput): TranscriptPreview => ({
   source,
   transcript: importTranscript({
     text: source.text,
     selfNames: [userName].filter(Boolean),
     fallbackTitle: source.fileName?.replace(FILE_EXTENSION, "") ?? null,
+    startTime,
   }),
 });
 

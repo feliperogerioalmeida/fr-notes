@@ -49,6 +49,37 @@ describe("storage", () => {
     expect(general?.instructions).toContain("uma seção ### por assunto");
   });
 
+  it("moves a note to another time together with its transcript", async () => {
+    const storage = await initializeStorage(await createMemoryClient());
+    const note = await storage.notes.createNote({ title: "Workshop" });
+    const nineAm = new Date(2026, 9, 29, 9, 0).getTime();
+    const sevenPm = new Date(2026, 9, 29, 19, 0).getTime();
+    await storage.notes.updateNote({
+      id: note.id,
+      patch: {
+        recordingStartedAt: new Date(nineAm).toISOString(),
+        recordingEndedAt: new Date(nineAm + 60_000).toISOString(),
+      },
+    });
+    await storage.transcript.appendSegment({
+      noteId: note.id,
+      source: "system",
+      text: "Boa noite",
+      startMs: nineAm + 1_000,
+      endMs: nineAm + 2_000,
+    });
+
+    await storage.notes.rescheduleNote({ id: note.id, startedAtMs: sevenPm });
+
+    const moved = await storage.notes.findNote(note.id);
+    const [segment] = await storage.transcript.listSegments(note.id);
+    expect(moved?.recordingStartedAt).toBe(new Date(sevenPm).toISOString());
+    expect(moved?.recordingEndedAt).toBe(
+      new Date(sevenPm + 60_000).toISOString(),
+    );
+    expect(segment?.startMs).toBe(sevenPm + 1_000);
+  });
+
   it("persists calendar participants and soft deletes segments", async () => {
     const storage = await initializeStorage(await createMemoryClient());
     const note = await storage.notes.createNote({

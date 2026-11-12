@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  resolveDictationLlm,
+  resolveFeatureLlm,
   resolveLlmModel,
   SettingsSchema,
 } from "./settings.js";
@@ -40,7 +40,7 @@ describe("resolveLlmModel", () => {
   });
 });
 
-describe("resolveDictationLlm", () => {
+describe("resolveFeatureLlm", () => {
   const settings = SettingsSchema.parse({
     llmProvider: "gateway",
     llmGatewayModel: "alibaba/qwen3.7-plus",
@@ -49,26 +49,45 @@ describe("resolveDictationLlm", () => {
   });
 
   it("uses the notes model without reasoning by default", () => {
-    const dictation = resolveDictationLlm(settings);
+    const dictation = resolveFeatureLlm(settings, "dictation");
     expect(resolveLlmModel(dictation)).toBe("alibaba/qwen3.7-plus");
     expect(dictation.llmThinking).toBe(false);
   });
 
   it("uses its own provider and model when chosen", () => {
-    const dictation = resolveDictationLlm({
-      ...settings,
-      dictationLlmProvider: "gateway",
-      dictationLlmModel: "google/gemini-3.1-flash-lite",
-    });
+    const dictation = resolveFeatureLlm(
+      {
+        ...settings,
+        dictationLlmProvider: "gateway",
+        dictationLlmModel: "google/gemini-3.1-flash-lite",
+      },
+      "dictation",
+    );
     expect(resolveLlmModel(dictation)).toBe("google/gemini-3.1-flash-lite");
   });
 
   it("falls back to the provider's notes model when no model is set", () => {
-    const dictation = resolveDictationLlm({
-      ...settings,
-      dictationLlmProvider: "openai-compatible",
-    });
+    const dictation = resolveFeatureLlm(
+      {
+        ...settings,
+        dictationLlmProvider: "openai-compatible",
+      },
+      "dictation",
+    );
     expect(dictation.llmProvider).toBe("openai-compatible");
     expect(resolveLlmModel(dictation)).toBe("fr-notes");
+  });
+
+  it("keeps reasoning for Perguntar and uses its own model", () => {
+    const ask = resolveFeatureLlm(
+      {
+        ...settings,
+        askLlmProvider: "gateway",
+        askLlmModel: "google/gemini-3.8-flash",
+      },
+      "ask",
+    );
+    expect(resolveLlmModel(ask)).toBe("google/gemini-3.8-flash");
+    expect(ask.llmThinking).toBe(true);
   });
 });

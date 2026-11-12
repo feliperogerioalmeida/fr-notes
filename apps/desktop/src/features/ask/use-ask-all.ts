@@ -7,6 +7,7 @@ import {
   type ChatMessage,
   type MeetingSource,
   type Note,
+  resolveFeatureLlm,
   toChatSources,
 } from "@workspace/core";
 import type { ModelMessage } from "ai";
@@ -66,7 +67,7 @@ const answerQuestion = async ({
     .slice(-HISTORY_MESSAGES)
     .map(({ role, content }) => ({ role, content }));
   return streamCompletion({
-    settings,
+    settings: resolveFeatureLlm(settings, "ask"),
     instructions: ASK_ALL_MEETINGS_SYSTEM_PROMPT,
     messages: [
       ...previous,

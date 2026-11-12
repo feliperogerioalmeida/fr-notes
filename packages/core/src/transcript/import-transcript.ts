@@ -22,6 +22,7 @@ interface ImportTranscriptInput {
   text: string;
   selfNames?: string[];
   fallbackTitle?: string | null;
+  startTime?: string;
   now?: Date;
 }
 
@@ -133,6 +134,17 @@ export const parseLooseDate = (
   return date;
 };
 
+const DEFAULT_START_TIME = "09:00";
+const TIME_INPUT = /^(\d{1,2}):(\d{2})$/;
+
+const withTime = (date: Date, time: string) => {
+  const match = time.match(TIME_INPUT);
+  if (!match) return date;
+  const result = new Date(date);
+  result.setHours(Number(match[1]), Number(match[2]), 0, 0);
+  return result;
+};
+
 const durationOf = (text: string) =>
   Math.max(MIN_TURN_MS, text.split(/\s+/).length * MS_PER_WORD);
 
@@ -178,11 +190,15 @@ export const importTranscript = ({
   text,
   selfNames = [],
   fallbackTitle = null,
+  startTime = DEFAULT_START_TIME,
   now = new Date(),
 }: ImportTranscriptInput): ImportedTranscript => {
   const lines = text.replace(/\r\n?/g, "\n").split("\n");
   const { header, body } = splitHeaderAndBody(lines);
-  const startedAt = parseLooseDate(readHeader(header, DATE_LINE), now) ?? now;
+  const startedAt = withTime(
+    parseLooseDate(readHeader(header, DATE_LINE), now) ?? now,
+    startTime,
+  );
   const speakers = createSpeakerMap(selfNames);
   let cursor = startedAt.getTime();
   const segments = collectTurns(body).map((turn): ImportedSegment => {
