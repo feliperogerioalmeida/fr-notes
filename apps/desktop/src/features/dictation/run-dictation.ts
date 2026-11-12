@@ -85,7 +85,10 @@ const polish = async ({ text, targetApp, settings }: PolishInput) => {
       signal: AbortSignal.timeout(POLISH_TIMEOUT_MS),
       onText: () => undefined,
     });
-    return { text: polished.trim() || text, polished: true };
+    const cleaned = polished.trim();
+    return cleaned
+      ? { text: cleaned, polished: true }
+      : { text, polished: false };
   } catch {
     return { text, polished: false };
   }
