@@ -6,6 +6,7 @@ import initSqlJs, { type Database, type SqlValue } from "sql.js";
 import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 
 import { useEnhanceStore } from "@/features/enhance/enhance-store.js";
+import { useRecordingStore } from "@/features/recording/recording-store.js";
 
 import {
   buildPreviewCalendars,
@@ -167,9 +168,55 @@ const simulateSpeakerScene = (noteId: string, bundleId = "us.zoom.xos") => {
   }
 };
 
+const PREVIEW_ELAPSED_MS = 754_000;
+const PREVIEW_ENDING_MS = 10_000;
+
+const PREVIEW_LIVE_TRANSCRIPT = {
+  lines: [
+    {
+      key: "1",
+      speaker: "Alandy Barreto",
+      text: "Esse processo aqui é um GOV, mas nem sempre é projeto. Às vezes vira dispensa ou compra direta.",
+      mine: false,
+    },
+    {
+      key: "2",
+      speaker: "Eu",
+      text: "Então a gente precisa de um mini Kanban só pra cotações, separado dos projetos.",
+      mine: true,
+    },
+    {
+      key: "3",
+      speaker: "Rafa",
+      text: "Isso, e manter a visão de tabela que já existe.",
+      mine: false,
+    },
+  ],
+  partials: [
+    {
+      key: "partial-system",
+      speaker: "Alandy Barreto",
+      text: "Perfeito, eu levo isso pro Paulinho",
+      mine: false,
+    },
+  ],
+};
+
+const simulateNubRecording = () =>
+  useRecordingStore.setState({
+    phase: "recording",
+    noteId: "preview-note",
+    startedAtMs: Date.now() - PREVIEW_ELAPSED_MS,
+  });
+
 const exposePreviewControls = () => {
   Object.assign(window, {
     simulateSpeakerScene,
+    simulateNubRecording,
+    simulateNubTranscript: () =>
+      emit("nub:transcript", PREVIEW_LIVE_TRANSCRIPT),
+    simulateNubEnding: () =>
+      emit("nub:ending", { endsAtMs: Date.now() + PREVIEW_ENDING_MS }),
     simulateEnhanceProgress: (noteId: string, estimatedReadMs = 150_000) =>
       useEnhanceStore.getState().begin({ noteId, estimatedReadMs }),
     simulateMeetingApp: (active = true) =>

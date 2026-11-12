@@ -6,6 +6,7 @@ import type {
   CalendarEvent,
   CalendarInfo,
   LiveSegmentEvent,
+  LiveTranscript,
   MicrophoneApp,
   TranscriptSource,
 } from "@workspace/core";
@@ -228,6 +229,48 @@ export const sendNubPrompt = (prompt: NubPrompt | null) =>
 
 export const onNubPrompt = (handler: (prompt: NubPrompt | null) => void) =>
   subscribe(PROMPT_EVENT, handler);
+
+const TRANSCRIPT_FEED_EVENT = "nub:transcript";
+const ENDING_EVENT = "nub:ending";
+const ENDING_ACTION_EVENT = "nub:ending-action";
+
+export interface NubEnding {
+  endsAtMs: number;
+}
+
+export type EndingAction = "keep-recording" | "finish-now";
+
+export const sendNubTranscript = (transcript: LiveTranscript) =>
+  emitTo(NUB_WINDOW_LABEL, TRANSCRIPT_FEED_EVENT, transcript);
+
+export const onNubTranscript = (
+  handler: (transcript: LiveTranscript) => void,
+) => subscribe(TRANSCRIPT_FEED_EVENT, handler);
+
+export const sendNubEnding = (ending: NubEnding | null) =>
+  emitTo(NUB_WINDOW_LABEL, ENDING_EVENT, ending);
+
+export const onNubEnding = (handler: (ending: NubEnding | null) => void) =>
+  subscribe(ENDING_EVENT, handler);
+
+export const requestEndingAction = (action: EndingAction) =>
+  emitTo(MAIN_WINDOW_LABEL, ENDING_ACTION_EVENT, action);
+
+export const onEndingAction = (handler: (action: EndingAction) => void) =>
+  subscribe(ENDING_ACTION_EVENT, handler);
+
+export interface ScreenWindow {
+  owner: string;
+  bundleId: string | null;
+  layer: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export const listFloatingWindows = async () =>
+  (await invoke<ScreenWindow[] | null>("list_floating_windows")) ?? [];
 
 export const focusMainWindow = async () => {
   const main = await WebviewWindow.getByLabel(MAIN_WINDOW_LABEL);

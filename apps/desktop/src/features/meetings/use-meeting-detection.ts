@@ -6,10 +6,10 @@ import { useEffect } from "react";
 import { fetchVisibleEvents } from "@/features/calendar/use-calendar.js";
 import type { StartNoteInput } from "@/features/notes/use-start-note.js";
 import { useRecordingStore } from "@/features/recording/recording-store.js";
-import { endRecording } from "@/features/recording/use-recording-controls.js";
 import { getStorage } from "@/lib/database.js";
 import {
   listMicrophoneApps,
+  onEndingAction,
   onMicrophoneAppsChanged,
   onPromptAction,
   type PromptAction,
@@ -18,6 +18,12 @@ import {
 } from "@/lib/native.js";
 
 import {
+  beginMeetingWatch,
+  handleEndingAction,
+  resetMeetingWatch,
+  watchMeetingEnd,
+} from "./meeting-end-watcher.js";
+import {
   buildAppPrompt,
   buildReminderPrompt,
   findUpcomingEvent,
@@ -25,7 +31,6 @@ import {
 } from "./meeting-rules.js";
 import { type MeetingPrompt, useMeetingStore } from "./meeting-store.js";
 
-const AUTO_STOP_GRACE_MS = 20_000;
 const REMINDER_INTERVAL_MS = 15_000;
 const DEFAULT_QUIET_MS = 60 * 60_000;
 
@@ -52,37 +57,16 @@ const withdrawPrompt = async () => {
   await sendNubPrompt(null);
 };
 
-const createAutoStopTimer = () => {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const cancel = () => {
-    if (timer) clearTimeout(timer);
-    timer = null;
-  };
-  const schedule = () => {
-    cancel();
-    timer = setTimeout(() => void endRecording(), AUTO_STOP_GRACE_MS);
-  };
-  return { schedule, cancel };
-};
-
-const autoStop = createAutoStopTimer();
-
 const isQuiet = () => useMeetingStore.getState().quietUntilMs > Date.now();
 
 const handleMeetingApps = async (apps: MeetingApp[], startNote: StartNote) => {
   useMeetingStore.getState().setActiveApps(apps);
   const settings = await (await getStorage()).settings.readSettings();
-  const recording = useRecordingStore.getState();
+  watchMeetingEnd(apps, settings.autoStopRecording);
   if (apps.length === 0) {
     if (useMeetingStore.getState().prompt?.fromApp) await withdrawPrompt();
-    const shouldStop =
-      recording.phase === "recording" &&
-      recording.origin === "detected" &&
-      settings.autoStopRecording;
-    if (shouldStop) autoStop.schedule();
     return;
   }
-  autoStop.cancel();
   if (!isIdle() || settings.meetingDetection === "off" || isQuiet()) return;
   const prompt = buildAppPrompt(apps, await loadEvents());
   if (settings.meetingDetection === "auto") {
@@ -143,6 +127,7 @@ const registerDetection = (startNote: StartNote): Promise<UnlistenFn>[] => [
     (apps) => void handleMeetingApps(detectMeetingApps(apps), startNote),
   ),
   onPromptAction((action) => void handlePromptAction(action, startNote)),
+  onEndingAction(handleEndingAction),
 ];
 
 export const useMeetingDetection = (startNote: StartNote) => {
@@ -160,6 +145,10 @@ export const useMeetingDetection = (startNote: StartNote) => {
       if (state.phase === "recording" && previous.phase !== "recording") {
         useMeetingStore.getState().clearPrompt();
         void sendNubPrompt(null);
+        beginMeetingWatch(useMeetingStore.getState().activeApps);
+      }
+      if (state.phase === "idle" && previous.phase !== "idle") {
+        resetMeetingWatch();
       }
     });
     return () => {

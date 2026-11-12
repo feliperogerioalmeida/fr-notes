@@ -10,6 +10,7 @@ import {
 import { ChatPanel } from "@/features/chat/chat-panel.js";
 import type { useNoteChat } from "@/features/chat/use-note-chat.js";
 import { RetranscribeButton } from "@/features/recordings/retranscribe-button.js";
+import { CopyTranscriptButton } from "@/features/transcript/copy-transcript-button.js";
 import { TranscriptPanel } from "@/features/transcript/transcript-panel.js";
 
 export type SidePanel = "transcript" | "tasks" | "chat";
@@ -72,7 +73,14 @@ const PanelActions = ({
 }: Omit<NoteSidePanelProps, "onClose">) => {
   if (panel === "chat") return <ClearChatButton chat={chat} />;
   if (panel === "tasks") return <SendAllItemsMenu noteId={noteId} />;
-  if (panel === "transcript") return <RetranscribeButton noteId={noteId} />;
+  if (panel === "transcript") {
+    return (
+      <>
+        <CopyTranscriptButton noteId={noteId} />
+        <RetranscribeButton noteId={noteId} />
+      </>
+    );
+  }
   return null;
 };
 

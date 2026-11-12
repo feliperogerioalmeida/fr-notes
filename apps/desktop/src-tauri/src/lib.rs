@@ -11,6 +11,7 @@ mod main_thread;
 mod microphone_apps;
 mod permissions;
 mod recordings;
+mod screen_windows;
 mod secrets;
 mod session;
 mod speaker_ax;
@@ -80,6 +81,7 @@ pub fn run() {
             commands::list_calendars,
             commands::list_calendar_events,
             commands::list_microphone_apps,
+            commands::list_floating_windows,
             commands::request_accessibility_permission,
             commands::start_dictation,
             commands::stop_dictation,

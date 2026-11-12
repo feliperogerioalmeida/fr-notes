@@ -13,6 +13,8 @@ import {
   requestPromptAction,
 } from "@/lib/native.js";
 
+import { PROMPT_CARD_HEIGHT } from "./nub-layout.js";
+
 const TICK_MS = 15_000;
 const MINUTE_MS = 60_000;
 
@@ -36,11 +38,8 @@ const describeStart = (startsAtMs: number, nowMs: number) => {
 
 const describeSchedule = (prompt: NubPrompt, nowMs: number) => {
   if (prompt.startsAtMs === null) return prompt.subtitle;
-  const range = [prompt.startsAtMs, prompt.endsAtMs]
-    .filter((value): value is number => value !== null)
-    .map((value) => formatTime(new Date(value).toISOString()))
-    .join(" – ");
-  return `${range} · ${describeStart(prompt.startsAtMs, nowMs)}`;
+  const start = formatTime(new Date(prompt.startsAtMs).toISOString());
+  return `${start} · ${describeStart(prompt.startsAtMs, nowMs)}`;
 };
 
 const send = (action: PromptAction) => () => void requestPromptAction(action);
@@ -52,13 +51,13 @@ const PrimaryAction = ({ prompt }: { prompt: NubPrompt }) => {
     <button
       type="button"
       onClick={send(joins ? "join-and-record" : "record")}
-      className="hover:bg-accent ease-brand flex items-center gap-2.5 rounded-l-[14px] py-1.5 pr-3.5 pl-3 text-left transition-colors duration-150"
+      className="hover:bg-accent ease-brand flex items-center gap-2 rounded-l-[12px] py-1 pr-3 pl-2.5 text-left transition-colors duration-150"
     >
       {joins ? (
-        <MeetingAppIcon provider={prompt.provider} className="size-7" />
+        <MeetingAppIcon provider={prompt.provider} className="size-6" />
       ) : (
-        <span className="bg-brand text-brand-foreground flex size-7 items-center justify-center rounded-lg">
-          <Mic className="size-4" />
+        <span className="bg-brand text-brand-foreground flex size-6 items-center justify-center rounded-md">
+          <Mic className="size-3.5" />
         </span>
       )}
       <span className="flex flex-col leading-tight">
@@ -66,7 +65,7 @@ const PrimaryAction = ({ prompt }: { prompt: NubPrompt }) => {
           {joins ? `Entrar no ${provider}` : "Gravar"}
         </span>
         <span className="text-caption text-muted-foreground whitespace-nowrap">
-          {joins ? "e gravar no FR Notes" : "com o FR Notes"}
+          {joins ? "e gravar" : "esta reunião"}
         </span>
       </span>
     </button>
@@ -83,7 +82,7 @@ const Option = ({ icon, label, action }: OptionProps) => (
   <button
     type="button"
     onClick={send(action)}
-    className="hover:bg-accent text-body-sm text-foreground ease-brand [&_svg]:text-muted-foreground flex h-9 items-center gap-2.5 rounded-lg px-3 text-left transition-colors duration-150 [&_svg]:size-4"
+    className="hover:bg-accent text-body-sm text-foreground ease-brand [&_svg]:text-muted-foreground flex h-8 items-center gap-2.5 rounded-lg px-3 text-left transition-colors duration-150 [&_svg]:size-4"
   >
     {icon}
     {label}
@@ -93,7 +92,7 @@ const Option = ({ icon, label, action }: OptionProps) => (
 const MoreOptions = ({ prompt }: { prompt: NubPrompt }) => {
   const provider = prompt.provider ? shortProviderName(prompt.provider) : null;
   return (
-    <div className="bg-card/95 mt-1.5 flex flex-col rounded-2xl border p-1 shadow-xl backdrop-blur">
+    <div className="bg-card/95 mt-1 flex flex-col rounded-2xl border p-1 shadow-xl backdrop-blur">
       {prompt.joinUrl && provider && (
         <>
           <Option
@@ -125,12 +124,13 @@ export const PromptCard = ({ prompt, expanded, onToggle }: PromptCardProps) => {
     <>
       <div
         data-tauri-drag-region
-        className="bg-card/95 flex h-[72px] w-full shrink-0 items-center gap-3 rounded-[22px] border py-2 pr-2 pl-3.5 shadow-xl backdrop-blur"
+        style={{ height: PROMPT_CARD_HEIGHT }}
+        className="bg-card/95 flex w-full shrink-0 items-center gap-2.5 rounded-[18px] border py-1.5 pr-1.5 pl-3 shadow-xl backdrop-blur"
       >
         <span
           data-tauri-drag-region
           className={cn(
-            "h-9 w-1 shrink-0 rounded-full",
+            "h-7 w-1 shrink-0 rounded-full",
             !prompt.accentColor && "bg-brand",
           )}
           style={
@@ -153,14 +153,14 @@ export const PromptCard = ({ prompt, expanded, onToggle }: PromptCardProps) => {
             {describeSchedule(prompt, now)}
           </span>
         </div>
-        <div className="bg-secondary/70 flex h-full shrink-0 items-stretch rounded-[16px] border">
+        <div className="bg-secondary/70 flex h-full shrink-0 items-stretch rounded-[13px] border">
           <PrimaryAction prompt={prompt} />
           <span className="bg-border w-px" />
           <button
             type="button"
             onClick={onToggle}
             aria-label="Mais opções"
-            className="hover:bg-accent ease-brand flex w-9 items-center justify-center rounded-r-[14px] transition-colors duration-150"
+            className="hover:bg-accent ease-brand flex w-8 items-center justify-center rounded-r-[12px] transition-colors duration-150"
           >
             <ChevronDown
               className={cn(
@@ -175,7 +175,7 @@ export const PromptCard = ({ prompt, expanded, onToggle }: PromptCardProps) => {
           onClick={send("dismiss")}
           aria-label="Fechar"
           title="Fechar"
-          className="text-muted-foreground hover:bg-accent hover:text-foreground ease-brand flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-150"
+          className="text-muted-foreground hover:bg-accent hover:text-foreground ease-brand flex size-7 shrink-0 items-center justify-center rounded-full transition-colors duration-150"
         >
           <X className="size-4" />
         </button>
