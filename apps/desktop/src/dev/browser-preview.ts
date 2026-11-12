@@ -175,28 +175,28 @@ const PREVIEW_LIVE_TRANSCRIPT = {
   lines: [
     {
       key: "1",
-      speaker: "Alandy Barreto",
-      text: "Esse processo aqui é um GOV, mas nem sempre é projeto. Às vezes vira dispensa ou compra direta.",
+      speaker: "Marina Souza",
+      text: "A proposta revisada precisa incluir o cronograma de implantação e o custo por usuário.",
       mine: false,
     },
     {
       key: "2",
       speaker: "Eu",
-      text: "Então a gente precisa de um mini Kanban só pra cotações, separado dos projetos.",
+      text: "Combinado, mando até sexta com as duas opções de plano.",
       mine: true,
     },
     {
       key: "3",
-      speaker: "Rafa",
-      text: "Isso, e manter a visão de tabela que já existe.",
+      speaker: "João Lima",
+      text: "E vale incluir o caso do cliente de logística como referência.",
       mine: false,
     },
   ],
   partials: [
     {
       key: "partial-system",
-      speaker: "Alandy Barreto",
-      text: "Perfeito, eu levo isso pro Paulinho",
+      speaker: "Marina Souza",
+      text: "Perfeito, aí eu levo para a diretoria na segunda",
       mine: false,
     },
   ],
@@ -236,7 +236,7 @@ const exposePreviewControls = () => {
       joinUrl: string | null = "https://meet.google.com/abc-defg-hij",
     ) =>
       emit("nub:prompt", {
-        title: "Ingenious Brazil - Marketing",
+        title: "Planejamento trimestral",
         subtitle: "",
         startsAtMs: Date.now() + 60_000,
         endsAtMs: Date.now() + 61 * 60_000,
