@@ -16,6 +16,7 @@ import {
 import { type RefObject, useEffect, useRef } from "react";
 import { NavLink } from "react-router";
 
+import { GeneratingCard } from "@/features/enhance/generating-card.js";
 import { FolderTreeNav } from "@/features/folders/folder-tree-nav.js";
 import { AudioLevelBars } from "@/features/recording/audio-level-bars.js";
 import { useRecordingStore } from "@/features/recording/recording-store.js";
@@ -144,6 +145,7 @@ export const AppSidebar = ({
       </nav>
     </ScrollArea>
     <div className="flex flex-col gap-2 p-3">
+      <GeneratingCard />
       <RecordingCard />
       <SidebarLink to="/settings" icon={Settings} label="Configurações" />
     </div>

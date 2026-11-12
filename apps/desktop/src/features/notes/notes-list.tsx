@@ -1,8 +1,9 @@
 import { formatTime, groupByDay, type Note } from "@workspace/core";
 import { cn } from "@workspace/ui/lib/utils";
-import { FileText, Sparkles } from "lucide-react";
+import { FileText, LoaderCircle, Sparkles } from "lucide-react";
 import { NavLink } from "react-router";
 
+import { useEnhanceJob } from "@/features/enhance/enhance-store.js";
 import { AudioLevelBars } from "@/features/recording/audio-level-bars.js";
 import { useRecordingStore } from "@/features/recording/recording-store.js";
 
@@ -23,14 +24,20 @@ const NoteIcon = ({ note }: { note: Note }) => {
   const level = useRecordingStore((state) =>
     Math.max(state.levels.microphone, state.levels.system),
   );
+  const isGenerating = Boolean(useEnhanceJob(note.id));
   if (isRecording) return <AudioLevelBars level={level} active />;
+  if (isGenerating)
+    return <LoaderCircle className="text-brand size-4 animate-spin" />;
   if (note.enhancedMarkdown)
     return <Sparkles className="text-muted-foreground size-4" />;
   return <FileText className="text-muted-foreground size-4" />;
 };
 
+const GENERATING_PREVIEW = "Gerando as notas…";
+
 const NoteRow = ({ note }: { note: Note }) => {
-  const preview = buildPreview(note);
+  const isGenerating = Boolean(useEnhanceJob(note.id));
+  const preview = isGenerating ? GENERATING_PREVIEW : buildPreview(note);
   return (
     <NavLink
       to={`/notes/${note.id}`}

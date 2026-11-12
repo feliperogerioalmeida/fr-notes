@@ -4,7 +4,7 @@ import { Sparkles } from "lucide-react";
 
 import { MarkdownEditor } from "@/components/markdown-editor.js";
 import { EnhanceProgress } from "@/features/enhance/enhance-progress.js";
-import { useEnhanceStore } from "@/features/enhance/enhance-store.js";
+import { useEnhanceJob } from "@/features/enhance/enhance-store.js";
 
 export type NoteView = "mine" | "enhanced";
 
@@ -55,9 +55,9 @@ export const NoteBody = ({
   onNotesChange,
   onEnhancedChange,
 }: NoteBodyProps) => {
-  const streamingNoteId = useEnhanceStore((state) => state.noteId);
-  const draft = useEnhanceStore((state) => state.draft);
-  const isStreaming = streamingNoteId === note.id;
+  const job = useEnhanceJob(note.id);
+  const isStreaming = Boolean(job);
+  const draft = job?.draft ?? "";
 
   if (isStreaming && !draft) return <EnhanceProgress noteId={note.id} />;
   if (isStreaming || view === "enhanced") {

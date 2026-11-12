@@ -17,7 +17,7 @@ import {
   selectOpenItems,
   useNoteActionItems,
 } from "@/features/action-items/use-action-items.js";
-import { useEnhanceStore } from "@/features/enhance/enhance-store.js";
+import { useEnhanceJob } from "@/features/enhance/enhance-store.js";
 import { TemplateMenu } from "@/features/enhance/template-menu.js";
 import { RecordingControl } from "@/features/recording/recording-control.js";
 import { useRecordingStore } from "@/features/recording/recording-store.js";
@@ -72,9 +72,8 @@ const EnhanceButton = ({
   note,
   onEnhance,
 }: Pick<NoteActionBarProps, "note" | "onEnhance">) => {
-  const streamingNoteId = useEnhanceStore((state) => state.noteId);
   const isRecording = useRecordingStore((state) => state.noteId === note.id);
-  const isEnhancing = streamingNoteId === note.id;
+  const isEnhancing = Boolean(useEnhanceJob(note.id));
   const isFirstRun = !note.enhancedMarkdown;
   return (
     <TemplateMenu activeTemplateId={note.templateId} onSelect={onEnhance}>
