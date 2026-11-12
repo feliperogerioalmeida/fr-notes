@@ -32,7 +32,7 @@ describe("storage", () => {
     const storage = await initializeStorage(client);
 
     const templates = await storage.templates.listTemplates();
-    expect(templates.filter((template) => template.isBuiltIn)).toHaveLength(6);
+    expect(templates.filter((template) => template.isBuiltIn)).toHaveLength(7);
   });
 
   it("refreshes built-in templates saved by an older version", async () => {

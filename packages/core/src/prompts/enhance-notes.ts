@@ -12,7 +12,7 @@ How to read the input:
 - In <transcript>, "Eu" is the user (their microphone). Other people appear by name when known, otherwise as "Pessoa 1", "Pessoa 2"… Voice separation is automatic: short interjections ("sim", "perfeito", "é") are often attributed to the wrong person, so rely on the content and on how people address each other by name.
 - When <transcript_summary> is present, it condenses the earlier parts of the meeting (written during the call, with the time range of each part); <transcript> then holds only the rest. Treat both as the transcript.
 - Speech-to-text mishears names, product names and jargon. Fix obvious mistakes using the meeting title, the participants and the context (for example a product named in the title that appears garbled in the transcript), and keep the domain vocabulary exactly as the participants use it (acronyms, codes, IDs).
-- <template> defines the structure. Skip any section that would be empty.
+- <template> defines the structure. A template line "### Title — description" means a section headed "### Title" only; the text after the dash describes what goes in it and never appears in the heading. Skip any section that would be empty.
 
 What good notes look like:
 - Organized by subject, not by chronology of who spoke. Merge everything said about the same subject into one section, even if it came up at different moments.
