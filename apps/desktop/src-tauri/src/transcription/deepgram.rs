@@ -75,6 +75,12 @@ fn dominant_speaker(words: &[ResultsWord]) -> Option<u32> {
         .map(|(id, _)| id)
 }
 
+/// Smart formatting turns the Portuguese article "uma" into the digit "1"
+/// ("1 boa pergunta"), so Portuguese keeps punctuation only.
+pub fn uses_smart_format(language: &str) -> bool {
+    !language.to_lowercase().starts_with("pt")
+}
+
 pub fn build_listen_url(config: &DeepgramConfig) -> Result<Url, String> {
     let mut url = Url::parse(DEEPGRAM_LISTEN_URL).map_err(|error| error.to_string())?;
     {
@@ -85,7 +91,10 @@ pub fn build_listen_url(config: &DeepgramConfig) -> Result<Url, String> {
             .append_pair("encoding", "linear16")
             .append_pair("sample_rate", &config.sample_rate.to_string())
             .append_pair("channels", "1")
-            .append_pair("smart_format", "true")
+            .append_pair(
+                "smart_format",
+                &uses_smart_format(&config.language).to_string(),
+            )
             .append_pair("punctuate", "true")
             .append_pair("interim_results", "true")
             .append_pair("endpointing", ENDPOINTING_MS);
@@ -159,7 +168,15 @@ mod tests {
         assert!(query.contains("sample_rate=48000"));
         assert!(query.contains("keyterm=FR+Hub"));
         assert!(query.contains("diarize=true"));
+        assert!(query.contains("smart_format=false"));
         assert_eq!(query.matches("keyterm=").count(), 1);
+    }
+
+    #[test]
+    fn keeps_smart_format_outside_portuguese() {
+        assert!(uses_smart_format("en"));
+        assert!(!uses_smart_format("pt-BR"));
+        assert!(!uses_smart_format("pt"));
     }
 
     #[test]

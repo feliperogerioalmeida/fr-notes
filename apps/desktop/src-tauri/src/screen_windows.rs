@@ -53,12 +53,16 @@ mod macos {
 
     fn read_number(info: &WindowInfo, key: &str) -> Option<f64> {
         let object = read_object(info, key)?;
-        object.downcast_ref::<NSNumber>().map(|number| number.doubleValue())
+        object
+            .downcast_ref::<NSNumber>()
+            .map(|number| number.doubleValue())
     }
 
     fn read_text(info: &WindowInfo, key: &str) -> Option<String> {
         let object = read_object(info, key)?;
-        object.downcast_ref::<NSString>().map(|text| text.to_string())
+        object
+            .downcast_ref::<NSString>()
+            .map(|text| text.to_string())
     }
 
     fn read_bounds(info: &WindowInfo) -> Option<(f64, f64, f64, f64)> {
@@ -73,7 +77,8 @@ mod macos {
     }
 
     fn read_bundle_id(pid: f64) -> Option<String> {
-        let application = NSRunningApplication::runningApplicationWithProcessIdentifier(pid as i32)?;
+        let application =
+            NSRunningApplication::runningApplicationWithProcessIdentifier(pid as i32)?;
         application.bundleIdentifier().map(|id| id.to_string())
     }
 

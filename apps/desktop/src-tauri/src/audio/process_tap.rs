@@ -13,11 +13,11 @@ use objc2_core_audio::{
     kAudioAggregateDeviceMainSubDeviceKey, kAudioAggregateDeviceNameKey,
     kAudioAggregateDeviceSubDeviceListKey, kAudioAggregateDeviceTapAutoStartKey,
     kAudioAggregateDeviceTapListKey, kAudioAggregateDeviceUIDKey, kAudioDevicePropertyDeviceUID,
-    kAudioDevicePropertyNominalSampleRate,
-    kAudioHardwarePropertyDefaultOutputDevice, kAudioHardwarePropertyTranslatePIDToProcessObject,
-    kAudioSubDeviceUIDKey, kAudioSubTapDriftCompensationKey, kAudioSubTapUIDKey,
-    kAudioTapPropertyFormat, AudioDeviceCreateIOProcIDWithBlock, AudioDeviceDestroyIOProcID,
-    AudioDeviceIOProcID, AudioDeviceStart, AudioDeviceStop, AudioHardwareCreateAggregateDevice,
+    kAudioDevicePropertyNominalSampleRate, kAudioHardwarePropertyDefaultOutputDevice,
+    kAudioHardwarePropertyTranslatePIDToProcessObject, kAudioSubDeviceUIDKey,
+    kAudioSubTapDriftCompensationKey, kAudioSubTapUIDKey, kAudioTapPropertyFormat,
+    AudioDeviceCreateIOProcIDWithBlock, AudioDeviceDestroyIOProcID, AudioDeviceIOProcID,
+    AudioDeviceStart, AudioDeviceStop, AudioHardwareCreateAggregateDevice,
     AudioHardwareDestroyAggregateDevice, AudioObjectID, CATapDescription,
 };
 use objc2_core_audio_types::{
@@ -131,12 +131,8 @@ pub fn start_process_tap(
         read_nominal_rate(aggregate_id).unwrap_or(format.mSampleRate as u32),
     ));
     capture.rate_watch = Some(watch_nominal_rate(aggregate_id, input_rate.clone()));
-    capture.proc_id = register_io_block(
-        aggregate_id,
-        format.mChannelsPerFrame,
-        input_rate,
-        audio_tx,
-    )?;
+    capture.proc_id =
+        register_io_block(aggregate_id, format.mChannelsPerFrame, input_rate, audio_tx)?;
     let status = unsafe { AudioDeviceStart(aggregate_id, capture.proc_id) };
     if status != 0 {
         return Err(TapError::Failed(status_error(
