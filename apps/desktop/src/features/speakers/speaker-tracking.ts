@@ -12,7 +12,9 @@ import { toast } from "sonner";
 import { useMeetingStore } from "@/features/meetings/meeting-store.js";
 import { getStorage } from "@/lib/database.js";
 import {
+  ACCESSIBILITY_REQUIRED_ERROR,
   onSpeakerSnapshot,
+  requestAccessibilityPermission,
   startSpeakerMonitor,
   stopSpeakerMonitor,
 } from "@/lib/native.js";
@@ -53,6 +55,18 @@ const recordSnapshot = (snapshot: AxSnapshot) => {
   });
 };
 
+const offerAccessibility = () =>
+  toast.warning("Não dá para identificar quem está falando", {
+    description:
+      "O FR Notes precisa da permissão de Acessibilidade para ler os nomes na janela da reunião.",
+    id: "speaker-accessibility",
+    duration: Infinity,
+    action: {
+      label: "Permitir",
+      onClick: () => void requestAccessibilityPermission(),
+    },
+  });
+
 const followMeetingApp = async () => {
   const current = tracking;
   const bundleId = useMeetingStore.getState().activeApps[0]?.bundleId ?? null;
@@ -66,6 +80,10 @@ const followMeetingApp = async () => {
     });
   } catch (error) {
     current.bundleId = null;
+    if (String(error).includes(ACCESSIBILITY_REQUIRED_ERROR)) {
+      offerAccessibility();
+      return;
+    }
     console.info("speaker monitor unavailable", error);
   }
 };

@@ -60,7 +60,8 @@ const PERMISSIONS: PermissionDefinition[] = [
   {
     key: "accessibility",
     title: "Acessibilidade",
-    description: "Digita o ditado no app em que você está escrevendo.",
+    description:
+      "Mostra quem está falando na reunião e digita o ditado no app em que você está escrevendo.",
     pane: "accessibility",
     request: requestAccessibilityPermission,
   },
