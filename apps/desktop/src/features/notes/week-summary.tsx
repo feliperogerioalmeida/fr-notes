@@ -19,7 +19,7 @@ interface MetricProps {
 }
 
 const Metric = ({ label, value, className }: MetricProps) => (
-  <div className={cn("flex min-w-0 flex-col gap-0.5", className)}>
+  <div className={cn("flex flex-col gap-0.5 whitespace-nowrap", className)}>
     <span className="text-title-3 text-heading whitespace-nowrap tabular-nums">
       {value}
     </span>
@@ -35,7 +35,7 @@ export const WeekSummary = ({ notes }: { notes: Note[] }) => {
       <h2 className="text-label text-muted-foreground uppercase">
         Esta semana
       </h2>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="flex items-start justify-between gap-4">
         <Metric
           label={pluralize(summary.notesCount, NOTE_FORMS)}
           value={String(summary.notesCount)}

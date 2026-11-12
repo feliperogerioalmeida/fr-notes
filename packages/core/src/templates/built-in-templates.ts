@@ -23,6 +23,26 @@ export const BUILT_IN_TEMPLATES: BuiltInTemplate[] = [
     ].join("\n"),
   },
   {
+    id: "builtin-class",
+    name: "Aula / Workshop",
+    description:
+      "Conceitos e métodos ensinados, o que se aplica ao seu caso, perguntas da turma, materiais indicados e suas tarefas.",
+    instructions: [
+      "> Um parágrafo curto no topo, como citação: o tema da aula, quem conduziu e as 2 ou 3 lições mais importantes.",
+      "",
+      'Depois, uma seção ### por conceito ou tema ensinado, com um título específico (por exemplo "Taxa de conversão do ponto", nunca "Conceitos gerais"). Em cada seção:',
+      "- a explicação do conceito, com as palavras mais claras possíveis;",
+      "- métodos, passo a passo, fórmulas, números de referência e regras práticas citados;",
+      "- exemplos e casos contados, dizendo de quem e o que aconteceu;",
+      "- **Na prática:** a orientação concreta de como aplicar (omita se não houver).",
+      "",
+      '### Aplicando ao meu caso — o que foi dito especificamente sobre o projeto, a situação ou as dúvidas do usuário ("Eu"), com as recomendações recebidas.',
+      "### Perguntas e respostas — as dúvidas da turma que trouxeram algo novo, com a resposta resumida.",
+      "### Materiais e referências — livros, filmes, ferramentas, sites, contatos e pessoas indicadas, com o motivo da indicação.",
+      '### Tarefas — "- [ ] Responsável — tarefa (prazo)", só as do usuário e as passadas para toda a turma.',
+    ].join("\n"),
+  },
+  {
     id: "builtin-client-discovery",
     name: "Cliente / Descoberta",
     description: "Entender o problema do cliente, escopo, orçamento e prazos.",
