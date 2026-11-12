@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header.js";
 import { useNoteChat } from "@/features/chat/use-note-chat.js";
-import { useEnhanceStore } from "@/features/enhance/enhance-store.js";
+import { useEnhanceJob } from "@/features/enhance/enhance-store.js";
 import { runEnhancement } from "@/features/enhance/run-enhancement.js";
 import { NoteActionBar } from "@/features/notes/note-action-bar.js";
 import { NoteActionsMenu } from "@/features/notes/note-actions-menu.js";
@@ -39,13 +39,13 @@ const useNoteAutosave = (noteId: string) => {
 
 const useNoteView = (note: Note | null | undefined) => {
   const [view, setView] = useState<NoteView>("mine");
-  const streamingNoteId = useEnhanceStore((state) => state.noteId);
+  const isStreaming = Boolean(useEnhanceJob(note?.id));
   useEffect(() => {
     setView(note?.enhancedMarkdown ? "enhanced" : "mine");
   }, [note?.id, Boolean(note?.enhancedMarkdown)]);
   useEffect(() => {
-    if (streamingNoteId && streamingNoteId === note?.id) setView("enhanced");
-  }, [streamingNoteId, note?.id]);
+    if (isStreaming) setView("enhanced");
+  }, [isStreaming, note?.id]);
   return [view, setView] as const;
 };
 

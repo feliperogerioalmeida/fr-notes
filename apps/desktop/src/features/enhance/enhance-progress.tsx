@@ -2,7 +2,7 @@ import { formatElapsed } from "@workspace/core";
 import { LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { useEnhanceStore } from "./enhance-store.js";
+import { useEnhanceJob } from "./enhance-store.js";
 
 const TICK_MS = 500;
 const FAST_READ_MS = 5_000;
@@ -26,13 +26,11 @@ const describeRemaining = (remainingMs: number) => {
 };
 
 export const EnhanceProgress = ({ noteId }: { noteId: string }) => {
-  const isMine = useEnhanceStore((state) => state.noteId === noteId);
-  const phase = useEnhanceStore((state) => state.phase);
-  const startedAt = useEnhanceStore((state) => state.startedAt);
-  const estimatedReadMs = useEnhanceStore((state) => state.estimatedReadMs);
-  const active = isMine && phase === "reading" && startedAt !== null;
+  const job = useEnhanceJob(noteId);
+  const active = job?.phase === "reading";
   const now = useNow(active);
-  if (!active || startedAt === null) return null;
+  if (!job || !active) return null;
+  const { startedAt, estimatedReadMs } = job;
   const elapsed = now - startedAt;
   if (estimatedReadMs < FAST_READ_MS) {
     return (

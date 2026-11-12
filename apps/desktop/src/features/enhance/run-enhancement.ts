@@ -5,6 +5,7 @@ import {
   parseEnhancedNotes,
   type Storage,
 } from "@workspace/core";
+import { toast } from "sonner";
 
 import { syncActionItems } from "@/features/action-items/sync-action-items.js";
 import { dispatchNoteEvent } from "@/features/integrations/deliver-webhooks.js";
@@ -13,7 +14,7 @@ import { streamCompletion } from "@/lib/llm.js";
 import { queryClient } from "@/lib/query-client.js";
 import { QUERY_KEYS } from "@/lib/query-keys.js";
 
-import { useEnhanceStore } from "./enhance-store.js";
+import { isEnhancing, useEnhanceStore } from "./enhance-store.js";
 import { estimateReadMs, recordReadRate } from "./read-rate.js";
 
 export class NothingToEnhanceError extends Error {
@@ -47,6 +48,22 @@ const resolveTemplate = async (
   throw new Error("Template não encontrado.");
 };
 
+const NOTE_ROUTE_PREFIX = "#/notes/";
+
+const announceReady = (noteId: string, title: string) => {
+  const route = `${NOTE_ROUTE_PREFIX}${noteId}`;
+  if (window.location.hash === route) return;
+  toast.success("Notas prontas", {
+    description: title.trim() || "Sem título",
+    action: {
+      label: "Abrir",
+      onClick: () => {
+        window.location.hash = route;
+      },
+    },
+  });
+};
+
 const pickTitle = (note: Note, generatedTitle: string | null) =>
   note.title.trim() ? undefined : (generatedTitle ?? undefined);
 
@@ -71,7 +88,7 @@ const streamNotes = async ({ noteId, prompt, settings }: StreamNotesInput) => {
         isFirstText = false;
         recordReadRate({ settings, chars, elapsedMs: Date.now() - startedAt });
       }
-      store.update(parseEnhancedNotes(text).markdown);
+      store.update(noteId, parseEnhancedNotes(text).markdown);
     },
   });
 };
@@ -80,6 +97,7 @@ export const runEnhancement = async ({
   noteId,
   templateId,
 }: RunEnhancementInput): Promise<void> => {
+  if (isEnhancing(noteId)) return;
   const storage = await getStorage();
   const { note, segments, settings, digests } = await loadInputs(
     storage,
@@ -115,9 +133,10 @@ export const runEnhancement = async ({
       },
     });
     await syncActionItems(noteId, enhanced.markdown);
+    announceReady(noteId, pickTitle(note, enhanced.title) ?? note.title);
     void dispatchNoteEvent({ noteId, event: "note.enhanced" });
   } finally {
-    useEnhanceStore.getState().finish();
+    useEnhanceStore.getState().finish(noteId);
     await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.note(noteId) });
     await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.allNotes });
   }
