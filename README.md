@@ -63,6 +63,7 @@ O FR Notes é um app desktop open source para quem passa o dia em reuniões. Dur
 | 🔎 **Busca em tudo**         | ⌘K procura em títulos, anotações, notas da IA e transcrições, sem se importar com acentos.                                                                                              |
 | 🛟 **À prova de falhas**     | Se a internet cair, a transcrição volta sozinha sem perder o horário das falas. O áudio fica guardado no Mac para refazer a transcrição, e uma gravação interrompida pode ser retomada. |
 | 📋 **Copiar e compartilhar** | Copie a nota em Markdown ou a transcrição inteira, com horário e nome de quem falou. Envie notas para outros sistemas por webhook assinado.                                             |
+| 📥 **Importar transcrições** | Traga reuniões gravadas em outro app, como o Granola: cole a transcrição ou escolha arquivos `.txt`/`.md`, e a IA gera as notas com o mesmo template das suas reuniões.                 |
 
 ### Organização
 
@@ -223,6 +224,15 @@ Em **Configurações → Integrações** você cadastra **webhooks**: a cada gra
    - **refaça a transcrição** a partir do áudio guardado (útil se a internet caiu ou se você mudou o vocabulário). Depois, regere as notas.
 4. No painel **Próximos passos**, marque o que foi feito ou envie cada tarefa — ou todas — para uma conexão.
 5. Pergunte qualquer coisa à reunião no chat, ou à sua base inteira em **Perguntar**.
+
+### Importar de outro app (Granola e outros)
+
+1. No **Início**, clique em **Importar**.
+2. Cole a transcrição ou clique em **Escolher arquivos** para trazer várias de uma vez (`.txt` ou `.md`). No Granola, abra a reunião e copie a transcrição; o formato esperado é uma fala por linha, `Nome: fala`, com um cabeçalho opcional (`Meeting Title:`, `Date:`).
+3. Confira a prévia: título, data, quantidade de falas e quem participou. “Me” e o seu nome viram “Eu”; “Them” e “Speaker A” viram vozes sem nome, que você pode nomear depois.
+4. Clique em **Importar**. Com **Gerar as notas com a IA** ligado, as notas são escritas uma reunião por vez com o provedor em uso.
+
+Como o texto importado não tem horário de cada fala, o FR Notes distribui as falas a partir do horário de início pelo tamanho de cada uma — a ordem fica certa e a duração, aproximada.
 
 ### Ditado
 
