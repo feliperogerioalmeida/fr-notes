@@ -1,3 +1,4 @@
+import type { ActionItem } from "../domain/action-item.js";
 import type { Note } from "../domain/note.js";
 
 const DAYS_IN_WEEK = 7;
@@ -7,7 +8,7 @@ const MINUTES_PER_HOUR = 60;
 export interface WeekSummary {
   notesCount: number;
   recordedMs: number;
-  enhancedCount: number;
+  openStepsCount: number;
 }
 
 const startOfWeek = (now: Date): Date => {
@@ -29,20 +30,29 @@ const recordedDuration = (note: Note): number => {
 const noteDate = (note: Note): number =>
   new Date(note.recordingStartedAt ?? note.createdAt).getTime();
 
-export const summarizeWeek = (
-  notes: Note[],
-  now: Date = new Date(),
-): WeekSummary => {
+interface SummarizeWeekInput {
+  notes: Note[];
+  actionItems?: ActionItem[];
+  now?: Date;
+}
+
+export const summarizeWeek = ({
+  notes,
+  actionItems = [],
+  now = new Date(),
+}: SummarizeWeekInput): WeekSummary => {
   const weekStart = startOfWeek(now).getTime();
   const thisWeek = notes.filter((note) => noteDate(note) >= weekStart);
+  const noteIds = new Set(thisWeek.map((note) => note.id));
   return {
     notesCount: thisWeek.length,
     recordedMs: thisWeek.reduce(
       (total, note) => total + recordedDuration(note),
       0,
     ),
-    enhancedCount: thisWeek.filter((note) => Boolean(note.enhancedMarkdown))
-      .length,
+    openStepsCount: actionItems.filter(
+      (item) => !item.done && !item.deletedAt && noteIds.has(item.noteId),
+    ).length,
   };
 };
 
@@ -51,6 +61,11 @@ export const formatDuration = (ms: number): string => {
   const hours = Math.floor(totalMinutes / MINUTES_PER_HOUR);
   const minutes = totalMinutes % MINUTES_PER_HOUR;
   if (hours === 0) return `${minutes} min`;
-  if (minutes === 0) return `${hours} h`;
-  return `${hours} h ${minutes} min`;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h${String(minutes).padStart(2, "0")}`;
 };
+
+export const pluralize = (
+  count: number,
+  forms: { one: string; other: string },
+): string => (count === 1 ? forms.one : forms.other);
