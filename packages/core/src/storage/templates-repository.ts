@@ -87,8 +87,17 @@ export const createTemplatesRepository = (db: SqlClient) => {
     const timestamp = nowIso();
     for (const template of BUILT_IN_TEMPLATES) {
       await db.execute(
-        `INSERT OR IGNORE INTO templates (id, name, description, instructions, is_built_in, created_at, updated_at)
-         VALUES (?, ?, ?, ?, 1, ?, ?)`,
+        `INSERT INTO templates (id, name, description, instructions, is_built_in, created_at, updated_at)
+         VALUES (?, ?, ?, ?, 1, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET
+           name = excluded.name,
+           description = excluded.description,
+           instructions = excluded.instructions,
+           updated_at = excluded.updated_at
+         WHERE templates.is_built_in = 1
+           AND (templates.name <> excluded.name
+             OR templates.description <> excluded.description
+             OR templates.instructions <> excluded.instructions)`,
         [
           template.id,
           template.name,

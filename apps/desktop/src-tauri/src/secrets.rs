@@ -1,7 +1,14 @@
 const KEYCHAIN_SERVICE: &str = "dev.feliperogerio.notes";
 pub const DEEPGRAM_API_KEY: &str = "deepgram_api_key";
 pub const LLM_API_KEY: &str = "llm_api_key";
-const ALLOWED_KEYS: [&str; 2] = [DEEPGRAM_API_KEY, LLM_API_KEY];
+pub const LLM_GATEWAY_API_KEY: &str = "llm_gateway_api_key";
+pub const LLM_COMPATIBLE_API_KEY: &str = "llm_compatible_api_key";
+const ALLOWED_KEYS: [&str; 4] = [
+    DEEPGRAM_API_KEY,
+    LLM_API_KEY,
+    LLM_GATEWAY_API_KEY,
+    LLM_COMPATIBLE_API_KEY,
+];
 const SCOPED_KEY_PREFIXES: [&str; 3] = ["webhook_secret:", "webhook_header:", "connection_token:"];
 const MAX_SCOPED_ID_LENGTH: usize = 64;
 

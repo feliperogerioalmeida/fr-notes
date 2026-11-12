@@ -2,6 +2,7 @@ import {
   buildDigestPrompt,
   DIGEST_CHUNK_MS,
   DIGEST_SYSTEM_PROMPT,
+  resolveLlmModel,
   selectUndigestedSegments,
   type TranscriptSegment,
 } from "@workspace/core";
@@ -52,7 +53,7 @@ const runDigest = async (target: DigestTracking) => {
   const { storage, note, settings, ready } = await loadDigestInputs(
     target.noteId,
   );
-  if (!note || !settings.llmDigestDuringMeeting || !settings.llmModel.trim())
+  if (!note || !settings.llmDigestDuringMeeting || !resolveLlmModel(settings))
     return;
   if (!coversEnoughTime(ready)) return;
   const controller = new AbortController();

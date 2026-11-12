@@ -35,6 +35,20 @@ describe("storage", () => {
     expect(templates.filter((template) => template.isBuiltIn)).toHaveLength(6);
   });
 
+  it("refreshes built-in templates saved by an older version", async () => {
+    const client = await createMemoryClient();
+    await initializeStorage(client);
+    await client.execute(
+      "UPDATE templates SET instructions = 'old' WHERE id = 'builtin-general'",
+    );
+    const storage = await initializeStorage(client);
+
+    const general = (await storage.templates.listTemplates()).find(
+      (template) => template.id === "builtin-general",
+    );
+    expect(general?.instructions).toContain("uma seção ### por assunto");
+  });
+
   it("persists calendar participants and soft deletes segments", async () => {
     const storage = await initializeStorage(await createMemoryClient());
     const note = await storage.notes.createNote({

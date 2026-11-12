@@ -11,6 +11,7 @@ import { endRecording } from "@/features/recording/use-recording-controls.js";
 import { useRecordingListeners } from "@/features/recording/use-recording-listeners.js";
 import { useRecordingMaintenance } from "@/features/recordings/use-recording-maintenance.js";
 import { SearchResults } from "@/features/search/search-results.js";
+import { useLlmSecretMigration } from "@/features/settings/migrate-llm-secret.js";
 import { useThemeSync } from "@/features/settings/use-theme-sync.js";
 import { useAutoUpdate } from "@/features/updates/use-auto-update.js";
 import {
@@ -51,6 +52,7 @@ export const AppShell = () => {
   useGlobalShortcuts(startNote);
   useThemeSync();
   useAutoUpdate();
+  useLlmSecretMigration();
   const context: ShellContext = { searchQuery };
   return (
     <div className="bg-background flex h-screen overflow-hidden">

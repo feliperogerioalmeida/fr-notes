@@ -39,7 +39,8 @@ export const useUpdateSettings = () => {
 
 const readSecretPresence = async () => ({
   deepgram: await checkSecret(SECRET_KEYS.deepgram),
-  llm: await checkSecret(SECRET_KEYS.llm),
+  llmGateway: await checkSecret(SECRET_KEYS.llmGateway),
+  llmCompatible: await checkSecret(SECRET_KEYS.llmCompatible),
 });
 
 export const useSecretsPresence = () =>

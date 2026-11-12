@@ -7,14 +7,22 @@ import type {
   CalendarInfo,
   LiveSegmentEvent,
   LiveTranscript,
+  LlmProvider,
   MicrophoneApp,
   TranscriptSource,
 } from "@workspace/core";
 
 export const SECRET_KEYS = {
   deepgram: "deepgram_api_key",
-  llm: "llm_api_key",
+  legacyLlm: "llm_api_key",
+  llmGateway: "llm_gateway_api_key",
+  llmCompatible: "llm_compatible_api_key",
 } as const;
+
+export const LLM_SECRET_KEYS = {
+  gateway: SECRET_KEYS.llmGateway,
+  "openai-compatible": SECRET_KEYS.llmCompatible,
+} as const satisfies Record<LlmProvider, string>;
 
 export type SecretKey =
   | (typeof SECRET_KEYS)[keyof typeof SECRET_KEYS]

@@ -1,4 +1,7 @@
 import type { LlmProvider } from "@workspace/core";
+import { Badge } from "@workspace/ui/components/ui/badge";
+import { cn } from "@workspace/ui/lib/utils";
+import type { ReactNode } from "react";
 
 import { SECRET_KEYS } from "@/lib/native.js";
 
@@ -12,29 +15,54 @@ import {
   useUpdateSettings,
 } from "./use-settings.js";
 
-const PROVIDER_OPTIONS: { value: LlmProvider; label: string }[] = [
-  { value: "gateway", label: "Vercel AI Gateway" },
-  {
-    value: "openai-compatible",
-    label: "Compatível com OpenAI (OpenRouter, Ollama, Groq…)",
-  },
-];
-
-const MODEL_HINTS: Record<LlmProvider, string> = {
-  gateway:
-    "Use o ID do catálogo do Gateway, no formato provedor/modelo. A lista está em vercel.com/ai-gateway/models.",
-  "openai-compatible":
-    "Use o nome do modelo como o provedor espera (ex.: o nome que aparece no `ollama list`).",
+const PROVIDER_LABELS: Record<LlmProvider, string> = {
+  gateway: "Vercel AI Gateway",
+  "openai-compatible": "Ollama ou compatível com OpenAI",
 };
+
+const PROVIDER_OPTIONS = (
+  Object.entries(PROVIDER_LABELS) as [LlmProvider, string][]
+).map(([value, label]) => ({ value, label }));
+
+interface ProviderPanelProps {
+  provider: LlmProvider;
+  active: boolean;
+  children: ReactNode;
+}
+
+const ProviderPanel = ({ provider, active, children }: ProviderPanelProps) => (
+  <div
+    className={cn(
+      "flex flex-col gap-4 rounded-lg border p-4",
+      active && "border-brand/60",
+    )}
+  >
+    <div className="flex items-center gap-2">
+      <h3 className="text-body-sm text-heading font-semibold">
+        {PROVIDER_LABELS[provider]}
+      </h3>
+      {active && (
+        <Badge className="bg-brand-subtle text-brand border-transparent">
+          Em uso
+        </Badge>
+      )}
+    </div>
+    {children}
+  </div>
+);
 
 export const AiSection = () => {
   const settings = useSettings();
   const updateSettings = useUpdateSettings();
   const { data: secrets } = useSecretsPresence();
-  const isCompatible = settings.llmProvider === "openai-compatible";
+  const isActive = (provider: LlmProvider) => settings.llmProvider === provider;
   return (
     <SettingsSection>
-      <SettingsField label="Provedor" htmlFor="llm-provider">
+      <SettingsField
+        label="Provedor em uso"
+        htmlFor="llm-provider"
+        hint="As duas configurações ficam salvas, cada uma com a sua chave. Aqui você só escolhe qual o FR Notes usa."
+      >
         <SelectSetting
           id="llm-provider"
           value={settings.llmProvider}
@@ -42,44 +70,62 @@ export const AiSection = () => {
           onChange={(llmProvider) => updateSettings.mutate({ llmProvider })}
         />
       </SettingsField>
-      {isCompatible && (
+      <ProviderPanel provider="gateway" active={isActive("gateway")}>
+        <SettingsField
+          label="Modelo"
+          htmlFor="llmGatewayModel"
+          hint="ID do catálogo do Gateway, no formato provedor/modelo (ex.: google/gemini-3.8-flash). A lista está em vercel.com/ai-gateway/models."
+        >
+          <TextSetting
+            settingKey="llmGatewayModel"
+            placeholder="provedor/modelo"
+          />
+        </SettingsField>
+        <SecretField
+          secretKey={SECRET_KEYS.llmGateway}
+          label="Chave da API"
+          isSaved={Boolean(secrets?.llmGateway)}
+          hint="Crie em vercel.com → AI Gateway → API Keys."
+        />
+      </ProviderPanel>
+      <ProviderPanel
+        provider="openai-compatible"
+        active={isActive("openai-compatible")}
+      >
         <SettingsField
           label="URL base"
           htmlFor="llmBaseUrl"
-          hint="Ex.: https://openrouter.ai/api/v1 ou http://localhost:11434/v1 (Ollama local ou no seu VPS)."
+          hint="Ex.: https://ollama.seu-servidor.com/v1, http://localhost:11434/v1 ou https://openrouter.ai/api/v1."
         >
           <TextSetting settingKey="llmBaseUrl" placeholder="https://…/v1" />
         </SettingsField>
-      )}
-      <SettingsField
-        label="Modelo"
-        htmlFor="llmModel"
-        hint={MODEL_HINTS[settings.llmProvider]}
-      >
-        <TextSetting settingKey="llmModel" placeholder="Escolha um modelo" />
-      </SettingsField>
-      <SecretField
-        secretKey={SECRET_KEYS.llm}
-        label="Chave da API"
-        isSaved={Boolean(secrets?.llm)}
-        hint={
-          isCompatible
-            ? "Opcional para Ollama sem autenticação."
-            : "Crie em vercel.com → AI Gateway → API Keys."
-        }
-      />
-      <SwitchSetting
-        settingKey="llmDigestDuringMeeting"
-        title="Adiantar as notas durante a reunião"
-        description="A cada 10 minutos de conversa, resume a transcrição em segundo plano. Quando a reunião acaba, as notas saem bem mais rápido, principalmente em modelos no seu servidor."
-      />
-      {isCompatible && (
+        <SettingsField
+          label="Modelo"
+          htmlFor="llmCompatibleModel"
+          hint="O nome do modelo como o provedor espera (ex.: o nome que aparece no `ollama list`)."
+        >
+          <TextSetting
+            settingKey="llmCompatibleModel"
+            placeholder="Nome do modelo"
+          />
+        </SettingsField>
+        <SecretField
+          secretKey={SECRET_KEYS.llmCompatible}
+          label="Chave da API"
+          isSaved={Boolean(secrets?.llmCompatible)}
+          hint="Opcional para Ollama sem autenticação."
+        />
         <SwitchSetting
           settingKey="llmThinking"
           title="Raciocínio do modelo"
           description="Em modelos que “pensam” antes de responder, pode melhorar a qualidade, mas deixa tudo bem mais lento. Mantenha desligado no Ollama."
         />
-      )}
+      </ProviderPanel>
+      <SwitchSetting
+        settingKey="llmDigestDuringMeeting"
+        title="Adiantar as notas durante a reunião"
+        description="A cada 10 minutos de conversa, resume a transcrição em segundo plano. Quando a reunião acaba, as notas saem bem mais rápido, principalmente em modelos no seu servidor."
+      />
     </SettingsSection>
   );
 };
