@@ -138,6 +138,7 @@ export const PromptCard = ({ prompt, expanded, onToggle }: PromptCardProps) => {
         <div data-tauri-drag-region className="flex min-w-0 flex-1 flex-col">
           <span
             data-tauri-drag-region
+            title={prompt.title}
             className="text-body-sm text-heading truncate font-semibold"
           >
             {prompt.title}

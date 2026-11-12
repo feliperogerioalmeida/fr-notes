@@ -6,6 +6,7 @@ import { useOutletContext } from "react-router";
 import { PageContainer, PageTitle } from "@/components/page-container.js";
 import { PageHeader } from "@/components/page-header.js";
 import { UpcomingMeetings } from "@/features/calendar/upcoming-meetings.js";
+import { ImportTranscriptButton } from "@/features/import/import-transcript-button.js";
 import { NotesList } from "@/features/notes/notes-list.js";
 import { useNotesQuery } from "@/features/notes/use-notes.js";
 import { useStartNote } from "@/features/notes/use-start-note.js";
@@ -68,6 +69,7 @@ export const HomePage = () => {
             description={todayLabel()}
             actions={
               <>
+                <ImportTranscriptButton />
                 <Button variant="outline" onClick={() => void startNote()}>
                   <Plus />
                   Nova nota

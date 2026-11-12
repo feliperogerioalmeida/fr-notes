@@ -54,6 +54,7 @@ export * from "./templates/built-in-templates.js";
 export * from "./templates/template-sections.js";
 export * from "./transcript/echo-detection.js";
 export * from "./transcript/format-transcript.js";
+export * from "./transcript/import-transcript.js";
 export * from "./transcript/live-transcript.js";
 export * from "./transcript/speaker-attribution.js";
 export * from "./utils/dates.js";
