@@ -87,5 +87,6 @@ export const streamCompletion = async ({
     onText(text);
   }
   if (streamError) throw streamError;
+  signal?.throwIfAborted();
   return text;
 };
