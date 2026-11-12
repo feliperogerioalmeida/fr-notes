@@ -18,9 +18,9 @@ describe("parseTemplateSections", () => {
   });
 
   it("parses every built-in template that uses headings", () => {
-    const general = BUILT_IN_TEMPLATES.find(
-      (item) => item.id === "builtin-general",
+    const kickoff = BUILT_IN_TEMPLATES.find(
+      (item) => item.id === "builtin-kickoff",
     );
-    expect(parseTemplateSections(general?.instructions ?? "")).toHaveLength(4);
+    expect(parseTemplateSections(kickoff?.instructions ?? "")).toHaveLength(6);
   });
 });

@@ -23,7 +23,7 @@ export const RECORDING_SHORTCUTS = [
 
 export const DEFAULT_TEMPLATE_ID = "builtin-general";
 
-export const SettingsSchema = z.object({
+const SettingsObjectSchema = z.object({
   userName: z.string().default(""),
   userBio: z.string().default(""),
   transcriptionLanguage: z.enum(TRANSCRIPTION_LANGUAGES).default("pt-BR"),
@@ -44,16 +44,48 @@ export const SettingsSchema = z.object({
   keyterms: z.array(z.string()).default([]),
   defaultTemplateId: z.string().default(DEFAULT_TEMPLATE_ID),
   llmProvider: z.enum(LLM_PROVIDERS).default("gateway"),
-  llmModel: z.string().default(""),
+  llmGatewayModel: z.string().default(""),
+  llmCompatibleModel: z.string().default(""),
   llmBaseUrl: z.string().default(""),
   llmThinking: z.boolean().default(false),
   llmDigestDuringMeeting: z.boolean().default(true),
   theme: z.enum(THEMES).default("dark"),
 });
 
-export type Settings = z.infer<typeof SettingsSchema>;
+export type LlmProvider = (typeof LLM_PROVIDERS)[number];
 
-export type LlmProvider = Settings["llmProvider"];
+export const LLM_MODEL_SETTING = {
+  gateway: "llmGatewayModel",
+  "openai-compatible": "llmCompatibleModel",
+} as const satisfies Record<LlmProvider, string>;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const migrateLegacyModel = (stored: unknown) => {
+  if (!isRecord(stored) || typeof stored.llmModel !== "string") return stored;
+  const provider =
+    stored.llmProvider === "openai-compatible"
+      ? "openai-compatible"
+      : "gateway";
+  const target = LLM_MODEL_SETTING[provider];
+  if (typeof stored[target] === "string") return stored;
+  return { ...stored, [target]: stored.llmModel };
+};
+
+export const SettingsSchema = z.preprocess(
+  migrateLegacyModel,
+  SettingsObjectSchema,
+);
+
+export type Settings = z.infer<typeof SettingsObjectSchema>;
+
+export const resolveLlmModel = (
+  settings: Pick<
+    Settings,
+    "llmProvider" | "llmGatewayModel" | "llmCompatibleModel"
+  >,
+): string => settings[LLM_MODEL_SETTING[settings.llmProvider]].trim();
 
 export type MeetingDetectionMode = Settings["meetingDetection"];
 

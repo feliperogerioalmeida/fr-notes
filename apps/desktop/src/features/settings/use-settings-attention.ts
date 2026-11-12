@@ -1,3 +1,5 @@
+import { resolveLlmModel } from "@workspace/core";
+
 import { useUpdateStore } from "@/features/updates/update-store.js";
 
 import {
@@ -26,8 +28,8 @@ export const useSettingsAttention = (): Partial<
   const { data: permissions } = usePermissions();
   const updateReady = useUpdateStore((state) => state.status === "ready");
   const llmMissing =
-    !settings.llmModel.trim() ||
-    (settings.llmProvider === "gateway" && !secrets?.llm) ||
+    !resolveLlmModel(settings) ||
+    (settings.llmProvider === "gateway" && !secrets?.llmGateway) ||
     (settings.llmProvider === "openai-compatible" &&
       !settings.llmBaseUrl.trim());
   return {

@@ -1,9 +1,9 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { fetch as tauriFetch } from "@tauri-apps/plugin-http";
-import type { Settings } from "@workspace/core";
+import { resolveLlmModel, type Settings } from "@workspace/core";
 import { createGateway, type ModelMessage, streamText } from "ai";
 
-import { readSecret, SECRET_KEYS } from "./native.js";
+import { LLM_SECRET_KEYS, readSecret } from "./native.js";
 
 export class LlmNotConfiguredError extends Error {
   constructor() {
@@ -13,7 +13,11 @@ export class LlmNotConfiguredError extends Error {
 
 type LlmSettings = Pick<
   Settings,
-  "llmProvider" | "llmModel" | "llmBaseUrl" | "llmThinking"
+  | "llmProvider"
+  | "llmGatewayModel"
+  | "llmCompatibleModel"
+  | "llmBaseUrl"
+  | "llmThinking"
 >;
 
 const OPENAI_COMPATIBLE_NAME = "fr-notes-llm";
@@ -27,7 +31,7 @@ const normalizeBaseUrl = (url: string) =>
 const buildModel = (settings: LlmSettings, apiKey: string | null) => {
   if (settings.llmProvider === "gateway") {
     return createGateway({ apiKey: apiKey ?? "", fetch: tauriFetch })(
-      settings.llmModel,
+      resolveLlmModel(settings),
     );
   }
   return createOpenAICompatible({
@@ -35,7 +39,7 @@ const buildModel = (settings: LlmSettings, apiKey: string | null) => {
     baseURL: normalizeBaseUrl(settings.llmBaseUrl),
     apiKey: apiKey ?? undefined,
     fetch: tauriFetch,
-  }).chatModel(settings.llmModel);
+  }).chatModel(resolveLlmModel(settings));
 };
 
 const buildProviderOptions = (settings: LlmSettings) =>
@@ -44,7 +48,7 @@ const buildProviderOptions = (settings: LlmSettings) =>
     : undefined;
 
 const isConfigured = (settings: LlmSettings, apiKey: string | null) => {
-  if (!settings.llmModel.trim()) return false;
+  if (!resolveLlmModel(settings)) return false;
   if (settings.llmProvider === "gateway") return Boolean(apiKey);
   return Boolean(normalizeBaseUrl(settings.llmBaseUrl));
 };
@@ -64,7 +68,7 @@ export const streamCompletion = async ({
   signal,
   onText,
 }: StreamCompletionInput): Promise<string> => {
-  const apiKey = await readSecret(SECRET_KEYS.llm);
+  const apiKey = await readSecret(LLM_SECRET_KEYS[settings.llmProvider]);
   if (!isConfigured(settings, apiKey)) throw new LlmNotConfiguredError();
   let streamError: unknown = null;
   const result = streamText({

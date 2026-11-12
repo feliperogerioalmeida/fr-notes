@@ -8,12 +8,18 @@ export const BUILT_IN_TEMPLATES: BuiltInTemplate[] = [
   {
     id: "builtin-general",
     name: "Reunião geral",
-    description: "Resumo, pontos discutidos, decisões e próximos passos.",
+    description:
+      "Resumo no topo, uma seção por assunto com decisões e pendências, e próximos passos por responsável.",
     instructions: [
-      "### Resumo — 2 a 4 frases com o objetivo e o resultado da reunião.",
-      "### Pontos discutidos — um tópico por assunto, com os detalhes relevantes em sub-bullets.",
-      "### Decisões — o que ficou decidido, de forma objetiva.",
-      "### Próximos passos — tarefas com responsável e prazo quando mencionados.",
+      "> Um parágrafo curto (2 a 3 frases) no topo, como citação: do que a reunião tratou e o que saiu dela.",
+      "",
+      'Depois, uma seção ### por assunto discutido, com um título específico (por exemplo "Falhas de captação no Portal de Compras Públicas", nunca "Problemas técnicos"). Em cada seção:',
+      "- o contexto ou problema, e quem trouxe;",
+      "- os pontos importantes, com fatos, números, exemplos e identificadores citados, dizendo quem disse quando estiver claro;",
+      "- **Decisão:** o que ficou definido (omita se nada foi decidido);",
+      "- **Em aberto:** o que ficou sem resposta ou depende de alguém (omita se não houver).",
+      "",
+      '### Próximos passos — tarefas no formato "- [ ] Responsável — tarefa (prazo)", agrupadas por responsável.',
     ].join("\n"),
   },
   {

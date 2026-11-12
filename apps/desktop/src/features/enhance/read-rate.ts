@@ -1,4 +1,4 @@
-import type { Settings } from "@workspace/core";
+import { resolveLlmModel, type Settings } from "@workspace/core";
 
 const STORAGE_KEY = "fr-notes:llm-read-rate";
 const CHARS_PER_TOKEN = 3.5;
@@ -9,10 +9,13 @@ const DEFAULT_TOKENS_PER_SECOND: Record<Settings["llmProvider"], number> = {
   gateway: 1_500,
 };
 
-type RateSettings = Pick<Settings, "llmProvider" | "llmModel">;
+type RateSettings = Pick<
+  Settings,
+  "llmProvider" | "llmGatewayModel" | "llmCompatibleModel"
+>;
 
-const rateKey = ({ llmProvider, llmModel }: RateSettings) =>
-  `${llmProvider}:${llmModel}`;
+const rateKey = (settings: RateSettings) =>
+  `${settings.llmProvider}:${resolveLlmModel(settings)}`;
 
 const readRates = (): Record<string, number> => {
   try {
