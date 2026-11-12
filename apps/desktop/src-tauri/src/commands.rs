@@ -7,6 +7,7 @@ use crate::dictation::{
 use crate::microphone_apps::{self, MicApp};
 use crate::permissions::{self, Permissions};
 use crate::recordings::{self, RecordingFile, RetranscribeRequest, RetranscribedSegment};
+use crate::screen_windows::{self, ScreenWindow};
 use crate::secrets::{read_secret, remove_secret, write_secret};
 use crate::session::{RecordingManager, RecordingStarted, RecordingStatus, StartRecordingArgs};
 use crate::speaker_ax::{self, SpeakerMonitor, StartSpeakerMonitorArgs};
@@ -111,6 +112,11 @@ pub async fn list_calendar_events(args: ListEventsArgs) -> Result<Vec<CalendarEv
 #[tauri::command]
 pub async fn list_microphone_apps() -> Result<Vec<MicApp>, String> {
     run_blocking(microphone_apps::list_microphone_apps).await
+}
+
+#[tauri::command]
+pub async fn list_floating_windows() -> Result<Vec<ScreenWindow>, String> {
+    run_blocking(|| Ok(screen_windows::list_floating_windows())).await
 }
 
 #[tauri::command]

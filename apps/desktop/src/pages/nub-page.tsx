@@ -1,25 +1,32 @@
 import type { UnlistenFn } from "@tauri-apps/api/event";
-import { Button } from "@workspace/ui/components/ui/button";
-import { Square } from "lucide-react";
-import { useEffect, useState } from "react";
+import type { LiveTranscript, Rect } from "@workspace/core";
+import { type ReactNode, useEffect, useState } from "react";
 
-import { FrSymbol } from "@/components/fr-logo.js";
-import { applyNubLayout, type NubMode } from "@/features/nub/nub-layout.js";
+import { EndingCard } from "@/features/nub/ending-card.js";
+import { LiveTranscriptPanel } from "@/features/nub/live-transcript-panel.js";
+import {
+  applyNubLayout,
+  NUB_PADDING,
+  NUB_SIDE_GAP,
+  type NubMode,
+  refreshNubPosition,
+} from "@/features/nub/nub-layout.js";
 import { PromptCard } from "@/features/nub/prompt-card.js";
-import { AudioLevelBars } from "@/features/recording/audio-level-bars.js";
+import { RecordingPill } from "@/features/nub/recording-pill.js";
 import { useRecordingStore } from "@/features/recording/recording-store.js";
 import { useRecordingListeners } from "@/features/recording/use-recording-listeners.js";
-import { useElapsed } from "@/hooks/use-elapsed.js";
 import {
-  focusMainWindow,
+  type NubEnding,
   type NubPrompt,
+  onNubEnding,
   onNubPrompt,
-  requestOpenNote,
-  requestStopRecording,
+  onNubTranscript,
   setNubVisible,
 } from "@/lib/native.js";
 
 const TRANSPARENT_CLASS = "bg-transparent";
+const POSITION_REFRESH_MS = 1_500;
+const EMPTY_TRANSCRIPT: LiveTranscript = { lines: [], partials: [] };
 
 const useTransparentWindow = () => {
   useEffect(() => {
@@ -28,109 +35,122 @@ const useTransparentWindow = () => {
   }, []);
 };
 
-const usePrompt = () => {
-  const [prompt, setPrompt] = useState<NubPrompt | null>(null);
+const useNubEvent = <Payload,>(
+  subscribe: (handler: (payload: Payload) => void) => Promise<UnlistenFn>,
+  initial: Payload,
+) => {
+  const [value, setValue] = useState<Payload>(initial);
   useEffect(() => {
     let unlisten: UnlistenFn | null = null;
-    void onNubPrompt(setPrompt).then((handle) => {
+    let disposed = false;
+    void subscribe(setValue).then((handle) => {
+      if (disposed) return handle();
       unlisten = handle;
     });
-    return () => unlisten?.();
-  }, []);
-  return [prompt, setPrompt] as const;
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, [subscribe]);
+  return [value, setValue] as const;
 };
 
 const useNubWindow = (mode: NubMode | null) => {
   useEffect(() => {
-    const apply = async () => {
+    let placed: Rect | null = null;
+    const show = async () => {
       if (!mode) return setNubVisible(false);
-      await applyNubLayout(mode);
+      placed = await applyNubLayout(mode);
       await setNubVisible(true);
     };
-    void apply();
+    void show();
+    if (!mode) return;
+    const timer = setInterval(() => {
+      if (!placed) return;
+      void refreshNubPosition(mode, placed).then((next) => {
+        placed = next;
+      });
+    }, POSITION_REFRESH_MS);
+    return () => clearInterval(timer);
   }, [mode]);
 };
 
-const openActiveNote = async (noteId: string | null) => {
-  await focusMainWindow();
-  if (noteId) await requestOpenNote(noteId);
-};
+interface ModeInput {
+  isRecording: boolean;
+  isEnding: boolean;
+  transcriptOpen: boolean;
+  hasPrompt: boolean;
+  expanded: boolean;
+}
 
-const RecordingPill = () => {
-  const noteId = useRecordingStore((state) => state.noteId);
-  const startedAtMs = useRecordingStore((state) => state.startedAtMs);
-  const levels = useRecordingStore((state) => state.levels);
-  const elapsed = useElapsed(startedAtMs);
-  return (
-    <div
-      data-tauri-drag-region
-      className="bg-card/95 flex h-full w-full flex-col items-center justify-between gap-2 rounded-2xl border px-1.5 py-3 shadow-lg"
-    >
-      <Button
-        variant="ghost"
-        className="h-auto p-1.5"
-        onClick={() => void openActiveNote(noteId)}
-        aria-label="Abrir nota"
-      >
-        <FrSymbol className="h-6 w-[26px]" />
-      </Button>
-      <div data-tauri-drag-region className="flex flex-col items-center gap-2">
-        <AudioLevelBars
-          level={Math.max(levels.microphone, levels.system)}
-          active={Boolean(noteId)}
-          className="h-5"
-        />
-        <span className="text-label text-muted-foreground tabular-nums">
-          {elapsed}
-        </span>
-      </div>
-      <Button
-        size="icon-sm"
-        variant="secondary"
-        onClick={() => void requestStopRecording()}
-        aria-label="Parar gravação"
-      >
-        <Square className="fill-current" />
-      </Button>
-    </div>
-  );
-};
-
-const resolveMode = (
-  isRecording: boolean,
-  hasPrompt: boolean,
-  expanded: boolean,
-): NubMode | null => {
+const resolveMode = ({
+  isRecording,
+  isEnding,
+  transcriptOpen,
+  hasPrompt,
+  expanded,
+}: ModeInput): NubMode | null => {
+  if (isRecording && isEnding) return "ending";
+  if (isRecording && transcriptOpen) return "recording-transcript";
   if (isRecording) return "recording";
   if (!hasPrompt) return null;
   return expanded ? "prompt-expanded" : "prompt";
 };
 
+const NubFrame = ({ children }: { children: ReactNode }) => (
+  <div
+    data-tauri-drag-region
+    className="flex h-screen items-start justify-end"
+    style={{ padding: NUB_PADDING, gap: NUB_SIDE_GAP }}
+  >
+    {children}
+  </div>
+);
+
 export const NubPage = () => {
   useTransparentWindow();
   useRecordingListeners({ persistSegments: false });
-  const [prompt, setPrompt] = usePrompt();
+  const [prompt, setPrompt] = useNubEvent<NubPrompt | null>(onNubPrompt, null);
+  const [ending, setEnding] = useNubEvent<NubEnding | null>(onNubEnding, null);
+  const [transcript] = useNubEvent(onNubTranscript, EMPTY_TRANSCRIPT);
   const [expanded, setExpanded] = useState(false);
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
   const isRecording = useRecordingStore((state) => state.phase !== "idle");
   useEffect(() => {
-    if (isRecording) setPrompt(null);
-  }, [isRecording, setPrompt]);
+    if (isRecording) return setPrompt(null);
+    setEnding(null);
+    setTranscriptOpen(false);
+  }, [isRecording, setPrompt, setEnding]);
   useEffect(() => setExpanded(false), [prompt]);
-  const mode = resolveMode(isRecording, Boolean(prompt), expanded);
+  const mode = resolveMode({
+    isRecording,
+    isEnding: Boolean(ending),
+    transcriptOpen,
+    hasPrompt: Boolean(prompt),
+    expanded,
+  });
   useNubWindow(mode);
-  if (mode === "recording") {
+  const toggleTranscript = () => setTranscriptOpen((open) => !open);
+  if (isRecording) {
     return (
-      <div
-        data-tauri-drag-region
-        className="flex h-screen items-center justify-center p-1.5"
-      >
-        <RecordingPill />
-      </div>
+      <NubFrame>
+        {ending && <EndingCard ending={ending} />}
+        {!ending && transcriptOpen && (
+          <LiveTranscriptPanel
+            transcript={transcript}
+            onClose={toggleTranscript}
+          />
+        )}
+        <RecordingPill
+          transcriptOpen={transcriptOpen}
+          onToggleTranscript={toggleTranscript}
+        />
+      </NubFrame>
     );
   }
   if (!prompt) return null;
   return (
-    <div className="flex h-screen flex-col p-1.5">
+    <div className="flex h-screen flex-col" style={{ padding: NUB_PADDING }}>
       <PromptCard
         prompt={prompt}
         expanded={expanded}
