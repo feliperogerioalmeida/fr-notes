@@ -120,7 +120,7 @@ export const SearchResults = ({ query, onOpen }: SearchResultsProps) => {
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader />
       <ScrollArea className="min-h-0 flex-1">
-        <PageContainer className="max-w-[880px]">
+        <PageContainer>
           <PageTitle
             title={
               <>

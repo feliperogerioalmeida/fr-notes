@@ -173,7 +173,7 @@ export const SettingsPage = () => {
           <h1 className="text-title-3 text-heading">Configurações</h1>
           <div className="grid items-start gap-8 @3xl:grid-cols-[200px_minmax(0,1fr)]">
             <SettingsNav />
-            <div className="flex max-w-[760px] min-w-0 flex-col gap-6">
+            <div className="flex min-w-0 flex-col gap-6">
               <div className="flex flex-col gap-1">
                 <h2 className="text-body-lg text-heading font-semibold">
                   {current.label}

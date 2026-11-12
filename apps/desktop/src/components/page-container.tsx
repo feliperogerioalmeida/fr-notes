@@ -9,7 +9,7 @@ interface PageContainerProps {
 export const PageContainer = ({ children, className }: PageContainerProps) => (
   <div
     className={cn(
-      "@container mx-auto flex w-full max-w-[1200px] flex-col gap-8 px-10 pt-4 pb-16",
+      "@container flex w-full flex-col gap-8 px-10 pt-4 pb-16 xl:px-16",
       className,
     )}
   >

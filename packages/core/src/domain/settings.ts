@@ -6,6 +6,8 @@ export const THEMES = ["dark", "light", "system"] as const;
 
 export const LLM_PROVIDERS = ["gateway", "openai-compatible"] as const;
 
+export const DICTATION_LLM_PROVIDERS = ["same", ...LLM_PROVIDERS] as const;
+
 export const MEETING_DETECTION_MODES = ["ask", "auto", "off"] as const;
 
 export const DICTATION_TRIGGERS = [
@@ -40,6 +42,8 @@ const SettingsObjectSchema = z.object({
   dictationEnabled: z.boolean().default(true),
   dictationTrigger: z.enum(DICTATION_TRIGGERS).default("fn"),
   dictationPolish: z.boolean().default(false),
+  dictationLlmProvider: z.enum(DICTATION_LLM_PROVIDERS).default("same"),
+  dictationLlmModel: z.string().default(""),
   recordingShortcut: z.enum(RECORDING_SHORTCUTS).default("alt-shift-r"),
   keyterms: z.array(z.string()).default([]),
   defaultTemplateId: z.string().default(DEFAULT_TEMPLATE_ID),
@@ -98,3 +102,22 @@ export type TranscriptionLanguage = Settings["transcriptionLanguage"];
 export type Theme = Settings["theme"];
 
 export const DEFAULT_SETTINGS: Settings = SettingsSchema.parse({});
+
+export type DictationLlmProvider = Settings["dictationLlmProvider"];
+
+export const resolveDictationLlm = (settings: Settings): Settings => {
+  const provider =
+    settings.dictationLlmProvider === "same"
+      ? settings.llmProvider
+      : settings.dictationLlmProvider;
+  const model =
+    settings.dictationLlmProvider === "same"
+      ? ""
+      : settings.dictationLlmModel.trim();
+  return {
+    ...settings,
+    llmProvider: provider,
+    llmThinking: false,
+    ...(model ? { [LLM_MODEL_SETTING[provider]]: model } : {}),
+  };
+};
