@@ -170,6 +170,15 @@ export const PromptCard = ({ prompt, expanded, onToggle }: PromptCardProps) => {
             />
           </button>
         </div>
+        <button
+          type="button"
+          onClick={send("dismiss")}
+          aria-label="Fechar"
+          title="Fechar"
+          className="text-muted-foreground hover:bg-accent hover:text-foreground ease-brand flex size-8 shrink-0 items-center justify-center rounded-full transition-colors duration-150"
+        >
+          <X className="size-4" />
+        </button>
       </div>
       {expanded && <MoreOptions prompt={prompt} />}
     </>
