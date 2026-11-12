@@ -1,5 +1,8 @@
 use std::ffi::{c_char, c_void, CStr};
 use std::ptr::NonNull;
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use block2::RcBlock;
 use objc2::rc::Retained;
@@ -10,6 +13,7 @@ use objc2_core_audio::{
     kAudioAggregateDeviceMainSubDeviceKey, kAudioAggregateDeviceNameKey,
     kAudioAggregateDeviceSubDeviceListKey, kAudioAggregateDeviceTapAutoStartKey,
     kAudioAggregateDeviceTapListKey, kAudioAggregateDeviceUIDKey, kAudioDevicePropertyDeviceUID,
+    kAudioDevicePropertyNominalSampleRate,
     kAudioHardwarePropertyDefaultOutputDevice, kAudioHardwarePropertyTranslatePIDToProcessObject,
     kAudioSubDeviceUIDKey, kAudioSubTapDriftCompensationKey, kAudioSubTapUIDKey,
     kAudioTapPropertyFormat, AudioDeviceCreateIOProcIDWithBlock, AudioDeviceDestroyIOProcID,
@@ -24,7 +28,7 @@ use objc2_core_foundation::CFDictionary;
 use objc2_foundation::{NSArray, NSDictionary, NSNumber, NSString, NSUUID};
 use tokio::sync::mpsc::UnboundedSender;
 
-use super::pcm::{average_channels, downmix_to_mono};
+use super::pcm::{average_channels, downmix_to_mono, AdaptiveResampler};
 use crate::core_audio::{read_qualified, read_string, read_value, status_error, SYSTEM_OBJECT};
 use crate::tcc;
 
@@ -34,6 +38,9 @@ const TAP_NAME: &str = "FR Notes System Audio";
 const AGGREGATE_NAME: &str = "FR Notes Tap";
 const AGGREGATE_UID_PREFIX: &str = "dev.feliperogerio.notes.tap.";
 const FLOAT32_BITS: u32 = 32;
+/// The tap is always delivered at this rate, whatever the output device runs at.
+const OUTPUT_SAMPLE_RATE: u32 = 48_000;
+const RATE_POLL_INTERVAL: Duration = Duration::from_millis(500);
 
 type CreateTapFn = unsafe extern "C" fn(*const CATapDescription, *mut AudioObjectID) -> i32;
 type DestroyTapFn = unsafe extern "C" fn(AudioObjectID) -> i32;
@@ -58,6 +65,7 @@ pub struct ProcessTapCapture {
     aggregate_id: Option<AudioObjectID>,
     proc_id: AudioDeviceIOProcID,
     started: bool,
+    rate_watch: Option<Arc<AtomicBool>>,
 }
 
 impl ProcessTapCapture {
@@ -68,6 +76,9 @@ impl ProcessTapCapture {
 
 impl Drop for ProcessTapCapture {
     fn drop(&mut self) {
+        if let Some(running) = self.rate_watch.take() {
+            running.store(false, Ordering::Relaxed);
+        }
         let Some(aggregate_id) = self.aggregate_id.take() else {
             unsafe { (self.destroy_tap)(self.tap_id) };
             return;
@@ -114,7 +125,18 @@ pub fn start_process_tap(
     let tap_uid = unsafe { description.UUID() }.UUIDString().to_string();
     capture.aggregate_id = Some(create_aggregate_device(&tap_uid)?);
     let aggregate_id = capture.aggregate_id.unwrap_or_default();
-    capture.proc_id = register_io_block(aggregate_id, format.mChannelsPerFrame, audio_tx)?;
+    // The aggregate runs at its main sub-device's rate, which can differ from the tap
+    // format (a headset in call mode runs at 16 kHz) and can change while recording.
+    let input_rate = Arc::new(AtomicU32::new(
+        read_nominal_rate(aggregate_id).unwrap_or(format.mSampleRate as u32),
+    ));
+    capture.rate_watch = Some(watch_nominal_rate(aggregate_id, input_rate.clone()));
+    capture.proc_id = register_io_block(
+        aggregate_id,
+        format.mChannelsPerFrame,
+        input_rate,
+        audio_tx,
+    )?;
     let status = unsafe { AudioDeviceStart(aggregate_id, capture.proc_id) };
     if status != 0 {
         return Err(TapError::Failed(status_error(
@@ -123,7 +145,26 @@ pub fn start_process_tap(
         )));
     }
     capture.started = true;
-    Ok((capture, format.mSampleRate as u32))
+    Ok((capture, OUTPUT_SAMPLE_RATE))
+}
+
+fn read_nominal_rate(device: AudioObjectID) -> Option<u32> {
+    let rate: f64 = read_value(device, kAudioDevicePropertyNominalSampleRate).ok()?;
+    (rate > 0.0).then(|| rate.round() as u32)
+}
+
+fn watch_nominal_rate(device: AudioObjectID, rate: Arc<AtomicU32>) -> Arc<AtomicBool> {
+    let running = Arc::new(AtomicBool::new(true));
+    let flag = running.clone();
+    std::thread::spawn(move || {
+        while flag.load(Ordering::Relaxed) {
+            if let Some(value) = read_nominal_rate(device) {
+                rate.store(value, Ordering::Relaxed);
+            }
+            std::thread::sleep(RATE_POLL_INTERVAL);
+        }
+    });
+    running
 }
 
 fn own_process_object() -> Option<AudioObjectID> {
@@ -172,6 +213,7 @@ fn create_tap(
         aggregate_id: None,
         proc_id: None,
         started: false,
+        rate_watch: None,
     })
 }
 
@@ -321,17 +363,27 @@ unsafe fn read_tap_samples(list: NonNull<AudioBufferList>, tap_channels: u32) ->
 fn register_io_block(
     aggregate_id: AudioObjectID,
     tap_channels: u32,
+    input_rate: Arc<AtomicU32>,
     audio_tx: UnboundedSender<Vec<f32>>,
 ) -> Result<AudioDeviceIOProcID, TapError> {
+    let resampler = Mutex::new(AdaptiveResampler::new(
+        input_rate.load(Ordering::Relaxed),
+        OUTPUT_SAMPLE_RATE,
+    ));
     let block = RcBlock::new(
         move |_now: NonNull<AudioTimeStamp>,
               input: NonNull<AudioBufferList>,
               _input_time: NonNull<AudioTimeStamp>,
               _output: NonNull<AudioBufferList>,
               _output_time: NonNull<AudioTimeStamp>| {
-            if let Some(samples) = unsafe { read_tap_samples(input, tap_channels) } {
-                let _ = audio_tx.send(samples);
-            }
+            let Some(samples) = (unsafe { read_tap_samples(input, tap_channels) }) else {
+                return;
+            };
+            let Ok(mut resampler) = resampler.lock() else {
+                return;
+            };
+            let resampled = resampler.process(input_rate.load(Ordering::Relaxed), &samples);
+            let _ = audio_tx.send(resampled);
         },
     );
     let mut proc_id: AudioDeviceIOProcID = None;

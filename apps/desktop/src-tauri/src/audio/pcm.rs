@@ -94,6 +94,31 @@ impl LinearResampler {
     }
 }
 
+/// Resamples to a fixed output rate while the input rate may change mid-stream
+/// (e.g. Bluetooth headsets dropping from 48 kHz to 16 kHz when a call grabs the mic).
+pub struct AdaptiveResampler {
+    input_rate: u32,
+    output_rate: u32,
+    inner: LinearResampler,
+}
+
+impl AdaptiveResampler {
+    pub fn new(input_rate: u32, output_rate: u32) -> Self {
+        Self {
+            input_rate,
+            output_rate,
+            inner: LinearResampler::new(input_rate, output_rate),
+        }
+    }
+
+    pub fn process(&mut self, input_rate: u32, input: &[f32]) -> Vec<f32> {
+        if input_rate != self.input_rate && input_rate > 0 {
+            *self = Self::new(input_rate, self.output_rate);
+        }
+        self.inner.process(input)
+    }
+}
+
 pub fn rms_level(samples: &[f32]) -> f32 {
     if samples.is_empty() {
         return 0.0;
@@ -114,6 +139,14 @@ mod tests {
     #[test]
     fn converts_to_little_endian_i16() {
         assert_eq!(to_i16_le_bytes(&[1.0, -1.0]), vec![0xFF, 0x7F, 0x01, 0x80]);
+    }
+
+    #[test]
+    fn adapts_when_the_input_rate_changes() {
+        let mut resampler = AdaptiveResampler::new(48_000, 48_000);
+        assert_eq!(resampler.process(48_000, &vec![0.0; 4_800]).len(), 4_800);
+        let total = resampler.process(16_000, &vec![0.0; 1_600]).len();
+        assert!((total as i64 - 4_800).abs() <= 3, "got {total}");
     }
 
     #[test]
