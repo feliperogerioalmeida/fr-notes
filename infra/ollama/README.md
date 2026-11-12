@@ -14,15 +14,18 @@ Sobe o modelo de IA do FR Notes num VPS com Coolify, protegido por uma chave.
 
 ## No FR Notes
 
-Configurações → IA:
+Configurações → IA, no painel **Ollama ou compatível com OpenAI**:
 
 | Campo                | Valor                      |
 | -------------------- | -------------------------- |
-| Provedor             | Compatível com OpenAI      |
 | URL base             | `https://<seu domínio>/v1` |
 | Modelo               | `fr-notes`                 |
 | Chave da API         | o valor copiado no passo 4 |
 | Raciocínio do modelo | desligado                  |
+
+Depois, em **Provedor em uso**, escolha **Ollama ou compatível com OpenAI**. A configuração do Vercel AI Gateway continua salva ao lado, e dá para alternar entre as duas a qualquer momento.
+
+Com 16 mil tokens de contexto, reuniões mais longas que cerca de 1 hora não cabem inteiras: deixe ligado **Adiantar as notas durante a reunião**, que resume a conversa a cada 10 minutos.
 
 ## Memória
 

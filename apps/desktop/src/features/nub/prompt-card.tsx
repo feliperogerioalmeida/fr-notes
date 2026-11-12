@@ -51,6 +51,7 @@ const PrimaryAction = ({ prompt }: { prompt: NubPrompt }) => {
     <button
       type="button"
       onClick={send(joins ? "join-and-record" : "record")}
+      title={joins ? `Entrar no ${provider} e gravar` : "Gravar esta reunião"}
       className="hover:bg-accent ease-brand flex items-center gap-2 rounded-l-[12px] py-1 pr-3 pl-2.5 text-left transition-colors duration-150"
     >
       {joins ? (
@@ -60,13 +61,8 @@ const PrimaryAction = ({ prompt }: { prompt: NubPrompt }) => {
           <Mic className="size-3.5" />
         </span>
       )}
-      <span className="flex flex-col leading-tight">
-        <span className="text-body-sm text-heading font-semibold whitespace-nowrap">
-          {joins ? `Entrar no ${provider}` : "Gravar"}
-        </span>
-        <span className="text-caption text-muted-foreground whitespace-nowrap">
-          {joins ? "e gravar" : "esta reunião"}
-        </span>
+      <span className="text-body-sm text-heading font-semibold whitespace-nowrap">
+        {joins ? "Entrar e gravar" : "Gravar"}
       </span>
     </button>
   );
