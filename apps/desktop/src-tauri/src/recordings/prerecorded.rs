@@ -58,7 +58,10 @@ pub fn build_prerecorded_url(
         query
             .append_pair("model", MODEL)
             .append_pair("language", language)
-            .append_pair("smart_format", "true")
+            .append_pair(
+                "smart_format",
+                &crate::transcription::deepgram::uses_smart_format(language).to_string(),
+            )
             .append_pair("punctuate", "true")
             .append_pair("utterances", "true");
         if diarize {
