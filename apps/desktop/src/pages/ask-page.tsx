@@ -159,7 +159,7 @@ export const AskPage = () => {
         }
       />
       <ScrollArea className="min-h-0 flex-1">
-        <div className="mx-auto w-full max-w-[760px] px-10 pb-36">
+        <div className="w-full px-10 pb-36 xl:px-16">
           {messages.length === 0 && !busy ? (
             <Intro onAsk={ask} />
           ) : (
@@ -172,8 +172,8 @@ export const AskPage = () => {
           )}
         </div>
       </ScrollArea>
-      <div className="gradient-fade-bottom pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-6 pt-10 pb-5">
-        <div className="pointer-events-auto w-full max-w-[760px]">
+      <div className="gradient-fade-bottom pointer-events-none absolute inset-x-0 bottom-0 flex justify-center px-10 pt-10 pb-5 xl:px-16">
+        <div className="pointer-events-auto w-full">
           <AskInput busy={busy} onAsk={ask} />
         </div>
       </div>

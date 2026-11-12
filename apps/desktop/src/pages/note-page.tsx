@@ -1,5 +1,4 @@
 import type { Note, Template } from "@workspace/core";
-import { Input } from "@workspace/ui/components/ui/input";
 import { ScrollArea } from "@workspace/ui/components/ui/scroll-area";
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router";
@@ -21,6 +20,7 @@ import {
   NoteSidePanel,
   type SidePanel,
 } from "@/features/notes/note-side-panel.js";
+import { NoteTitleField } from "@/features/notes/note-title-field.js";
 import { useNoteQuery, useUpdateNote } from "@/features/notes/use-notes.js";
 import { useTranscriptQuery } from "@/features/transcript/use-transcript.js";
 import { useDebouncedCallback } from "@/hooks/use-debounced-callback.js";
@@ -63,15 +63,13 @@ const NoteEditorColumn = ({ note }: { note: Note }) => {
   const [title, setTitle] = useState(note.title);
   useEffect(() => setTitle(note.title), [note.id, note.title]);
   return (
-    <div className="mx-auto flex w-full max-w-[720px] flex-col gap-4 px-10 pt-6 pb-40">
-      <Input
+    <div className="flex w-full flex-col gap-4 px-10 pt-6 pb-40 xl:px-16">
+      <NoteTitleField
         value={title}
-        onChange={(event) => {
-          setTitle(event.target.value);
-          save({ title: event.target.value });
+        onChange={(next) => {
+          setTitle(next);
+          save({ title: next });
         }}
-        placeholder="Nova nota"
-        className="text-heading h-auto border-0 bg-transparent px-0 py-1 text-3xl font-semibold tracking-tight shadow-none focus-visible:ring-0 md:text-3xl dark:bg-transparent"
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <NoteMeta note={note} />

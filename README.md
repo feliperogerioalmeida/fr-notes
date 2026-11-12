@@ -182,7 +182,7 @@ Em **Configurações → Reuniões e agenda**:
 Em **Configurações → Ditado e atalhos**:
 
 - **Ditar em qualquer app** e a **Tecla do ditado** (`fn` por padrão).
-- **Polir com IA:** corrige pontuação e vícios de fala antes de digitar.
+- **Polir com IA:** corrige pontuação e vícios de fala antes de digitar. Em **IA do ditado** você pode usar um modelo separado do das notas: o ditado precisa responder em cerca de 1 segundo, então prefira um modelo pequeno e sem raciocínio, como `google/gemini-3.1-flash-lite` no Gateway (medido: ~1 s por ditado).
 - **Atalhos globais:** começar ou parar a gravação de uma reunião (⌥ ⇧ R por padrão), mesmo com o app em segundo plano.
 
 ### 7. Conexões e integrações (opcional)
