@@ -134,7 +134,7 @@ O FR Notes guarda **duas configurações de IA lado a lado**, cada uma com seu m
 
 1. Crie uma conta na [Vercel](https://vercel.com), abra **AI Gateway → API Keys** e clique em **Create Key**.
 2. No painel **Vercel AI Gateway**, cole a chave em **Chave da API** e clique em **Salvar**.
-3. Em **Modelo**, use o ID do [catálogo](https://vercel.com/ai-gateway/models) no formato `provedor/modelo`.
+3. Em **Modelo**, escolha na lista, que vem do [catálogo do Gateway](https://vercel.com/ai-gateway/models) com o preço por milhão de tokens, o tamanho do contexto e as marcas **rápido** e **raciocínio**. Dá para buscar por nome, provedor ou ID.
 4. Em **Provedor em uso**, escolha **Vercel AI Gateway**.
 
 Comparamos quatro modelos com a mesma reunião de 1h25 e o mesmo prompt:
@@ -152,12 +152,14 @@ Comparamos quatro modelos com a mesma reunião de 1h25 e o mesmo prompt:
    - Ollama no seu Mac: `http://localhost:11434/v1` (sem chave);
    - Ollama no seu servidor: `https://ollama.seu-dominio.com/v1` — o guia [infra/ollama](infra/ollama/README.md) sobe o Ollama num VPS com Coolify, protegido por chave;
    - OpenRouter: `https://openrouter.ai/api/v1`.
-2. Em **Modelo**, use o nome que o provedor espera (no Ollama, o que aparece em `ollama list`).
+2. Em **Modelo**, escolha na lista de modelos que o servidor informa; se ele não listar, digite o nome (no Ollama, o que aparece em `ollama list`).
 3. Se o provedor exigir, cole a chave em **Chave da API**.
 4. Deixe **Raciocínio do modelo** desligado em modelos locais: “pensar” antes de responder deixa tudo muito mais lento em CPU.
 5. Em **Provedor em uso**, escolha **Ollama ou compatível com OpenAI**.
 
 > Modelos pequenos rodando em CPU têm pouca memória de contexto. Uma reunião de 1h30 tem cerca de 20 mil tokens; se o modelo aceitar menos que isso, o começo da reunião fica de fora. Para esses casos, ligue **Adiantar as notas durante a reunião**: a cada 10 minutos o app resume a conversa em segundo plano, e as notas finais usam esses resumos. Com um modelo na nuvem, deixe desligado — o modelo lê a reunião inteira e as notas saem mais detalhadas.
+
+**IA por função.** As notas usam o **Provedor em uso**. Em **IA por função** você pode dar um modelo próprio ao **Perguntar e chat da nota** e ao **Ditado**, com as mesmas chaves. O ditado precisa responder em 1 a 2 segundos: prefira um modelo marcado como rápido e sem raciocínio (medimos ~1 s com `google/gemini-3.1-flash-lite`; modelos com raciocínio levaram de 10 a 30 s).
 
 ### 4. Sobre você
 
@@ -182,7 +184,7 @@ Em **Configurações → Reuniões e agenda**:
 Em **Configurações → Ditado e atalhos**:
 
 - **Ditar em qualquer app** e a **Tecla do ditado** (`fn` por padrão).
-- **Polir com IA:** corrige pontuação e vícios de fala antes de digitar. Em **IA do ditado** você pode usar um modelo separado do das notas: o ditado precisa responder em cerca de 1 segundo, então prefira um modelo pequeno e sem raciocínio, como `google/gemini-3.1-flash-lite` no Gateway (medido: ~1 s por ditado).
+- **Polir com IA:** corrige pontuação e vícios de fala antes de digitar. O modelo do ditado fica em **Configurações → IA → IA por função**.
 - **Atalhos globais:** começar ou parar a gravação de uma reunião (⌥ ⇧ R por padrão), mesmo com o app em segundo plano.
 
 ### 7. Conexões e integrações (opcional)
@@ -222,14 +224,15 @@ Em **Configurações → Integrações** você cadastra **webhooks**: a cada gra
    - clique no nome de uma voz (“Pessoa 1”) para dar o nome certo — vale para a reunião inteira;
    - **copie** a transcrição inteira;
    - **refaça a transcrição** a partir do áudio guardado (útil se a internet caiu ou se você mudou o vocabulário). Depois, regere as notas.
-4. No painel **Próximos passos**, marque o que foi feito ou envie cada tarefa — ou todas — para uma conexão.
+4. No painel **Próximos passos**, marque o que foi feito ou envie cada tarefa — ou todas — para uma conexão. A página **Próximos passos** junta tudo: filtre por **Meus** (os seus, os da turma toda e os sem responsável) ou por pessoa, e agrupe por reunião ou por pessoa.
 5. Pergunte qualquer coisa à reunião no chat, ou à sua base inteira em **Perguntar**.
+6. Clique na data da nota para corrigir o dia e o horário; a transcrição acompanha.
 
 ### Importar de outro app (Granola e outros)
 
 1. No **Início**, clique em **Importar**.
 2. Cole a transcrição ou clique em **Escolher arquivos** para trazer várias de uma vez (`.txt` ou `.md`). No Granola, abra a reunião e copie a transcrição; o formato esperado é uma fala por linha, `Nome: fala`, com um cabeçalho opcional (`Meeting Title:`, `Date:`).
-3. Confira a prévia: título, data, quantidade de falas e quem participou. “Me” e o seu nome viram “Eu”; “Them” e “Speaker A” viram vozes sem nome, que você pode nomear depois.
+3. Confira a prévia (título, data, quantidade de falas e quem participou) e ajuste o **Horário de início**, já que a cópia do Granola só traz a data. “Me” e o seu nome viram “Eu”; “Them” e “Speaker A” viram vozes sem nome, que você pode nomear depois.
 4. Clique em **Importar**. Com **Gerar as notas com a IA** ligado, as notas são escritas uma reunião por vez com o provedor em uso.
 
 Como o texto importado não tem horário de cada fala, o FR Notes distribui as falas a partir do horário de início pelo tamanho de cada uma — a ordem fica certa e a duração, aproximada.

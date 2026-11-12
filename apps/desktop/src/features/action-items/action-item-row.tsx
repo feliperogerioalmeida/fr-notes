@@ -103,9 +103,14 @@ const Chip = ({ icon, children }: { icon: ReactNode; children: ReactNode }) => (
 interface ActionItemRowProps {
   item: ActionItem;
   context?: ReactNode;
+  hideOwner?: boolean;
 }
 
-export const ActionItemRow = ({ item, context }: ActionItemRowProps) => (
+export const ActionItemRow = ({
+  item,
+  context,
+  hideOwner = false,
+}: ActionItemRowProps) => (
   <li className="group hover:bg-accent/60 ease-brand flex items-start gap-3 rounded-md px-2 py-2 transition-colors duration-150">
     <CheckButton item={item} />
     <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -118,7 +123,7 @@ export const ActionItemRow = ({ item, context }: ActionItemRowProps) => (
         {item.text}
       </p>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        {item.owner && <Chip icon={<User />}>{item.owner}</Chip>}
+        {item.owner && !hideOwner && <Chip icon={<User />}>{item.owner}</Chip>}
         {item.dueText && <Chip icon={<CalendarClock />}>{item.dueText}</Chip>}
         {context}
         {item.sentTo.map((sent) => (

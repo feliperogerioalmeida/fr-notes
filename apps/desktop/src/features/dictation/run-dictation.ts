@@ -2,7 +2,7 @@ import { register, unregister } from "@tauri-apps/plugin-global-shortcut";
 import {
   buildDictationCleanupPrompt,
   DICTATION_CLEANUP_PROMPT,
-  resolveDictationLlm,
+  resolveFeatureLlm,
   type Settings,
 } from "@workspace/core";
 import { toast } from "sonner";
@@ -71,7 +71,7 @@ const polish = async ({ text, targetApp, settings }: PolishInput) => {
   if (!settings.dictationPolish) return { text, polished: false };
   try {
     const polished = await streamCompletion({
-      settings: resolveDictationLlm(settings),
+      settings: resolveFeatureLlm(settings, "dictation"),
       instructions: DICTATION_CLEANUP_PROMPT,
       messages: [
         {

@@ -1,15 +1,15 @@
 import {
   describeFolderPath,
   describeParticipant,
-  formatDayLabel,
-  formatTime,
   type Note,
 } from "@workspace/core";
-import { CalendarDays, Folder, LayoutTemplate, Users } from "lucide-react";
+import { Folder, LayoutTemplate, Users } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { useFoldersQuery } from "@/features/folders/use-folders.js";
 import { useTemplatesQuery } from "@/features/templates/use-templates.js";
+
+import { NoteDateChip } from "./note-date-chip.js";
 
 const VISIBLE_PARTICIPANTS = 3;
 
@@ -36,13 +36,9 @@ export const NoteMeta = ({ note }: { note: Note }) => {
         .join(" / ")
     : "";
   const template = templates.find((item) => item.id === note.templateId);
-  const startedAt = note.recordingStartedAt ?? note.createdAt;
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <MetaChip
-        icon={<CalendarDays />}
-        label={`${formatDayLabel(new Date(startedAt))}, ${formatTime(startedAt)}`}
-      />
+      <NoteDateChip note={note} />
       {note.participants.length > 0 && (
         <MetaChip icon={<Users />} label={describeParticipants(note)} />
       )}

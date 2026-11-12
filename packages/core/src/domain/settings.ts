@@ -6,7 +6,7 @@ export const THEMES = ["dark", "light", "system"] as const;
 
 export const LLM_PROVIDERS = ["gateway", "openai-compatible"] as const;
 
-export const DICTATION_LLM_PROVIDERS = ["same", ...LLM_PROVIDERS] as const;
+export const FEATURE_LLM_PROVIDERS = ["same", ...LLM_PROVIDERS] as const;
 
 export const MEETING_DETECTION_MODES = ["ask", "auto", "off"] as const;
 
@@ -42,7 +42,7 @@ const SettingsObjectSchema = z.object({
   dictationEnabled: z.boolean().default(true),
   dictationTrigger: z.enum(DICTATION_TRIGGERS).default("fn"),
   dictationPolish: z.boolean().default(false),
-  dictationLlmProvider: z.enum(DICTATION_LLM_PROVIDERS).default("same"),
+  dictationLlmProvider: z.enum(FEATURE_LLM_PROVIDERS).default("same"),
   dictationLlmModel: z.string().default(""),
   recordingShortcut: z.enum(RECORDING_SHORTCUTS).default("alt-shift-r"),
   keyterms: z.array(z.string()).default([]),
@@ -53,6 +53,8 @@ const SettingsObjectSchema = z.object({
   llmBaseUrl: z.string().default(""),
   llmThinking: z.boolean().default(false),
   llmDigestDuringMeeting: z.boolean().default(true),
+  askLlmProvider: z.enum(FEATURE_LLM_PROVIDERS).default("same"),
+  askLlmModel: z.string().default(""),
   theme: z.enum(THEMES).default("dark"),
 });
 
@@ -103,21 +105,31 @@ export type Theme = Settings["theme"];
 
 export const DEFAULT_SETTINGS: Settings = SettingsSchema.parse({});
 
-export type DictationLlmProvider = Settings["dictationLlmProvider"];
+export type FeatureLlmProvider = Settings["dictationLlmProvider"];
 
-export const resolveDictationLlm = (settings: Settings): Settings => {
-  const provider =
-    settings.dictationLlmProvider === "same"
-      ? settings.llmProvider
-      : settings.dictationLlmProvider;
-  const model =
-    settings.dictationLlmProvider === "same"
-      ? ""
-      : settings.dictationLlmModel.trim();
+export const FEATURE_LLM_SETTINGS = {
+  ask: { provider: "askLlmProvider", model: "askLlmModel" },
+  dictation: { provider: "dictationLlmProvider", model: "dictationLlmModel" },
+} as const;
+
+export type LlmFeature = keyof typeof FEATURE_LLM_SETTINGS;
+
+const FEATURES_WITHOUT_REASONING: LlmFeature[] = ["dictation"];
+
+export const resolveFeatureLlm = (
+  settings: Settings,
+  feature: LlmFeature,
+): Settings => {
+  const keys = FEATURE_LLM_SETTINGS[feature];
+  const choice = settings[keys.provider];
+  const provider = choice === "same" ? settings.llmProvider : choice;
+  const model = choice === "same" ? "" : settings[keys.model].trim();
   return {
     ...settings,
     llmProvider: provider,
-    llmThinking: false,
+    llmThinking: FEATURES_WITHOUT_REASONING.includes(feature)
+      ? false
+      : settings.llmThinking,
     ...(model ? { [LLM_MODEL_SETTING[provider]]: model } : {}),
   };
 };

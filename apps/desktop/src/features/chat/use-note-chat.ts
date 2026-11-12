@@ -3,6 +3,7 @@ import {
   buildChatContext,
   CHAT_SYSTEM_PROMPT,
   type ChatMessage,
+  resolveFeatureLlm,
 } from "@workspace/core";
 import type { ModelMessage } from "ai";
 import { useCallback, useRef, useState } from "react";
@@ -37,7 +38,7 @@ const askModel = async (noteId: string, onText: (text: string) => void) => {
   const history = await storage.chat.listMessages(noteId);
   const { instructions, settings } = await buildInstructions(noteId);
   const answer = await streamCompletion({
-    settings,
+    settings: resolveFeatureLlm(settings, "ask"),
     instructions,
     messages: toModelMessages(history),
     onText,

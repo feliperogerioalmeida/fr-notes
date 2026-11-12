@@ -25,7 +25,7 @@ const OPENAI_COMPATIBLE_OPTIONS_KEY = "frNotesLlm";
 
 const TRAILING_URL_JUNK = /[\s,;/]+$/;
 
-const normalizeBaseUrl = (url: string) =>
+export const normalizeBaseUrl = (url: string) =>
   url.trim().replace(TRAILING_URL_JUNK, "");
 
 const buildModel = (settings: LlmSettings, apiKey: string | null) => {

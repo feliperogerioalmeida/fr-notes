@@ -80,6 +80,11 @@ export interface CreateNoteInput {
   participants?: Participant[];
 }
 
+export interface RescheduleNoteInput {
+  id: string;
+  startedAtMs: number;
+}
+
 interface UpdateNoteInput {
   id: string;
   patch: NotePatch;
@@ -171,6 +176,42 @@ export const createNotesRepository = (db: SqlClient) => {
     );
   };
 
+  const shiftTimeline = async (noteId: string, deltaMs: number) => {
+    const timestamp = nowIso();
+    for (const table of ["transcript_segments", "transcript_digests"]) {
+      await db.execute(
+        `UPDATE ${table} SET start_ms = start_ms + ?, end_ms = end_ms + ?, updated_at = ? WHERE note_id = ? AND deleted_at IS NULL`,
+        [deltaMs, deltaMs, timestamp, noteId],
+      );
+    }
+  };
+
+  const rescheduleNote = async ({
+    id,
+    startedAtMs,
+  }: RescheduleNoteInput): Promise<void> => {
+    const note = await findNote(id);
+    if (!note) return;
+    const currentMs = new Date(
+      note.recordingStartedAt ?? note.createdAt,
+    ).getTime();
+    const deltaMs = startedAtMs - currentMs;
+    if (deltaMs === 0) return;
+    const endedAt = note.recordingEndedAt
+      ? new Date(
+          new Date(note.recordingEndedAt).getTime() + deltaMs,
+        ).toISOString()
+      : null;
+    await updateNote({
+      id,
+      patch: {
+        recordingStartedAt: new Date(startedAtMs).toISOString(),
+        recordingEndedAt: endedAt,
+      },
+    });
+    await shiftTimeline(id, deltaMs);
+  };
+
   const deleteNote = async (id: string): Promise<void> => {
     const timestamp = nowIso();
     await db.execute(
@@ -185,6 +226,7 @@ export const createNotesRepository = (db: SqlClient) => {
     listNotes,
     createNote,
     updateNote,
+    rescheduleNote,
     deleteNote,
   };
 };

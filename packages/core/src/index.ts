@@ -25,6 +25,8 @@ export * from "./meetings/meeting-apps.js";
 export * from "./meetings/meeting-countdown.js";
 export * from "./meetings/meeting-end.js";
 export * from "./meetings/speaker-roster.js";
+export * from "./models/model-catalog.js";
+export * from "./notes/action-item-views.js";
 export * from "./notes/action-items.js";
 export * from "./notes/note-stats.js";
 export * from "./prompts/ask-all-meetings.js";

@@ -44,6 +44,16 @@ describe("importTranscript", () => {
     ]);
   });
 
+  it("starts at the time chosen for the import", () => {
+    const { startedAtMs } = importTranscript({
+      text: GRANOLA_EXPORT,
+      startTime: "19:00",
+      now: NOW,
+    });
+    const startedAt = new Date(startedAtMs);
+    expect([startedAt.getDate(), startedAt.getHours()]).toEqual([12, 19]);
+  });
+
   it("keeps the order of the turns on a synthetic clock", () => {
     const { segments, startedAtMs, endedAtMs } = importTranscript({
       text: GRANOLA_EXPORT,
