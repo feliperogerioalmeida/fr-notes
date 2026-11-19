@@ -20,6 +20,7 @@ const KNOWN_MEETING_APPS: Record<string, string> = {
   "Cisco-Systems.Spark": "Webex",
   "com.google.Chrome": "Google Chrome",
   "company.thebrowser.Browser": "Arc",
+  "company.thebrowser.dia": "Dia",
   "com.brave.Browser": "Brave",
   "com.microsoft.edgemac": "Microsoft Edge",
   "org.mozilla.firefox": "Firefox",

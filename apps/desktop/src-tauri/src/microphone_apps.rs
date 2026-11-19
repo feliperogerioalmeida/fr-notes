@@ -22,6 +22,19 @@ pub struct MicrophoneAppsPayload {
     pub apps: Vec<MicApp>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ProcessIdentity {
+    pub bundle_id: Option<String>,
+    pub name: Option<String>,
+    pub is_regular_app: bool,
+}
+
+pub fn pick_host_app(lineage: &[ProcessIdentity]) -> Option<&ProcessIdentity> {
+    lineage
+        .iter()
+        .find(|process| process.is_regular_app && process.bundle_id.is_some())
+}
+
 pub fn bundle_id_set(apps: &[MicApp]) -> BTreeSet<String> {
     apps.iter().map(|app| app.bundle_id.clone()).collect()
 }
@@ -60,13 +73,16 @@ pub use platform::list_microphone_apps;
 #[cfg(target_os = "macos")]
 mod platform {
     use objc2::rc::autoreleasepool;
-    use objc2_app_kit::NSRunningApplication;
+    use objc2_app_kit::{NSApplicationActivationPolicy, NSRunningApplication};
     use objc2_core_audio::{
         kAudioHardwarePropertyProcessObjectList, kAudioProcessPropertyBundleID,
         kAudioProcessPropertyIsRunningInput, kAudioProcessPropertyPID, AudioObjectID,
     };
 
-    use super::MicApp;
+    use super::{pick_host_app, MicApp, ProcessIdentity};
+
+    const LAUNCHD_PID: i32 = 1;
+    const MAX_LINEAGE_DEPTH: usize = 4;
     use crate::core_audio::{read_array, read_string, read_value, status_error, SYSTEM_OBJECT};
 
     fn is_running_input(process: AudioObjectID) -> bool {
@@ -74,14 +90,44 @@ mod platform {
             .is_ok_and(|value| value != 0)
     }
 
-    fn running_application_details(pid: i32) -> (Option<String>, Option<String>) {
+    fn identify(pid: i32) -> ProcessIdentity {
         let Some(application) = NSRunningApplication::runningApplicationWithProcessIdentifier(pid)
         else {
-            return (None, None);
+            return ProcessIdentity {
+                bundle_id: None,
+                name: None,
+                is_regular_app: false,
+            };
         };
-        let name = application.localizedName().map(|name| name.to_string());
-        let bundle_id = application.bundleIdentifier().map(|id| id.to_string());
-        (name, bundle_id)
+        ProcessIdentity {
+            bundle_id: application.bundleIdentifier().map(|id| id.to_string()),
+            name: application.localizedName().map(|name| name.to_string()),
+            is_regular_app: application.activationPolicy()
+                == NSApplicationActivationPolicy::Regular,
+        }
+    }
+
+    fn parent_pid(pid: i32) -> Option<i32> {
+        let mut info: libc::proc_bsdinfo = unsafe { std::mem::zeroed() };
+        let size = std::mem::size_of::<libc::proc_bsdinfo>() as i32;
+        let written = unsafe {
+            libc::proc_pidinfo(
+                pid,
+                libc::PROC_PIDTBSDINFO,
+                0,
+                (&mut info as *mut libc::proc_bsdinfo).cast(),
+                size,
+            )
+        };
+        let parent = i32::try_from(info.pbi_ppid).ok()?;
+        (written == size && parent > LAUNCHD_PID).then_some(parent)
+    }
+
+    fn lineage(pid: i32) -> Vec<ProcessIdentity> {
+        std::iter::successors(Some(pid), |current| parent_pid(*current))
+            .take(MAX_LINEAGE_DEPTH)
+            .map(identify)
+            .collect()
     }
 
     fn describe_process(process: AudioObjectID, own_pid: i32) -> Option<MicApp> {
@@ -94,10 +140,14 @@ mod platform {
         }
         let audio_bundle_id =
             read_string(process, kAudioProcessPropertyBundleID).unwrap_or_default();
-        let (name, app_bundle_id) = running_application_details(pid);
-        let bundle_id = Some(audio_bundle_id)
-            .filter(|id| !id.is_empty())
-            .or(app_bundle_id)
+        let lineage = lineage(pid);
+        let host = pick_host_app(&lineage);
+        let own = lineage.first();
+        let name = host.or(own).and_then(|process| process.name.clone());
+        let bundle_id = host
+            .and_then(|process| process.bundle_id.clone())
+            .or(Some(audio_bundle_id).filter(|id| !id.is_empty()))
+            .or(own.and_then(|process| process.bundle_id.clone()))
             .filter(|id| !id.is_empty())?;
         Some(MicApp {
             name: name
@@ -153,6 +203,35 @@ mod tests {
     fn ignores_pid_changes_for_the_same_bundle() {
         let previous = bundle_id_set(&[app("us.zoom.xos", 10)]);
         assert!(!has_changed(&previous, &[app("us.zoom.xos", 99)]));
+    }
+
+    fn process(bundle_id: Option<&str>, is_regular_app: bool) -> ProcessIdentity {
+        ProcessIdentity {
+            bundle_id: bundle_id.map(Into::into),
+            name: bundle_id.map(Into::into),
+            is_regular_app,
+        }
+    }
+
+    #[test]
+    fn attributes_browser_helpers_to_the_browser_that_launched_them() {
+        let lineage = [
+            process(Some("company.thebrowser.browser.helper"), false),
+            process(Some("company.thebrowser.dia"), true),
+        ];
+        assert_eq!(pick_host_app(&lineage), Some(&lineage[1]));
+    }
+
+    #[test]
+    fn keeps_apps_that_capture_audio_themselves() {
+        let lineage = [process(Some("us.zoom.xos"), true)];
+        assert_eq!(pick_host_app(&lineage), Some(&lineage[0]));
+    }
+
+    #[test]
+    fn finds_no_host_for_system_services() {
+        let lineage = [process(Some("com.apple.WebKit.GPU"), false)];
+        assert_eq!(pick_host_app(&lineage), None);
     }
 
     #[test]

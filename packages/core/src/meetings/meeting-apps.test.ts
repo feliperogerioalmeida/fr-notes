@@ -29,4 +29,12 @@ describe("detectMeetingApps", () => {
 
     expect(apps.map((app) => app.name)).toEqual(["Zoom", "Google Chrome"]);
   });
+
+  it("recognizes calls in the Dia browser", () => {
+    const apps = detectMeetingApps([
+      { bundleId: "company.thebrowser.dia", name: "Dia", pid: 5 },
+    ]);
+
+    expect(apps).toEqual([{ bundleId: "company.thebrowser.dia", name: "Dia" }]);
+  });
 });
