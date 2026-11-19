@@ -51,7 +51,7 @@ export const MarkdownEditor = ({
   }, [editor, value]);
 
   useEffect(() => {
-    editor?.setEditable(editable);
+    editor?.setEditable(editable, false);
   }, [editor, editable]);
 
   return <EditorContent editor={editor} />;
